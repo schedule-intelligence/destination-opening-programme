@@ -1,0 +1,258 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
+  "name": "p06_v05_dcma_table",
+  "position": {
+    "x": 16,
+    "y": 260,
+    "z": 10000,
+    "height": 214,
+    "width": 816,
+    "tabOrder": 10000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_dcma_check"
+                    }
+                  },
+                  "Property": "check_id"
+                }
+              },
+              "queryRef": "fact_dcma_check.check_id",
+              "nativeQueryRef": "check_id",
+              "displayName": "Check"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_dcma_check"
+                    }
+                  },
+                  "Property": "check_name"
+                }
+              },
+              "queryRef": "fact_dcma_check.check_name",
+              "nativeQueryRef": "check_name",
+              "displayName": "Check name"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_dcma_check"
+                    }
+                  },
+                  "Property": "group"
+                }
+              },
+              "queryRef": "fact_dcma_check.group",
+              "nativeQueryRef": "group",
+              "displayName": "Group"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_dcma_check"
+                    }
+                  },
+                  "Property": "value"
+                }
+              },
+              "queryRef": "fact_dcma_check.value",
+              "nativeQueryRef": "value",
+              "displayName": "Value"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_dcma_check"
+                    }
+                  },
+                  "Property": "threshold"
+                }
+              },
+              "queryRef": "fact_dcma_check.threshold",
+              "nativeQueryRef": "threshold",
+              "displayName": "Threshold"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_dcma_check"
+                    }
+                  },
+                  "Property": "passed"
+                }
+              },
+              "queryRef": "fact_dcma_check.passed",
+              "nativeQueryRef": "passed",
+              "displayName": "Pass"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_dcma_check"
+                    }
+                  },
+                  "Property": "score"
+                }
+              },
+              "queryRef": "fact_dcma_check.score",
+              "nativeQueryRef": "score",
+              "displayName": "Score"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_dcma_check"
+                    }
+                  },
+                  "Property": "weight"
+                }
+              },
+              "queryRef": "fact_dcma_check.weight",
+              "nativeQueryRef": "weight",
+              "displayName": "Weight"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "fact_dcma_check"
+                  }
+                },
+                "Property": "check_id"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ]
+      }
+    },
+    "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "columnAdjustment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'growToFit'"
+                }
+              }
+            },
+            "autoSizeColumnWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "values": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'DCMA and update-discipline checks: value, threshold and pass'"
+                }
+              }
+            },
+            "titleWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'DCMA and update-discipline checks: value, threshold and pass'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

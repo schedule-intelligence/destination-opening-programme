@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import pathlib
 import shutil
 import sys
 import time
@@ -26,6 +27,19 @@ def cmd_pptx(args):
     from .pptx_gen import build_pack
     path = build_pack(ROOT, args.data_date, args.pack)
     print(f"[pptx] {path.relative_to(ROOT)}")
+    return 0
+
+
+def cmd_pbip(args):
+    from .pbip import DEFAULT_CSV_FOLDER, generate_pbip
+    out = generate_pbip(ROOT, out_dir=args.out, csv_folder=args.csv_folder or DEFAULT_CSV_FOLDER)
+    where = out["out_dir"]
+    try:
+        where = where.relative_to(ROOT)
+    except ValueError:
+        pass
+    print(f"[pbip] {where}: {out['tables']} tables ({out['csv_tables']} from CSV), {out['measures']} measures, "
+          f"{out['relationships']} relationships, {out['pages']} pages, {out['visuals']} visuals, {out['files']} files")
     return 0
 
 
@@ -61,11 +75,16 @@ def main(argv=None) -> int:
     p = sub.add_parser("pptx", help="build an executive PowerPoint pack")
     p.add_argument("--data-date", required=True)
     p.add_argument("--pack", choices=["monthly", "fortnightly"], default="monthly")
+    p = sub.add_parser("pbip", help="generate the Power BI project (PBIP) from the CSV star schema, DAX measures and theme")
+    p.add_argument("--out", type=pathlib.Path, default=None, help="output folder (default: powerbi)")
+    p.add_argument("--csv-folder", default=None,
+                   help=r"default value of the CsvFolder parameter (default: V:\schedule-intelligence\output\csv)")
     p = sub.add_parser("run", help="run everything")
     p.add_argument("--all", action="store_true", required=True)
     p.add_argument("--near-critical", type=int, default=10)
     args = ap.parse_args(argv)
-    return {"generate": cmd_generate, "pipeline": cmd_pipeline, "pptx": cmd_pptx, "run": cmd_run}[args.cmd](args)
+    return {"generate": cmd_generate, "pipeline": cmd_pipeline, "pptx": cmd_pptx, "pbip": cmd_pbip,
+            "run": cmd_run}[args.cmd](args)
 
 
 if __name__ == "__main__":

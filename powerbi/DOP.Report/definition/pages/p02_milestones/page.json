@@ -1,0 +1,15 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json",
+  "name": "p02_milestones",
+  "displayName": "Milestones & slippage",
+  "displayOption": "FitToPage",
+  "height": 720,
+  "width": 1280,
+  "visualInteractions": [
+    {
+      "source": "p02_h4_dd_slicer",
+      "target": "p02_v01_gate_forecasts",
+      "type": "NoFilter"
+    }
+  ]
+}

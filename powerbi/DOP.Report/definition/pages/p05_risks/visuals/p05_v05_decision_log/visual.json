@@ -1,0 +1,273 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
+  "name": "p05_v05_decision_log",
+  "position": {
+    "x": 648,
+    "y": 490,
+    "z": 9000,
+    "height": 214,
+    "width": 616,
+    "tabOrder": 9000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_decision"
+                    }
+                  },
+                  "Property": "decision_id"
+                }
+              },
+              "queryRef": "fact_decision.decision_id",
+              "nativeQueryRef": "decision_id",
+              "displayName": "Decision"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_decision"
+                    }
+                  },
+                  "Property": "ask"
+                }
+              },
+              "queryRef": "fact_decision.ask",
+              "nativeQueryRef": "ask",
+              "displayName": "Ask"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_decision"
+                    }
+                  },
+                  "Property": "owner"
+                }
+              },
+              "queryRef": "fact_decision.owner",
+              "nativeQueryRef": "owner",
+              "displayName": "Owner"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_decision"
+                    }
+                  },
+                  "Property": "raised_data_date"
+                }
+              },
+              "queryRef": "fact_decision.raised_data_date",
+              "nativeQueryRef": "raised_data_date",
+              "displayName": "Raised"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_decision"
+                    }
+                  },
+                  "Property": "needed_by"
+                }
+              },
+              "queryRef": "fact_decision.needed_by",
+              "nativeQueryRef": "needed_by",
+              "displayName": "Needed by"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_decision"
+                    }
+                  },
+                  "Property": "status"
+                }
+              },
+              "queryRef": "fact_decision.status",
+              "nativeQueryRef": "status",
+              "displayName": "Status"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_decision"
+                    }
+                  },
+                  "Property": "overdue"
+                }
+              },
+              "queryRef": "fact_decision.overdue",
+              "nativeQueryRef": "overdue",
+              "displayName": "Overdue"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_decision"
+                    }
+                  },
+                  "Property": "closed_on"
+                }
+              },
+              "queryRef": "fact_decision.closed_on",
+              "nativeQueryRef": "closed_on",
+              "displayName": "Closed"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_decision"
+                    }
+                  },
+                  "Property": "outcome"
+                }
+              },
+              "queryRef": "fact_decision.outcome",
+              "nativeQueryRef": "outcome",
+              "displayName": "Outcome"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "fact_decision"
+                  }
+                },
+                "Property": "needed_by"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ]
+      }
+    },
+    "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "columnAdjustment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'growToFit'"
+                }
+              }
+            },
+            "autoSizeColumnWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "values": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Decision log (all decisions)'"
+                }
+              }
+            },
+            "titleWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Decision log (all decisions)'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

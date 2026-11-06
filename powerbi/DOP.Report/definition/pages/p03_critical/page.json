@@ -1,0 +1,15 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json",
+  "name": "p03_critical",
+  "displayName": "Critical path & look-ahead",
+  "displayOption": "FitToPage",
+  "height": 720,
+  "width": 1280,
+  "visualInteractions": [
+    {
+      "source": "p03_h4_dd_slicer",
+      "target": "p03_v03_float_erosion",
+      "type": "NoFilter"
+    }
+  ]
+}

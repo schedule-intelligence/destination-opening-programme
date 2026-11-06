@@ -1,0 +1,303 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
+  "name": "p08_v03_history",
+  "position": {
+    "x": 16,
+    "y": 286,
+    "z": 6000,
+    "height": 204,
+    "width": 1248,
+    "tabOrder": 6000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_snapshot"
+                    }
+                  },
+                  "Property": "label"
+                }
+              },
+              "queryRef": "dim_snapshot.label",
+              "nativeQueryRef": "label",
+              "displayName": "Update"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_snapshot"
+                    }
+                  },
+                  "Property": "data_date"
+                }
+              },
+              "queryRef": "dim_snapshot.data_date",
+              "nativeQueryRef": "data_date",
+              "displayName": "Data date"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_activity_snapshot"
+                    }
+                  },
+                  "Property": "status"
+                }
+              },
+              "queryRef": "fact_activity_snapshot.status",
+              "nativeQueryRef": "status",
+              "displayName": "Status"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_activity_snapshot"
+                    }
+                  },
+                  "Property": "start"
+                }
+              },
+              "queryRef": "fact_activity_snapshot.start",
+              "nativeQueryRef": "start",
+              "displayName": "Start"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_activity_snapshot"
+                    }
+                  },
+                  "Property": "finish"
+                }
+              },
+              "queryRef": "fact_activity_snapshot.finish",
+              "nativeQueryRef": "finish",
+              "displayName": "Finish"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_activity_snapshot"
+                    }
+                  },
+                  "Property": "total_float_d"
+                }
+              },
+              "queryRef": "fact_activity_snapshot.total_float_d",
+              "nativeQueryRef": "total_float_d",
+              "displayName": "TF (d)"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_activity_snapshot"
+                    }
+                  },
+                  "Property": "var_finish_bl0_d"
+                }
+              },
+              "queryRef": "fact_activity_snapshot.var_finish_bl0_d",
+              "nativeQueryRef": "var_finish_bl0_d",
+              "displayName": "vs BL0 (d)"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_activity_snapshot"
+                    }
+                  },
+                  "Property": "var_finish_bl1_d"
+                }
+              },
+              "queryRef": "fact_activity_snapshot.var_finish_bl1_d",
+              "nativeQueryRef": "var_finish_bl1_d",
+              "displayName": "vs BL1 (d)"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_activity_snapshot"
+                    }
+                  },
+                  "Property": "slip_vs_prev_d"
+                }
+              },
+              "queryRef": "fact_activity_snapshot.slip_vs_prev_d",
+              "nativeQueryRef": "slip_vs_prev_d",
+              "displayName": "Movement (d)"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_activity_snapshot"
+                    }
+                  },
+                  "Property": "constraint_type"
+                }
+              },
+              "queryRef": "fact_activity_snapshot.constraint_type",
+              "nativeQueryRef": "constraint_type",
+              "displayName": "Constraint"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_activity_snapshot"
+                    }
+                  },
+                  "Property": "dq_flags"
+                }
+              },
+              "queryRef": "fact_activity_snapshot.dq_flags",
+              "nativeQueryRef": "dq_flags",
+              "displayName": "DQ flags"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "dim_snapshot"
+                  }
+                },
+                "Property": "data_date"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ]
+      }
+    },
+    "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "columnAdjustment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'growToFit'"
+                }
+              }
+            },
+            "autoSizeColumnWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "values": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'History across all updates'"
+                }
+              }
+            },
+            "titleWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'History across all updates'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -36,6 +36,7 @@ dop/                      Python package (run with `python -m dop ...`)
     excel.py              openpyxl controls workbook per snapshot
     run.py                pipeline orchestration (publishes only after the gate passes)
   pptx_gen.py             monthly + fortnightly executive packs (python-pptx)
+  pbip.py                 Power BI project generator (TMSL semantic model + PBIR report pages)
   cli.py / __main__.py    CLI
 data/xer/                 DOP_BL0.xer, DOP_BL1.xer, DOP_UPD_<yyyy-mm-dd>.xer x6
 data/registers/           risk, decision, change, interface, recovery-option and reporting-calendar inputs (not in P6)
@@ -255,6 +256,9 @@ tables, and a lineage footer (source file, hash, data date, reconciliation statu
 
 The CSV star schema is the Power BI source. [POWERBI.md](POWERBI.md) gives the model, relationships, DAX measures
 (`powerbi/measures.dax`), the page design and the report theme (`powerbi/dop_theme.json`).
+`python -m dop pbip` turns these into the Power BI project `powerbi/DOP.pbip` (a TMSL model and a PBIR report,
+checked offline by `scripts/check_pbip.py`); it is not part of `run --all`, so a project saved from Power BI
+Desktop is never overwritten.
 
 ## 11. Test plan
 

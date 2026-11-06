@@ -5,3 +5,5 @@ __pycache__/
 output/tmp/
 .confidential_terms.txt
 _build_notes/
+**/.pbi/cache.abf
+**/.pbi/localSettings.json

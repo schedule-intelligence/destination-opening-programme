@@ -111,7 +111,7 @@ flowchart LR
   R -->|pass| J["docs/data/dashboard.json"]
   R -->|pass| XL["output/xlsx<br/>controls workbook"]
   J --> W["Web dashboard<br/>GitHub Pages"]
-  CSV --> BI["Power BI<br/>POWERBI.md + DAX"]
+  CSV --> BI["Power BI<br/>PBIP project + DAX"]
   J --> PP["PowerPoint packs<br/>python-pptx"]
   R -->|fail| STOP["exit 1: nothing published"]
 ```
@@ -128,7 +128,7 @@ data/truth/           injected-issue truth files used by the tests
 output/csv|xlsx|pptx|reports/
 docs/                 GitHub Pages site (index.html, data/dashboard.json, downloads/, screenshots/)
 governance/           scheduling framework, reporting calendar, RACI, reporting standards, owner playbook
-powerbi/              Power BI theme and DAX measures (see POWERBI.md)
+powerbi/              Power BI project DOP.pbip (semantic model + 7 report pages), DAX measures and theme
 tests/                pytest: hand-calculated CPM networks, invariants, XER round trip, truth, gate, integrity, outputs
 scripts/              dashboard verification (Playwright), DAX column check, confidentiality check
 ```
@@ -158,11 +158,13 @@ python -m dop run --all && python -m pytest -q      # or ./run_all.sh
 ```
 
 Individual steps: `python -m dop generate`, `python -m dop pipeline [--near-critical 10]`,
-`python -m dop pptx --data-date 2026-10-29 --pack monthly|fortnightly`.
+`python -m dop pptx --data-date 2026-10-29 --pack monthly|fortnightly`,
+`python -m dop pbip` (regenerates the Power BI project; not part of `run --all`).
 
 Verification tools: `python scripts/verify_dashboard.py` (headless Chromium over every data date, compare mode and
 tab), `python scripts/render_pptx_previews.py` (renders both packs with LibreOffice for visual review and refreshes
-the slide previews) and `python scripts/check_confidentiality.py`.
+the slide previews), `python scripts/check_pbip.py` (validates the Power BI project offline against the published
+schemas and the model) and `python scripts/check_confidentiality.py`.
 
 ## Outputs
 
@@ -170,6 +172,7 @@ the slide previews) and `python scripts/check_confidentiality.py`.
 |---|---|
 | P6 XER files (2 baselines + 6 updates) | `data/xer/` |
 | Star schema (7 dims, 15 facts) for Power BI | `output/csv/` · [POWERBI.md](POWERBI.md) · [DATA_DICTIONARY.md](DATA_DICTIONARY.md) |
+| Power BI project: semantic model, 96 measures, 7 report pages + drill-through | `powerbi/DOP.pbip` · [README_PBIP.md](powerbi/README_PBIP.md) |
 | Dashboard data (self-describing, reconciled) | `docs/data/dashboard.json` · [schema](docs/data/README.md) |
 | Reconciliation reports | `output/reports/reconciliation_<date>.md` |
 | Excel controls workbook per data date | `output/xlsx/DOP_controls_<date>.xlsx` |
@@ -183,7 +186,7 @@ the slide previews) and `python scripts/check_confidentiality.py`.
 | A. Validate schedule quality: logic, open ends, constraints, lags, calendars, float paths, critical and near-critical | `dop/pipeline/quality.py` (DCMA 14 + update discipline), Schedule Quality tab, owner scorecard; tests prove every injected issue is caught with zero false positives |
 | A. Update cycles, progress validation, variance, forecasting, scenario modelling, recovery planning | Six monthly updates; variance vs BL0 / BL1 / previous; milestone trend; recovery scenarios rescheduled by the CPM engine; Recovery tab and slide |
 | A. Controls for ownership, change, data cut-off, status dates, approvals, baseline governance | Owner codes, change register, BL1 via CR-003, data-date control U08; [PLANNING_REPORTING_CALENDAR.md](governance/PLANNING_REPORTING_CALENDAR.md) |
-| B. Power BI model from P6 exports; automated progress, milestone, critical path, float, variance, slippage, look-ahead, risk and dependency reporting | `output/csv/` star schema; [POWERBI.md](POWERBI.md) with DAX; `powerbi/dop_theme.json` |
+| B. Power BI model from P6 exports; automated progress, milestone, critical path, float, variance, slippage, look-ahead, risk and dependency reporting | `output/csv/` star schema; Power BI project [`powerbi/DOP.pbip`](powerbi/README_PBIP.md) (semantic model, 96 DAX measures, 7 pages); [POWERBI.md](POWERBI.md); `powerbi/dop_theme.json` |
 | B. Drill-down portfolio → programme → project → workstream → WBS → activity | Dashboard breadcrumb and activity drawer; Power BI field parameters |
 | B. Data definitions and reconciliation controls aligned to the approved P6 schedule | [DATA_DICTIONARY.md](DATA_DICTIONARY.md); reconciliation gate (R01–R16); Reconciliation & Lineage tab; "Reconciled ✓" header |
 | C. Consulting-quality packs: executive summary, milestone outlook, critical path, two-week look-back and look-ahead, trend, decision log, recovery plan, owners and asks | `dop/pptx_gen.py` monthly (15 slides) and fortnightly (6 slides) packs |
@@ -214,7 +217,8 @@ the slide previews) and `python scripts/check_confidentiality.py`.
 
 - No resource loading, cost or earned value yet (DCMA check 10 is reported N/A).
 - Monthly updates only; fortnightly packs reuse the monthly data date.
-- Power BI is delivered as a documented build (CSV, DAX, theme) rather than a .pbix file.
+- The Power BI project (`powerbi/DOP.pbip`) is generated and validated offline against the published schemas;
+  field parameters, bookmarks and row-level security remain short manual steps ([README_PBIP.md](powerbi/README_PBIP.md)).
 - Roadmap: TASKRSRC and EV measures; Monte Carlo schedule risk analysis on the same network; UDF-driven interface
   register; automated XER intake from a shared folder with a scheduled refresh.
 

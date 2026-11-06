@@ -1,0 +1,228 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
+  "name": "p06_v07_owner_scorecard",
+  "position": {
+    "x": 16,
+    "y": 490,
+    "z": 12000,
+    "height": 214,
+    "width": 520,
+    "tabOrder": 12000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_owner"
+                    }
+                  },
+                  "Property": "owner_name"
+                }
+              },
+              "queryRef": "dim_owner.owner_name",
+              "nativeQueryRef": "owner_name",
+              "displayName": "Owner"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Owner DQ"
+                }
+              },
+              "queryRef": "_Measures.Owner DQ",
+              "nativeQueryRef": "Owner DQ",
+              "displayName": "Owner DQ"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_owner_scorecard"
+                    }
+                  },
+                  "Property": "incomplete"
+                }
+              },
+              "queryRef": "fact_owner_scorecard.incomplete",
+              "nativeQueryRef": "incomplete",
+              "displayName": "Incomplete"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_owner_scorecard"
+                    }
+                  },
+                  "Property": "flagged"
+                }
+              },
+              "queryRef": "fact_owner_scorecard.flagged",
+              "nativeQueryRef": "flagged",
+              "displayName": "Flagged"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_owner_scorecard"
+                    }
+                  },
+                  "Property": "update_issues"
+                }
+              },
+              "queryRef": "fact_owner_scorecard.update_issues",
+              "nativeQueryRef": "update_issues",
+              "displayName": "Update issues"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_owner_scorecard"
+                    }
+                  },
+                  "Property": "logic_issues"
+                }
+              },
+              "queryRef": "fact_owner_scorecard.logic_issues",
+              "nativeQueryRef": "logic_issues",
+              "displayName": "Logic issues"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "_Measures"
+                  }
+                },
+                "Property": "Owner DQ"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ]
+      }
+    },
+    "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "columnAdjustment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'growToFit'"
+                }
+              }
+            },
+            "autoSizeColumnWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "values": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Owner scorecard: Owner DQ and flags'"
+                }
+              }
+            },
+            "titleWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Owner scorecard: Owner DQ and flags'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

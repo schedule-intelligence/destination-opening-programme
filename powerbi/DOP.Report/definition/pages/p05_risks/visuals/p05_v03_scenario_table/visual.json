@@ -1,0 +1,288 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
+  "name": "p05_v03_scenario_table",
+  "position": {
+    "x": 448,
+    "y": 260,
+    "z": 7000,
+    "height": 214,
+    "width": 816,
+    "tabOrder": 7000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_scenario"
+                    }
+                  },
+                  "Property": "scenario_id"
+                }
+              },
+              "queryRef": "fact_scenario.scenario_id",
+              "nativeQueryRef": "scenario_id",
+              "displayName": "Scenario"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_scenario"
+                    }
+                  },
+                  "Property": "name"
+                }
+              },
+              "queryRef": "fact_scenario.name",
+              "nativeQueryRef": "name",
+              "displayName": "Name"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_scenario"
+                    }
+                  },
+                  "Property": "day1_forecast"
+                }
+              },
+              "queryRef": "fact_scenario.day1_forecast",
+              "nativeQueryRef": "day1_forecast",
+              "displayName": "Day 1 forecast"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_scenario"
+                    }
+                  },
+                  "Property": "day1_tf_d"
+                }
+              },
+              "queryRef": "fact_scenario.day1_tf_d",
+              "nativeQueryRef": "day1_tf_d",
+              "displayName": "Day 1 TF (d)"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_scenario"
+                    }
+                  },
+                  "Property": "float_gain_d"
+                }
+              },
+              "queryRef": "fact_scenario.float_gain_d",
+              "nativeQueryRef": "float_gain_d",
+              "displayName": "Float gain (d)"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_scenario"
+                    }
+                  },
+                  "Property": "neg_float_count"
+                }
+              },
+              "queryRef": "fact_scenario.neg_float_count",
+              "nativeQueryRef": "neg_float_count",
+              "displayName": "Negative float"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_scenario"
+                    }
+                  },
+                  "Property": "near_critical_count"
+                }
+              },
+              "queryRef": "fact_scenario.near_critical_count",
+              "nativeQueryRef": "near_critical_count",
+              "displayName": "Near-critical"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_scenario"
+                    }
+                  },
+                  "Property": "residual_risk"
+                }
+              },
+              "queryRef": "fact_scenario.residual_risk",
+              "nativeQueryRef": "residual_risk",
+              "displayName": "Residual risk"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_scenario"
+                    }
+                  },
+                  "Property": "decision"
+                }
+              },
+              "queryRef": "fact_scenario.decision",
+              "nativeQueryRef": "decision",
+              "displayName": "Decisions"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_scenario"
+                    }
+                  },
+                  "Property": "recommended"
+                }
+              },
+              "queryRef": "fact_scenario.recommended",
+              "nativeQueryRef": "recommended",
+              "displayName": "Recommended"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "fact_scenario"
+                  }
+                },
+                "Property": "day1_tf_d"
+              }
+            },
+            "direction": "Descending"
+          }
+        ]
+      }
+    },
+    "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "columnAdjustment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'growToFit'"
+                }
+              }
+            },
+            "autoSizeColumnWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "values": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Recovery scenarios: outcome, decisions needed and residual risk'"
+                }
+              }
+            },
+            "titleWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Recovery scenarios: outcome, decisions needed and residual risk'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

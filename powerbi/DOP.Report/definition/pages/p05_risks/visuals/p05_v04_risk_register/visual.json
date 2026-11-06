@@ -1,0 +1,303 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
+  "name": "p05_v04_risk_register",
+  "position": {
+    "x": 16,
+    "y": 490,
+    "z": 8000,
+    "height": 214,
+    "width": 616,
+    "tabOrder": 8000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_risk"
+                    }
+                  },
+                  "Property": "risk_id"
+                }
+              },
+              "queryRef": "fact_risk.risk_id",
+              "nativeQueryRef": "risk_id",
+              "displayName": "Risk"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_risk"
+                    }
+                  },
+                  "Property": "title"
+                }
+              },
+              "queryRef": "fact_risk.title",
+              "nativeQueryRef": "title",
+              "displayName": "Title"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_risk"
+                    }
+                  },
+                  "Property": "owner_code"
+                }
+              },
+              "queryRef": "fact_risk.owner_code",
+              "nativeQueryRef": "owner_code",
+              "displayName": "Owner"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_risk"
+                    }
+                  },
+                  "Property": "probability"
+                }
+              },
+              "queryRef": "fact_risk.probability",
+              "nativeQueryRef": "probability",
+              "displayName": "P"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_risk"
+                    }
+                  },
+                  "Property": "impact"
+                }
+              },
+              "queryRef": "fact_risk.impact",
+              "nativeQueryRef": "impact",
+              "displayName": "I"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_risk"
+                    }
+                  },
+                  "Property": "score"
+                }
+              },
+              "queryRef": "fact_risk.score",
+              "nativeQueryRef": "score",
+              "displayName": "Score"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_risk"
+                    }
+                  },
+                  "Property": "rating"
+                }
+              },
+              "queryRef": "fact_risk.rating",
+              "nativeQueryRef": "rating",
+              "displayName": "Rating"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_risk"
+                    }
+                  },
+                  "Property": "trend"
+                }
+              },
+              "queryRef": "fact_risk.trend",
+              "nativeQueryRef": "trend",
+              "displayName": "Trend"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_risk"
+                    }
+                  },
+                  "Property": "mitigation_owner"
+                }
+              },
+              "queryRef": "fact_risk.mitigation_owner",
+              "nativeQueryRef": "mitigation_owner",
+              "displayName": "Mitigation owner"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_risk"
+                    }
+                  },
+                  "Property": "schedule_impact_days"
+                }
+              },
+              "queryRef": "fact_risk.schedule_impact_days",
+              "nativeQueryRef": "schedule_impact_days",
+              "displayName": "Impact (days)"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_risk"
+                    }
+                  },
+                  "Property": "min_linked_float_d"
+                }
+              },
+              "queryRef": "fact_risk.min_linked_float_d",
+              "nativeQueryRef": "min_linked_float_d",
+              "displayName": "Min linked float (d)"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "fact_risk"
+                  }
+                },
+                "Property": "score"
+              }
+            },
+            "direction": "Descending"
+          }
+        ]
+      }
+    },
+    "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "columnAdjustment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'growToFit'"
+                }
+              }
+            },
+            "autoSizeColumnWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "values": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Risk register for the selected update'"
+                }
+              }
+            },
+            "titleWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Risk register for the selected update'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
