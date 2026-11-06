@@ -231,7 +231,7 @@ def p6_tables(k: int, recs: dict[str, dict], rels: list[tuple], ids: Ids, proj_i
 def write_csv(path: pathlib.Path, header: list[str], rows: list[list]):
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", newline="", encoding="utf-8") as f:
-        w = csv.writer(f)
+        w = csv.writer(f, lineterminator="\n")
         w.writerow(header)
         w.writerows(rows)
 
@@ -261,7 +261,7 @@ def write_registers(snaps: list[Snapshot], root: pathlib.Path):
                                             "linked_activity", "day1_impact_days"],
               [[c[0], c[1], c[2], c[3], DATA_DATES[c[4]].isoformat(), c[5], c[6], c[7], c[8], c[9],
                 impact.get(c[0], "")] for c in CHANGES])
-    (reg / "recovery_options.json").write_text(json.dumps(RECOVERY_OPTIONS, indent=2), encoding="utf-8")
+    (reg / "recovery_options.json").write_text(json.dumps(RECOVERY_OPTIONS, indent=2), encoding="utf-8", newline="\n")
     write_csv(reg / "interfaces.csv", ["interface_id", "giver", "receiver", "description"],
               [[i["interface_id"], i["giver"], i["receiver"], i["description"]] for i in interface_list()])
     cal = []
@@ -307,9 +307,9 @@ def generate(root: pathlib.Path = ROOT) -> dict:
         truth = compute_truth(k, s, recs, prev_recs, bl, injections)
         truth.update(xer=name, baseline="BL0" if k < BL1_K else "BL1")
         (truth_dir / f"truth_{DATA_DATES[k].isoformat()}.json").write_text(json.dumps(truth, indent=1),
-                                                                          encoding="utf-8")
+                                                                          encoding="utf-8", newline="\n")
         prev_recs = recs
     write_registers(snaps, root)
-    (root / "data" / "xer" / "MANIFEST.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    (root / "data" / "xer" / "MANIFEST.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8", newline="\n")
     return {"snapshots": len(snaps), "activities": [len(s.spec) for s in snaps],
             "day1_tf_days": [s.sched.day1().tf / HOURS_PER_DAY for s in snaps]}

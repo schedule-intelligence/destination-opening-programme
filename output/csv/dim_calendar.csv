@@ -1,0 +1,4 @@
+calendar_id,calendar_name,hours_per_day,hours_per_week,working_days,holiday_exceptions
+1,DOP 6-Day Site (Sat-Thu),8.0,48.0,6,31
+2,DOP 5-Day Office (Sun-Thu),8.0,40.0,5,31
+3,DOP 7-Day T&C / Trials,8.0,56.0,7,3

@@ -1,8 +1,8 @@
 [
   {
     "id": "A",
-    "name": "Commission the arena by zone in parallel",
-    "description": "Start IST zone by zone once final finishes are under way, run HVAC/electrical/fire commissioning in parallel (SS links), add a second ICA witness team; correct the LOE link that holds IST.",
+    "name": "Zone-based completion: commission and snag the arena by zone",
+    "description": "Start IST and snagging zone by zone once final finishes are under way, overlap show-systems and fire commissioning, add a second ICA witness team; correct the LOE link that holds IST.",
     "owner": "Lead Commissioning Manager",
     "decision": "D-07",
     "cost": "Second ICA witness team (8 weeks)",
@@ -39,6 +39,25 @@
         "lag_days": 8
       },
       {
+        "op": "rel_remove",
+        "pred": "DAR-CON-M142",
+        "succ": "DAR-HOV-3010"
+      },
+      {
+        "op": "rel_add",
+        "pred": "DAR-CON-1225",
+        "succ": "DAR-HOV-3010",
+        "type": "SS",
+        "lag_days": 25
+      },
+      {
+        "op": "rel_add",
+        "pred": "DAR-CON-M142",
+        "succ": "DAR-HOV-3010",
+        "type": "FF",
+        "lag_days": 12
+      },
+      {
         "op": "dur_factor",
         "id": "DAR-TNC-2110",
         "factor": 0.85
@@ -47,28 +66,31 @@
         "op": "dur_factor",
         "id": "DAR-TNC-2130",
         "factor": 0.85
+      },
+      {
+        "op": "dur_factor",
+        "id": "DAR-TNC-2140",
+        "factor": 0.8
+      },
+      {
+        "op": "dur_factor",
+        "id": "DAR-TNC-2145",
+        "factor": 0.8
       }
     ]
   },
   {
     "id": "B",
     "name": "Phased handover with early operator access",
-    "description": "Operator familiarisation starts in completed zones under a temporary occupancy permit, linked to IST progress instead of the full occupancy certificate.",
+    "description": "Operator familiarisation starts in completed zones under a temporary occupancy permit, so about 20% of it is done before the full occupancy certificate; operator access brought forward.",
     "owner": "Operator Readiness Lead",
     "decision": "D-08",
     "cost": "Temporary occupancy permit; zone security staffing",
     "deltas": [
       {
-        "op": "rel_remove",
-        "pred": "DAR-HOV-M130",
-        "succ": "DAR-OPM-4130"
-      },
-      {
-        "op": "rel_add",
-        "pred": "DAR-HOV-3110",
-        "succ": "DAR-OPM-4130",
-        "type": "FS",
-        "lag_days": 0
+        "op": "dur_factor",
+        "id": "DAR-OPM-4130",
+        "factor": 0.8
       },
       {
         "op": "constraint",
@@ -81,20 +103,15 @@
   {
     "id": "C",
     "name": "Extra training shifts",
-    "description": "Run SOP validation and classroom training on the 7-day calendar with double shifts.",
+    "description": "Double training shifts compress SOP validation by 15% and classroom training by 25%.",
     "owner": "Operator Readiness Lead",
     "decision": "",
     "cost": "Overtime and trainer agency fees",
     "deltas": [
       {
-        "op": "calendar",
-        "id": "DAR-OPM-4140",
-        "cal": 3
-      },
-      {
         "op": "dur_factor",
         "id": "DAR-OPM-4140",
-        "factor": 0.75
+        "factor": 0.85
       },
       {
         "op": "dur_factor",

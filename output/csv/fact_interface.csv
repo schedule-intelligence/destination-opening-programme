@@ -1,0 +1,205 @@
+snapshot_id,interface_id,giver_id,receiver_id,description,giver_owner,receiver_owner,giver_asset,receiver_asset,giver_ws,receiver_ws,need_by,giver_forecast,gap_days,status,giver_tf_d
+20260528,IF-01,PEW-TNC-M021,MTP-TNC-2010,Permanent power to Mesa Theme Park for pre-commissioning,MEP,MEP,PEW,MTP,TNC,TNC,2026-12-02 08:00:00,2026-11-27 16:00:00,-5,At risk,4.0
+20260528,IF-02,PEW-TNC-M021,LWP-TNC-2010,Permanent power to Lagoon Water Park for pre-commissioning,MEP,MEP,PEW,LWP,TNC,TNC,2027-01-15 08:00:00,2026-11-27 16:00:00,-49,On track,4.0
+20260528,IF-03,PEW-TNC-M031,DAR-TNC-2010,Permanent power to Dune Arena for pre-commissioning,MEP,MEP,PEW,DAR,TNC,TNC,2027-01-01 08:00:00,2026-11-27 16:00:00,-35,On track,32.0
+20260528,IF-04,PEW-TNC-M031,PBR-TNC-2010,Permanent power to Palm Boulevard (Retail & Dining) for pre-commissioning,MEP,MEP,PEW,PBR,TNC,TNC,2026-12-30 08:00:00,2026-11-27 16:00:00,-33,On track,32.0
+20260528,IF-05,PEW-TNC-M041,MTP-TNC-2110,District cooling to Mesa Theme Park for HVAC commissioning,MEP,MEP,PEW,MTP,TNC,TNC,2027-01-13 08:00:00,2027-01-12 16:00:00,-1,At risk,6.0
+20260528,IF-06,PEW-TNC-M041,LWP-TNC-2110,District cooling to Lagoon Water Park for HVAC commissioning,MEP,MEP,PEW,LWP,TNC,TNC,2027-02-04 08:00:00,2027-01-12 16:00:00,-23,On track,6.0
+20260528,IF-07,PEW-TNC-M041,DAR-TNC-2110,District cooling to Dune Arena for HVAC commissioning,MEP,MEP,PEW,DAR,TNC,TNC,2027-01-21 08:00:00,2027-01-12 16:00:00,-9,On track,6.0
+20260528,IF-08,PEW-TNC-M041,PBR-TNC-2110,District cooling to Palm Boulevard (Retail & Dining) for HVAC commissioning,MEP,MEP,PEW,PBR,TNC,TNC,2027-01-19 08:00:00,2027-01-12 16:00:00,-7,On track,6.0
+20260528,IF-09,MTP-CON-M142,MTP-TNC-2210,Mesa Theme Park construction complete to IST (construction > T&C),MWC,ICA,MTP,MTP,CON,TNC,2027-03-22 08:00:00,2027-02-09 16:00:00,-41,On track,52.0
+20260528,IF-10,LWP-CON-M142,LWP-TNC-2210,Lagoon Water Park construction complete to IST (construction > T&C),MWC,ICA,LWP,LWP,CON,TNC,2027-04-10 08:00:00,2027-03-30 16:00:00,-11,On track,28.0
+20260528,IF-11,DAR-CON-M142,DAR-TNC-2210,Dune Arena construction complete to IST (construction > T&C),MWC,ICA,DAR,DAR,CON,TNC,2027-03-22 08:00:00,2027-03-25 16:00:00,3,Late,18.0
+20260528,IF-12,PBR-CON-M142,PBR-TNC-2210,Palm Boulevard (Retail & Dining) construction complete to IST (construction > T&C),MWC,ICA,PBR,PBR,CON,TNC,2027-03-20 08:00:00,2027-02-14 16:00:00,-34,On track,24.0
+20260528,IF-13,MTP-TNC-M220,MTP-OPM-M120,Mesa Theme Park T&C complete to operator site access (T&C > operator),ICA,SSY,MTP,MTP,TNC,OPM,2027-04-06 08:00:00,2027-04-05 16:00:00,-1,At risk,26.0
+20260528,IF-14,LWP-TNC-M220,LWP-OPM-M120,Lagoon Water Park T&C complete to operator site access (T&C > operator),ICA,SSY,LWP,LWP,TNC,OPM,2027-04-25 08:00:00,2027-04-24 16:00:00,-1,At risk,28.0
+20260528,IF-15,DAR-TNC-M220,DAR-OPM-M120,Dune Arena T&C complete to operator site access (T&C > operator),ICA,SSY,DAR,DAR,TNC,OPM,2027-04-06 08:00:00,2027-04-15 16:00:00,9,Late,16.0
+20260528,IF-16,PBR-TNC-M220,PBR-OPM-M120,Palm Boulevard (Retail & Dining) T&C complete to operator site access (T&C > operator),ICA,SSY,PBR,PBR,TNC,OPM,2027-04-04 08:00:00,2027-04-03 16:00:00,-1,At risk,0.0
+20260528,IF-17,MTP-TNC-M220,MTP-HOV-3110,Mesa Theme Park T&C complete to authority inspection (T&C > handover),ICA,AAT,MTP,MTP,TNC,HOV,2027-04-06 08:00:00,2027-04-05 16:00:00,-1,At risk,26.0
+20260528,IF-18,LWP-TNC-M220,LWP-HOV-3110,Lagoon Water Park T&C complete to authority inspection (T&C > handover),ICA,AAT,LWP,LWP,TNC,HOV,2027-04-25 08:00:00,2027-04-24 16:00:00,-1,At risk,28.0
+20260528,IF-19,DAR-TNC-M220,DAR-HOV-3110,Dune Arena T&C complete to authority inspection (T&C > handover),ICA,AAT,DAR,DAR,TNC,HOV,2027-04-06 08:00:00,2027-04-15 16:00:00,9,Late,16.0
+20260528,IF-20,PBR-TNC-M220,PBR-HOV-3110,Palm Boulevard (Retail & Dining) T&C complete to authority inspection (T&C > handover),ICA,AAT,PBR,PBR,TNC,HOV,2027-04-04 08:00:00,2027-04-03 16:00:00,-1,At risk,0.0
+20260528,IF-21,MTP-HOV-M130,MTP-OPM-4130,Mesa Theme Park occupancy certificate to operator familiarisation,AAT,OPR,MTP,MTP,HOV,OPM,2027-06-01 08:00:00,2027-05-31 16:00:00,-1,At risk,18.0
+20260528,IF-22,LWP-HOV-M130,LWP-OPM-4130,Lagoon Water Park occupancy certificate to operator familiarisation,AAT,OPR,LWP,LWP,HOV,OPM,2027-06-18 08:00:00,2027-06-17 16:00:00,-1,At risk,15.0
+20260528,IF-23,DAR-HOV-M130,DAR-OPM-4130,Dune Arena occupancy certificate to operator familiarisation,AAT,OPR,DAR,DAR,HOV,OPM,2027-06-01 08:00:00,2027-06-10 16:00:00,9,Late,10.0
+20260528,IF-24,PBR-HOV-M130,PBR-OPM-4130,Palm Boulevard (Retail & Dining) occupancy certificate to operator familiarisation,AAT,OPR,PBR,PBR,HOV,OPM,2027-05-28 08:00:00,2027-05-27 16:00:00,-1,At risk,20.0
+20260528,IF-25,MTP-HOV-M230,MTP-OTE-5010,Mesa Theme Park handover to operator to operational trials,PMO,OPR,MTP,MTP,HOV,OTE,2027-07-29 08:00:00,2027-05-31 16:00:00,-59,On track,69.0
+20260528,IF-26,LWP-HOV-M230,LWP-OTE-5010,Lagoon Water Park handover to operator to operational trials,PMO,OPR,LWP,LWP,HOV,OTE,2027-08-13 08:00:00,2027-06-17 16:00:00,-57,On track,66.0
+20260528,IF-27,DAR-HOV-M230,DAR-OTE-5010,Dune Arena handover to operator to operational trials,PMO,OPR,DAR,DAR,HOV,OTE,2027-07-29 08:00:00,2027-06-10 16:00:00,-49,On track,60.0
+20260528,IF-28,PBR-HOV-M230,PBR-OTE-5010,Palm Boulevard (Retail & Dining) handover to operator to operational trials,PMO,OPR,PBR,PBR,HOV,OTE,2027-07-23 08:00:00,2027-05-27 16:00:00,-57,On track,72.0
+20260528,IF-29,MTP-D1R-M020,PRG-D1R-6010,Mesa Theme Park Day 1 ready to programme go/no-go review,PMO,PMO,MTP,PRG,D1R,D1R,2027-09-15 08:00:00,2027-09-14 16:00:00,-1,At risk,24.0
+20260528,IF-30,LWP-D1R-M020,PRG-D1R-6010,Lagoon Water Park Day 1 ready to programme go/no-go review,PMO,PMO,LWP,PRG,D1R,D1R,2027-09-15 08:00:00,2027-09-14 16:00:00,-1,At risk,24.0
+20260528,IF-31,DAR-D1R-M020,PRG-D1R-6010,Dune Arena Day 1 ready to programme go/no-go review,PMO,PMO,DAR,PRG,D1R,D1R,2027-09-15 08:00:00,2027-09-22 16:00:00,7,Late,16.0
+20260528,IF-32,PBR-D1R-M020,PRG-D1R-6010,Palm Boulevard (Retail & Dining) Day 1 ready to programme go/no-go review,PMO,PMO,PBR,PRG,D1R,D1R,2027-09-15 08:00:00,2027-09-08 16:00:00,-7,On track,30.0
+20260528,IF-33,PEW-TNC-M071,PEW-OTE-5010,Transit ready to transit trial running,ICA,OPR,PEW,PEW,TNC,OTE,2027-07-24 08:00:00,2027-07-23 16:00:00,-1,At risk,33.0
+20260528,IF-34,PEW-OTE-5010,PRG-OTE-5020,Transit trial running to integrated destination test event,OPR,OPR,PEW,PRG,OTE,OTE,2027-09-06 08:00:00,2027-08-22 16:00:00,-15,On track,39.0
+20260625,IF-01,PEW-TNC-M021,MTP-TNC-2010,Permanent power to Mesa Theme Park for pre-commissioning,MEP,MEP,PEW,MTP,TNC,TNC,2026-12-02 08:00:00,2026-11-27 16:00:00,-5,At risk,4.0
+20260625,IF-02,PEW-TNC-M021,LWP-TNC-2010,Permanent power to Lagoon Water Park for pre-commissioning,MEP,MEP,PEW,LWP,TNC,TNC,2027-01-15 08:00:00,2026-11-27 16:00:00,-49,On track,4.0
+20260625,IF-03,PEW-TNC-M031,DAR-TNC-2010,Permanent power to Dune Arena for pre-commissioning,MEP,MEP,PEW,DAR,TNC,TNC,2027-01-01 08:00:00,2026-11-27 16:00:00,-35,On track,32.0
+20260625,IF-04,PEW-TNC-M031,PBR-TNC-2010,Permanent power to Palm Boulevard (Retail & Dining) for pre-commissioning,MEP,MEP,PEW,PBR,TNC,TNC,2026-12-30 08:00:00,2026-11-27 16:00:00,-33,On track,32.0
+20260625,IF-05,PEW-TNC-M041,MTP-TNC-2110,District cooling to Mesa Theme Park for HVAC commissioning,MEP,MEP,PEW,MTP,TNC,TNC,2027-01-13 08:00:00,2027-01-12 16:00:00,-1,At risk,6.0
+20260625,IF-06,PEW-TNC-M041,LWP-TNC-2110,District cooling to Lagoon Water Park for HVAC commissioning,MEP,MEP,PEW,LWP,TNC,TNC,2027-02-04 08:00:00,2027-01-12 16:00:00,-23,On track,6.0
+20260625,IF-07,PEW-TNC-M041,DAR-TNC-2110,District cooling to Dune Arena for HVAC commissioning,MEP,MEP,PEW,DAR,TNC,TNC,2027-01-21 08:00:00,2027-01-12 16:00:00,-9,On track,6.0
+20260625,IF-08,PEW-TNC-M041,PBR-TNC-2110,District cooling to Palm Boulevard (Retail & Dining) for HVAC commissioning,MEP,MEP,PEW,PBR,TNC,TNC,2027-01-19 08:00:00,2027-01-12 16:00:00,-7,On track,6.0
+20260625,IF-09,MTP-CON-M142,MTP-TNC-2210,Mesa Theme Park construction complete to IST (construction > T&C),MWC,ICA,MTP,MTP,CON,TNC,2027-03-22 08:00:00,2027-02-09 16:00:00,-41,On track,52.0
+20260625,IF-10,LWP-CON-M142,LWP-TNC-2210,Lagoon Water Park construction complete to IST (construction > T&C),MWC,ICA,LWP,LWP,CON,TNC,2027-04-10 08:00:00,2027-03-30 16:00:00,-11,On track,28.0
+20260625,IF-11,DAR-CON-M142,DAR-TNC-2210,Dune Arena construction complete to IST (construction > T&C),MWC,ICA,DAR,DAR,CON,TNC,2027-03-22 08:00:00,2027-03-24 16:00:00,2,Late,19.0
+20260625,IF-12,PBR-CON-M142,PBR-TNC-2210,Palm Boulevard (Retail & Dining) construction complete to IST (construction > T&C),MWC,ICA,PBR,PBR,CON,TNC,2027-03-20 08:00:00,2027-02-14 16:00:00,-34,On track,24.0
+20260625,IF-13,MTP-TNC-M220,MTP-OPM-M120,Mesa Theme Park T&C complete to operator site access (T&C > operator),ICA,SSY,MTP,MTP,TNC,OPM,2027-04-06 08:00:00,2027-04-05 16:00:00,-1,At risk,26.0
+20260625,IF-14,LWP-TNC-M220,LWP-OPM-M120,Lagoon Water Park T&C complete to operator site access (T&C > operator),ICA,SSY,LWP,LWP,TNC,OPM,2027-04-25 08:00:00,2027-04-24 16:00:00,-1,At risk,28.0
+20260625,IF-15,DAR-TNC-M220,DAR-OPM-M120,Dune Arena T&C complete to operator site access (T&C > operator),ICA,SSY,DAR,DAR,TNC,OPM,2027-04-06 08:00:00,2027-04-14 16:00:00,8,Late,17.0
+20260625,IF-16,PBR-TNC-M220,PBR-OPM-M120,Palm Boulevard (Retail & Dining) T&C complete to operator site access (T&C > operator),ICA,SSY,PBR,PBR,TNC,OPM,2027-04-04 08:00:00,2027-04-03 16:00:00,-1,At risk,0.0
+20260625,IF-17,MTP-TNC-M220,MTP-HOV-3110,Mesa Theme Park T&C complete to authority inspection (T&C > handover),ICA,AAT,MTP,MTP,TNC,HOV,2027-04-06 08:00:00,2027-04-05 16:00:00,-1,At risk,26.0
+20260625,IF-18,LWP-TNC-M220,LWP-HOV-3110,Lagoon Water Park T&C complete to authority inspection (T&C > handover),ICA,AAT,LWP,LWP,TNC,HOV,2027-04-25 08:00:00,2027-04-24 16:00:00,-1,At risk,28.0
+20260625,IF-19,DAR-TNC-M220,DAR-HOV-3110,Dune Arena T&C complete to authority inspection (T&C > handover),ICA,AAT,DAR,DAR,TNC,HOV,2027-04-06 08:00:00,2027-04-14 16:00:00,8,Late,17.0
+20260625,IF-20,PBR-TNC-M220,PBR-HOV-3110,Palm Boulevard (Retail & Dining) T&C complete to authority inspection (T&C > handover),ICA,AAT,PBR,PBR,TNC,HOV,2027-04-04 08:00:00,2027-04-03 16:00:00,-1,At risk,0.0
+20260625,IF-21,MTP-HOV-M130,MTP-OPM-4130,Mesa Theme Park occupancy certificate to operator familiarisation,AAT,OPR,MTP,MTP,HOV,OPM,2027-06-01 08:00:00,2027-05-31 16:00:00,-1,At risk,18.0
+20260625,IF-22,LWP-HOV-M130,LWP-OPM-4130,Lagoon Water Park occupancy certificate to operator familiarisation,AAT,OPR,LWP,LWP,HOV,OPM,2027-06-18 08:00:00,2027-06-17 16:00:00,-1,At risk,15.0
+20260625,IF-23,DAR-HOV-M130,DAR-OPM-4130,Dune Arena occupancy certificate to operator familiarisation,AAT,OPR,DAR,DAR,HOV,OPM,2027-06-01 08:00:00,2027-06-09 16:00:00,8,Late,11.0
+20260625,IF-24,PBR-HOV-M130,PBR-OPM-4130,Palm Boulevard (Retail & Dining) occupancy certificate to operator familiarisation,AAT,OPR,PBR,PBR,HOV,OPM,2027-05-28 08:00:00,2027-05-27 16:00:00,-1,At risk,20.0
+20260625,IF-25,MTP-HOV-M230,MTP-OTE-5010,Mesa Theme Park handover to operator to operational trials,PMO,OPR,MTP,MTP,HOV,OTE,2027-07-29 08:00:00,2027-05-31 16:00:00,-59,On track,69.0
+20260625,IF-26,LWP-HOV-M230,LWP-OTE-5010,Lagoon Water Park handover to operator to operational trials,PMO,OPR,LWP,LWP,HOV,OTE,2027-08-13 08:00:00,2027-06-17 16:00:00,-57,On track,66.0
+20260625,IF-27,DAR-HOV-M230,DAR-OTE-5010,Dune Arena handover to operator to operational trials,PMO,OPR,DAR,DAR,HOV,OTE,2027-07-29 08:00:00,2027-06-09 16:00:00,-50,On track,61.0
+20260625,IF-28,PBR-HOV-M230,PBR-OTE-5010,Palm Boulevard (Retail & Dining) handover to operator to operational trials,PMO,OPR,PBR,PBR,HOV,OTE,2027-07-23 08:00:00,2027-05-27 16:00:00,-57,On track,72.0
+20260625,IF-29,MTP-D1R-M020,PRG-D1R-6010,Mesa Theme Park Day 1 ready to programme go/no-go review,PMO,PMO,MTP,PRG,D1R,D1R,2027-09-15 08:00:00,2027-09-14 16:00:00,-1,At risk,24.0
+20260625,IF-30,LWP-D1R-M020,PRG-D1R-6010,Lagoon Water Park Day 1 ready to programme go/no-go review,PMO,PMO,LWP,PRG,D1R,D1R,2027-09-15 08:00:00,2027-09-14 16:00:00,-1,At risk,24.0
+20260625,IF-31,DAR-D1R-M020,PRG-D1R-6010,Dune Arena Day 1 ready to programme go/no-go review,PMO,PMO,DAR,PRG,D1R,D1R,2027-09-15 08:00:00,2027-09-22 16:00:00,7,Late,16.0
+20260625,IF-32,PBR-D1R-M020,PRG-D1R-6010,Palm Boulevard (Retail & Dining) Day 1 ready to programme go/no-go review,PMO,PMO,PBR,PRG,D1R,D1R,2027-09-15 08:00:00,2027-09-08 16:00:00,-7,On track,30.0
+20260625,IF-33,PEW-TNC-M071,PEW-OTE-5010,Transit ready to transit trial running,ICA,OPR,PEW,PEW,TNC,OTE,2027-07-24 08:00:00,2027-07-23 16:00:00,-1,At risk,33.0
+20260625,IF-34,PEW-OTE-5010,PRG-OTE-5020,Transit trial running to integrated destination test event,OPR,OPR,PEW,PRG,OTE,OTE,2027-09-06 08:00:00,2027-08-22 16:00:00,-15,On track,39.0
+20260730,IF-01,PEW-TNC-M021,MTP-TNC-2010,Permanent power to Mesa Theme Park for pre-commissioning,MEP,MEP,PEW,MTP,TNC,TNC,2026-12-02 08:00:00,2026-11-27 16:00:00,-5,At risk,30.0
+20260730,IF-02,PEW-TNC-M021,LWP-TNC-2010,Permanent power to Lagoon Water Park for pre-commissioning,MEP,MEP,PEW,LWP,TNC,TNC,2027-01-15 08:00:00,2026-11-27 16:00:00,-49,On track,30.0
+20260730,IF-03,PEW-TNC-M031,DAR-TNC-2010,Permanent power to Dune Arena for pre-commissioning,MEP,MEP,PEW,DAR,TNC,TNC,2027-01-05 08:00:00,2026-11-27 16:00:00,-39,On track,32.0
+20260730,IF-04,PEW-TNC-M031,PBR-TNC-2010,Permanent power to Palm Boulevard (Retail & Dining) for pre-commissioning,MEP,MEP,PEW,PBR,TNC,TNC,2026-12-30 08:00:00,2026-11-27 16:00:00,-33,On track,32.0
+20260730,IF-05,PEW-TNC-M041,MTP-TNC-2110,District cooling to Mesa Theme Park for HVAC commissioning,MEP,MEP,PEW,MTP,TNC,TNC,2027-01-13 08:00:00,2027-01-12 16:00:00,-1,At risk,6.0
+20260730,IF-06,PEW-TNC-M041,LWP-TNC-2110,District cooling to Lagoon Water Park for HVAC commissioning,MEP,MEP,PEW,LWP,TNC,TNC,2027-02-04 08:00:00,2027-01-12 16:00:00,-23,On track,6.0
+20260730,IF-07,PEW-TNC-M041,DAR-TNC-2110,District cooling to Dune Arena for HVAC commissioning,MEP,MEP,PEW,DAR,TNC,TNC,2027-01-25 08:00:00,2027-01-12 16:00:00,-13,On track,6.0
+20260730,IF-08,PEW-TNC-M041,PBR-TNC-2110,District cooling to Palm Boulevard (Retail & Dining) for HVAC commissioning,MEP,MEP,PEW,PBR,TNC,TNC,2027-01-19 08:00:00,2027-01-12 16:00:00,-7,On track,6.0
+20260730,IF-09,MTP-CON-M142,MTP-TNC-2210,Mesa Theme Park construction complete to IST (construction > T&C),MWC,ICA,MTP,MTP,CON,TNC,2027-03-22 08:00:00,2027-02-09 16:00:00,-41,On track,52.0
+20260730,IF-10,LWP-CON-M142,LWP-TNC-2210,Lagoon Water Park construction complete to IST (construction > T&C),MWC,ICA,LWP,LWP,CON,TNC,2027-04-10 08:00:00,2027-03-30 16:00:00,-11,On track,28.0
+20260730,IF-11,DAR-CON-M142,DAR-TNC-2210,Dune Arena construction complete to IST (construction > T&C),MWC,ICA,DAR,DAR,CON,TNC,2027-04-05 08:00:00,2027-03-30 16:00:00,-6,At risk,14.0
+20260730,IF-12,PBR-CON-M142,PBR-TNC-2210,Palm Boulevard (Retail & Dining) construction complete to IST (construction > T&C),MWC,ICA,PBR,PBR,CON,TNC,2027-03-20 08:00:00,2027-03-14 16:00:00,-6,At risk,4.0
+20260730,IF-13,MTP-TNC-M220,MTP-OPM-M120,Mesa Theme Park T&C complete to operator site access (T&C > operator),ICA,SSY,MTP,MTP,TNC,OPM,2027-04-06 08:00:00,2027-04-05 16:00:00,-1,At risk,26.0
+20260730,IF-14,LWP-TNC-M220,LWP-OPM-M120,Lagoon Water Park T&C complete to operator site access (T&C > operator),ICA,SSY,LWP,LWP,TNC,OPM,2027-04-25 08:00:00,2027-04-24 16:00:00,-1,At risk,28.0
+20260730,IF-15,DAR-TNC-M220,DAR-OPM-M120,Dune Arena T&C complete to operator site access (T&C > operator),ICA,SSY,DAR,DAR,TNC,OPM,2027-04-20 08:00:00,2027-04-19 16:00:00,-1,At risk,12.0
+20260730,IF-16,PBR-TNC-M220,PBR-OPM-M120,Palm Boulevard (Retail & Dining) T&C complete to operator site access (T&C > operator),ICA,SSY,PBR,PBR,TNC,OPM,2027-04-04 08:00:00,2027-04-03 16:00:00,-1,At risk,0.0
+20260730,IF-17,MTP-TNC-M220,MTP-HOV-3110,Mesa Theme Park T&C complete to authority inspection (T&C > handover),ICA,AAT,MTP,MTP,TNC,HOV,2027-04-06 08:00:00,2027-04-05 16:00:00,-1,At risk,26.0
+20260730,IF-18,LWP-TNC-M220,LWP-HOV-3110,Lagoon Water Park T&C complete to authority inspection (T&C > handover),ICA,AAT,LWP,LWP,TNC,HOV,2027-04-25 08:00:00,2027-04-24 16:00:00,-1,At risk,28.0
+20260730,IF-19,DAR-TNC-M220,DAR-HOV-3110,Dune Arena T&C complete to authority inspection (T&C > handover),ICA,AAT,DAR,DAR,TNC,HOV,2027-04-20 08:00:00,2027-04-19 16:00:00,-1,At risk,12.0
+20260730,IF-20,PBR-TNC-M220,PBR-HOV-3110,Palm Boulevard (Retail & Dining) T&C complete to authority inspection (T&C > handover),ICA,AAT,PBR,PBR,TNC,HOV,2027-04-04 08:00:00,2027-04-03 16:00:00,-1,At risk,0.0
+20260730,IF-21,MTP-HOV-M130,MTP-OPM-4130,Mesa Theme Park occupancy certificate to operator familiarisation,AAT,OPR,MTP,MTP,HOV,OPM,2027-06-01 08:00:00,2027-05-31 16:00:00,-1,At risk,18.0
+20260730,IF-22,LWP-HOV-M130,LWP-OPM-4130,Lagoon Water Park occupancy certificate to operator familiarisation,AAT,OPR,LWP,LWP,HOV,OPM,2027-06-18 08:00:00,2027-06-17 16:00:00,-1,At risk,15.0
+20260730,IF-23,DAR-HOV-M130,DAR-OPM-4130,Dune Arena occupancy certificate to operator familiarisation,AAT,OPR,DAR,DAR,HOV,OPM,2027-06-15 08:00:00,2027-06-14 16:00:00,-1,At risk,8.0
+20260730,IF-24,PBR-HOV-M130,PBR-OPM-4130,Palm Boulevard (Retail & Dining) occupancy certificate to operator familiarisation,AAT,OPR,PBR,PBR,HOV,OPM,2027-05-28 08:00:00,2027-05-27 16:00:00,-1,At risk,20.0
+20260730,IF-25,MTP-HOV-M230,MTP-OTE-5010,Mesa Theme Park handover to operator to operational trials,PMO,OPR,MTP,MTP,HOV,OTE,2027-07-29 08:00:00,2027-05-31 16:00:00,-59,On track,69.0
+20260730,IF-26,LWP-HOV-M230,LWP-OTE-5010,Lagoon Water Park handover to operator to operational trials,PMO,OPR,LWP,LWP,HOV,OTE,2027-08-13 08:00:00,2027-06-17 16:00:00,-57,On track,66.0
+20260730,IF-27,DAR-HOV-M230,DAR-OTE-5010,Dune Arena handover to operator to operational trials,PMO,OPR,DAR,DAR,HOV,OTE,2027-08-12 08:00:00,2027-06-14 16:00:00,-59,On track,57.0
+20260730,IF-28,PBR-HOV-M230,PBR-OTE-5010,Palm Boulevard (Retail & Dining) handover to operator to operational trials,PMO,OPR,PBR,PBR,HOV,OTE,2027-07-23 08:00:00,2027-05-27 16:00:00,-57,On track,72.0
+20260730,IF-29,MTP-D1R-M020,PRG-D1R-6010,Mesa Theme Park Day 1 ready to programme go/no-go review,PMO,PMO,MTP,PRG,D1R,D1R,2027-09-30 08:00:00,2027-09-14 16:00:00,-16,On track,24.0
+20260730,IF-30,LWP-D1R-M020,PRG-D1R-6010,Lagoon Water Park Day 1 ready to programme go/no-go review,PMO,PMO,LWP,PRG,D1R,D1R,2027-09-30 08:00:00,2027-09-14 16:00:00,-16,On track,24.0
+20260730,IF-31,DAR-D1R-M020,PRG-D1R-6010,Dune Arena Day 1 ready to programme go/no-go review,PMO,PMO,DAR,PRG,D1R,D1R,2027-09-30 08:00:00,2027-09-29 16:00:00,-1,At risk,10.0
+20260730,IF-32,PBR-D1R-M020,PRG-D1R-6010,Palm Boulevard (Retail & Dining) Day 1 ready to programme go/no-go review,PMO,PMO,PBR,PRG,D1R,D1R,2027-09-30 08:00:00,2027-09-08 16:00:00,-22,On track,30.0
+20260730,IF-33,PEW-TNC-M071,PEW-OTE-5010,Transit ready to transit trial running,ICA,OPR,PEW,PEW,TNC,OTE,2027-07-24 08:00:00,2027-07-23 16:00:00,-1,At risk,33.0
+20260730,IF-34,PEW-OTE-5010,PRG-OTE-5020,Transit trial running to integrated destination test event,OPR,OPR,PEW,PRG,OTE,OTE,2027-09-20 08:00:00,2027-08-22 16:00:00,-29,On track,39.0
+20260827,IF-01,PEW-TNC-M021,MTP-TNC-2010,Permanent power to Mesa Theme Park for pre-commissioning,MEP,MEP,PEW,MTP,TNC,TNC,2026-12-02 08:00:00,2026-11-27 16:00:00,-5,At risk,30.0
+20260827,IF-02,PEW-TNC-M021,LWP-TNC-2010,Permanent power to Lagoon Water Park for pre-commissioning,MEP,MEP,PEW,LWP,TNC,TNC,2027-01-15 08:00:00,2026-11-27 16:00:00,-49,On track,30.0
+20260827,IF-03,PEW-TNC-M031,DAR-TNC-2010,Permanent power to Dune Arena for pre-commissioning,MEP,MEP,PEW,DAR,TNC,TNC,2027-01-05 08:00:00,2027-01-11 16:00:00,6,Late,-13.0
+20260827,IF-04,PEW-TNC-M031,PBR-TNC-2010,Permanent power to Palm Boulevard (Retail & Dining) for pre-commissioning,MEP,MEP,PEW,PBR,TNC,TNC,2026-12-30 08:00:00,2027-01-11 16:00:00,12,Late,-13.0
+20260827,IF-05,PEW-TNC-M041,MTP-TNC-2110,District cooling to Mesa Theme Park for HVAC commissioning,MEP,MEP,PEW,MTP,TNC,TNC,2027-01-13 08:00:00,2027-01-12 16:00:00,-1,At risk,6.0
+20260827,IF-06,PEW-TNC-M041,LWP-TNC-2110,District cooling to Lagoon Water Park for HVAC commissioning,MEP,MEP,PEW,LWP,TNC,TNC,2027-02-04 08:00:00,2027-01-12 16:00:00,-23,On track,6.0
+20260827,IF-07,PEW-TNC-M041,DAR-TNC-2110,District cooling to Dune Arena for HVAC commissioning,MEP,MEP,PEW,DAR,TNC,TNC,2027-01-25 08:00:00,2027-01-12 16:00:00,-13,On track,6.0
+20260827,IF-08,PEW-TNC-M041,PBR-TNC-2110,District cooling to Palm Boulevard (Retail & Dining) for HVAC commissioning,MEP,MEP,PEW,PBR,TNC,TNC,2027-01-19 08:00:00,2027-01-12 16:00:00,-7,On track,6.0
+20260827,IF-09,MTP-CON-M142,MTP-TNC-2210,Mesa Theme Park construction complete to IST (construction > T&C),MWC,ICA,MTP,MTP,CON,TNC,2027-03-22 08:00:00,2027-02-09 16:00:00,-41,On track,52.0
+20260827,IF-10,LWP-CON-M142,LWP-TNC-2210,Lagoon Water Park construction complete to IST (construction > T&C),MWC,ICA,LWP,LWP,CON,TNC,2027-04-10 08:00:00,2027-03-30 16:00:00,-11,On track,28.0
+20260827,IF-11,DAR-CON-M142,DAR-TNC-2210,Dune Arena construction complete to IST (construction > T&C),MWC,ICA,DAR,DAR,CON,TNC,2027-04-05 08:00:00,2027-04-04 16:00:00,-1,At risk,10.0
+20260827,IF-12,PBR-CON-M142,PBR-TNC-2210,Palm Boulevard (Retail & Dining) construction complete to IST (construction > T&C),MWC,ICA,PBR,PBR,CON,TNC,2027-03-20 08:00:00,2027-03-14 16:00:00,-6,At risk,4.0
+20260827,IF-13,MTP-TNC-M220,MTP-OPM-M120,Mesa Theme Park T&C complete to operator site access (T&C > operator),ICA,SSY,MTP,MTP,TNC,OPM,2027-04-06 08:00:00,2027-04-05 16:00:00,-1,At risk,26.0
+20260827,IF-14,LWP-TNC-M220,LWP-OPM-M120,Lagoon Water Park T&C complete to operator site access (T&C > operator),ICA,SSY,LWP,LWP,TNC,OPM,2027-04-25 08:00:00,2027-04-24 16:00:00,-1,At risk,28.0
+20260827,IF-15,DAR-TNC-M220,DAR-OPM-M120,Dune Arena T&C complete to operator site access (T&C > operator),ICA,SSY,DAR,DAR,TNC,OPM,2027-04-20 08:00:00,2027-04-19 16:00:00,-1,At risk,12.0
+20260827,IF-16,PBR-TNC-M220,PBR-OPM-M120,Palm Boulevard (Retail & Dining) T&C complete to operator site access (T&C > operator),ICA,SSY,PBR,PBR,TNC,OPM,2027-04-04 08:00:00,2027-04-16 16:00:00,12,Late,-13.0
+20260827,IF-17,MTP-TNC-M220,MTP-HOV-3110,Mesa Theme Park T&C complete to authority inspection (T&C > handover),ICA,AAT,MTP,MTP,TNC,HOV,2027-04-06 08:00:00,2027-04-05 16:00:00,-1,At risk,26.0
+20260827,IF-18,LWP-TNC-M220,LWP-HOV-3110,Lagoon Water Park T&C complete to authority inspection (T&C > handover),ICA,AAT,LWP,LWP,TNC,HOV,2027-04-25 08:00:00,2027-04-24 16:00:00,-1,At risk,28.0
+20260827,IF-19,DAR-TNC-M220,DAR-HOV-3110,Dune Arena T&C complete to authority inspection (T&C > handover),ICA,AAT,DAR,DAR,TNC,HOV,2027-04-20 08:00:00,2027-04-19 16:00:00,-1,At risk,12.0
+20260827,IF-20,PBR-TNC-M220,PBR-HOV-3110,Palm Boulevard (Retail & Dining) T&C complete to authority inspection (T&C > handover),ICA,AAT,PBR,PBR,TNC,HOV,2027-04-04 08:00:00,2027-04-16 16:00:00,12,Late,-13.0
+20260827,IF-21,MTP-HOV-M130,MTP-OPM-4130,Mesa Theme Park occupancy certificate to operator familiarisation,AAT,OPR,MTP,MTP,HOV,OPM,2027-06-01 08:00:00,2027-05-31 16:00:00,-1,At risk,18.0
+20260827,IF-22,LWP-HOV-M130,LWP-OPM-4130,Lagoon Water Park occupancy certificate to operator familiarisation,AAT,OPR,LWP,LWP,HOV,OPM,2027-06-18 08:00:00,2027-06-17 16:00:00,-1,At risk,15.0
+20260827,IF-23,DAR-HOV-M130,DAR-OPM-4130,Dune Arena occupancy certificate to operator familiarisation,AAT,OPR,DAR,DAR,HOV,OPM,2027-06-15 08:00:00,2027-06-14 16:00:00,-1,At risk,8.0
+20260827,IF-24,PBR-HOV-M130,PBR-OPM-4130,Palm Boulevard (Retail & Dining) occupancy certificate to operator familiarisation,AAT,OPR,PBR,PBR,HOV,OPM,2027-05-28 08:00:00,2027-05-27 16:00:00,-1,At risk,20.0
+20260827,IF-25,MTP-HOV-M230,MTP-OTE-5010,Mesa Theme Park handover to operator to operational trials,PMO,OPR,MTP,MTP,HOV,OTE,2027-07-29 08:00:00,2027-05-31 16:00:00,-59,On track,69.0
+20260827,IF-26,LWP-HOV-M230,LWP-OTE-5010,Lagoon Water Park handover to operator to operational trials,PMO,OPR,LWP,LWP,HOV,OTE,2027-08-13 08:00:00,2027-06-17 16:00:00,-57,On track,66.0
+20260827,IF-27,DAR-HOV-M230,DAR-OTE-5010,Dune Arena handover to operator to operational trials,PMO,OPR,DAR,DAR,HOV,OTE,2027-08-12 08:00:00,2027-06-14 16:00:00,-59,On track,57.0
+20260827,IF-28,PBR-HOV-M230,PBR-OTE-5010,Palm Boulevard (Retail & Dining) handover to operator to operational trials,PMO,OPR,PBR,PBR,HOV,OTE,2027-07-23 08:00:00,2027-05-27 16:00:00,-57,On track,72.0
+20260827,IF-29,MTP-D1R-M020,PRG-D1R-6010,Mesa Theme Park Day 1 ready to programme go/no-go review,PMO,PMO,MTP,PRG,D1R,D1R,2027-09-30 08:00:00,2027-09-14 16:00:00,-16,On track,24.0
+20260827,IF-30,LWP-D1R-M020,PRG-D1R-6010,Lagoon Water Park Day 1 ready to programme go/no-go review,PMO,PMO,LWP,PRG,D1R,D1R,2027-09-30 08:00:00,2027-09-14 16:00:00,-16,On track,24.0
+20260827,IF-31,DAR-D1R-M020,PRG-D1R-6010,Dune Arena Day 1 ready to programme go/no-go review,PMO,PMO,DAR,PRG,D1R,D1R,2027-09-30 08:00:00,2027-10-04 16:00:00,4,Late,5.0
+20260827,IF-32,PBR-D1R-M020,PRG-D1R-6010,Palm Boulevard (Retail & Dining) Day 1 ready to programme go/no-go review,PMO,PMO,PBR,PRG,D1R,D1R,2027-09-30 08:00:00,2027-09-08 16:00:00,-22,On track,30.0
+20260827,IF-33,PEW-TNC-M071,PEW-OTE-5010,Transit ready to transit trial running,ICA,OPR,PEW,PEW,TNC,OTE,2027-07-24 08:00:00,2027-07-23 16:00:00,-1,At risk,33.0
+20260827,IF-34,PEW-OTE-5010,PRG-OTE-5020,Transit trial running to integrated destination test event,OPR,OPR,PEW,PRG,OTE,OTE,2027-09-20 08:00:00,2027-08-22 16:00:00,-29,On track,39.0
+20260924,IF-01,PEW-TNC-M021,MTP-TNC-2010,Permanent power to Mesa Theme Park for pre-commissioning,MEP,MEP,PEW,MTP,TNC,TNC,2026-12-02 08:00:00,2026-11-27 16:00:00,-5,At risk,30.0
+20260924,IF-02,PEW-TNC-M021,LWP-TNC-2010,Permanent power to Lagoon Water Park for pre-commissioning,MEP,MEP,PEW,LWP,TNC,TNC,2027-01-15 08:00:00,2026-11-27 16:00:00,-49,On track,30.0
+20260924,IF-03,PEW-TNC-M031,DAR-TNC-2010,Permanent power to Dune Arena for pre-commissioning,MEP,MEP,PEW,DAR,TNC,TNC,2027-01-05 08:00:00,2027-01-11 16:00:00,6,Late,-13.0
+20260924,IF-04,PEW-TNC-M031,PBR-TNC-2010,Permanent power to Palm Boulevard (Retail & Dining) for pre-commissioning,MEP,MEP,PEW,PBR,TNC,TNC,2026-12-30 08:00:00,2027-01-11 16:00:00,12,Late,-13.0
+20260924,IF-05,PEW-TNC-M041,MTP-TNC-2110,District cooling to Mesa Theme Park for HVAC commissioning,MEP,MEP,PEW,MTP,TNC,TNC,2027-01-13 08:00:00,2027-01-12 16:00:00,-1,At risk,6.0
+20260924,IF-06,PEW-TNC-M041,LWP-TNC-2110,District cooling to Lagoon Water Park for HVAC commissioning,MEP,MEP,PEW,LWP,TNC,TNC,2027-02-04 08:00:00,2027-01-12 16:00:00,-23,On track,6.0
+20260924,IF-07,PEW-TNC-M041,DAR-TNC-2110,District cooling to Dune Arena for HVAC commissioning,MEP,MEP,PEW,DAR,TNC,TNC,2027-01-25 08:00:00,2027-01-12 16:00:00,-13,On track,6.0
+20260924,IF-08,PEW-TNC-M041,PBR-TNC-2110,District cooling to Palm Boulevard (Retail & Dining) for HVAC commissioning,MEP,MEP,PEW,PBR,TNC,TNC,2027-01-19 08:00:00,2027-01-12 16:00:00,-7,On track,6.0
+20260924,IF-09,MTP-CON-M142,MTP-TNC-2210,Mesa Theme Park construction complete to IST (construction > T&C),MWC,ICA,MTP,MTP,CON,TNC,2027-03-22 08:00:00,2027-02-09 16:00:00,-41,On track,52.0
+20260924,IF-10,LWP-CON-M142,LWP-TNC-2210,Lagoon Water Park construction complete to IST (construction > T&C),MWC,ICA,LWP,LWP,CON,TNC,2027-04-10 08:00:00,2027-03-30 16:00:00,-11,On track,28.0
+20260924,IF-11,DAR-CON-M142,DAR-TNC-2210,Dune Arena construction complete to IST (construction > T&C),MWC,ICA,DAR,DAR,CON,TNC,2027-04-05 08:00:00,2027-04-26 16:00:00,21,Late,-9.0
+20260924,IF-12,PBR-CON-M142,PBR-TNC-2210,Palm Boulevard (Retail & Dining) construction complete to IST (construction > T&C),MWC,ICA,PBR,PBR,CON,TNC,2027-03-20 08:00:00,2027-03-14 16:00:00,-6,At risk,4.0
+20260924,IF-13,MTP-TNC-M220,MTP-OPM-M120,Mesa Theme Park T&C complete to operator site access (T&C > operator),ICA,SSY,MTP,MTP,TNC,OPM,2027-04-06 08:00:00,2027-04-05 16:00:00,-1,At risk,26.0
+20260924,IF-14,LWP-TNC-M220,LWP-OPM-M120,Lagoon Water Park T&C complete to operator site access (T&C > operator),ICA,SSY,LWP,LWP,TNC,OPM,2027-04-25 08:00:00,2027-04-24 16:00:00,-1,At risk,28.0
+20260924,IF-15,DAR-TNC-M220,DAR-OPM-M120,Dune Arena T&C complete to operator site access (T&C > operator),ICA,SSY,DAR,DAR,TNC,OPM,2027-04-20 08:00:00,2027-05-11 16:00:00,21,Late,-10.0
+20260924,IF-16,PBR-TNC-M220,PBR-OPM-M120,Palm Boulevard (Retail & Dining) T&C complete to operator site access (T&C > operator),ICA,SSY,PBR,PBR,TNC,OPM,2027-04-04 08:00:00,2027-04-16 16:00:00,12,Late,-13.0
+20260924,IF-17,MTP-TNC-M220,MTP-HOV-3110,Mesa Theme Park T&C complete to authority inspection (T&C > handover),ICA,AAT,MTP,MTP,TNC,HOV,2027-04-06 08:00:00,2027-04-05 16:00:00,-1,At risk,26.0
+20260924,IF-18,LWP-TNC-M220,LWP-HOV-3110,Lagoon Water Park T&C complete to authority inspection (T&C > handover),ICA,AAT,LWP,LWP,TNC,HOV,2027-04-25 08:00:00,2027-04-24 16:00:00,-1,At risk,28.0
+20260924,IF-19,DAR-TNC-M220,DAR-HOV-3110,Dune Arena T&C complete to authority inspection (T&C > handover),ICA,AAT,DAR,DAR,TNC,HOV,2027-04-20 08:00:00,2027-05-11 16:00:00,21,Late,-10.0
+20260924,IF-20,PBR-TNC-M220,PBR-HOV-3110,Palm Boulevard (Retail & Dining) T&C complete to authority inspection (T&C > handover),ICA,AAT,PBR,PBR,TNC,HOV,2027-04-04 08:00:00,2027-04-16 16:00:00,12,Late,-13.0
+20260924,IF-21,MTP-HOV-M130,MTP-OPM-4130,Mesa Theme Park occupancy certificate to operator familiarisation,AAT,OPR,MTP,MTP,HOV,OPM,2027-06-01 08:00:00,2027-05-31 16:00:00,-1,At risk,18.0
+20260924,IF-22,LWP-HOV-M130,LWP-OPM-4130,Lagoon Water Park occupancy certificate to operator familiarisation,AAT,OPR,LWP,LWP,HOV,OPM,2027-06-18 08:00:00,2027-06-17 16:00:00,-1,At risk,15.0
+20260924,IF-23,DAR-HOV-M130,DAR-OPM-4130,Dune Arena occupancy certificate to operator familiarisation,AAT,OPR,DAR,DAR,HOV,OPM,2027-06-15 08:00:00,2027-07-06 16:00:00,21,Late,-8.0
+20260924,IF-24,PBR-HOV-M130,PBR-OPM-4130,Palm Boulevard (Retail & Dining) occupancy certificate to operator familiarisation,AAT,OPR,PBR,PBR,HOV,OPM,2027-05-28 08:00:00,2027-05-27 16:00:00,-1,At risk,20.0
+20260924,IF-25,MTP-HOV-M230,MTP-OTE-5010,Mesa Theme Park handover to operator to operational trials,PMO,OPR,MTP,MTP,HOV,OTE,2027-07-29 08:00:00,2027-05-31 16:00:00,-59,On track,69.0
+20260924,IF-26,LWP-HOV-M230,LWP-OTE-5010,Lagoon Water Park handover to operator to operational trials,PMO,OPR,LWP,LWP,HOV,OTE,2027-08-13 08:00:00,2027-06-17 16:00:00,-57,On track,66.0
+20260924,IF-27,DAR-HOV-M230,DAR-OTE-5010,Dune Arena handover to operator to operational trials,PMO,OPR,DAR,DAR,HOV,OTE,2027-08-12 08:00:00,2027-07-06 16:00:00,-37,On track,38.0
+20260924,IF-28,PBR-HOV-M230,PBR-OTE-5010,Palm Boulevard (Retail & Dining) handover to operator to operational trials,PMO,OPR,PBR,PBR,HOV,OTE,2027-07-23 08:00:00,2027-05-27 16:00:00,-57,On track,72.0
+20260924,IF-29,MTP-D1R-M020,PRG-D1R-6010,Mesa Theme Park Day 1 ready to programme go/no-go review,PMO,PMO,MTP,PRG,D1R,D1R,2027-09-30 08:00:00,2027-09-14 16:00:00,-16,On track,24.0
+20260924,IF-30,LWP-D1R-M020,PRG-D1R-6010,Lagoon Water Park Day 1 ready to programme go/no-go review,PMO,PMO,LWP,PRG,D1R,D1R,2027-09-30 08:00:00,2027-09-14 16:00:00,-16,On track,24.0
+20260924,IF-31,DAR-D1R-M020,PRG-D1R-6010,Dune Arena Day 1 ready to programme go/no-go review,PMO,PMO,DAR,PRG,D1R,D1R,2027-09-30 08:00:00,2027-10-21 16:00:00,21,Late,-12.0
+20260924,IF-32,PBR-D1R-M020,PRG-D1R-6010,Palm Boulevard (Retail & Dining) Day 1 ready to programme go/no-go review,PMO,PMO,PBR,PRG,D1R,D1R,2027-09-30 08:00:00,2027-09-08 16:00:00,-22,On track,30.0
+20260924,IF-33,PEW-TNC-M071,PEW-OTE-5010,Transit ready to transit trial running,ICA,OPR,PEW,PEW,TNC,OTE,2027-07-24 08:00:00,2027-07-23 16:00:00,-1,At risk,33.0
+20260924,IF-34,PEW-OTE-5010,PRG-OTE-5020,Transit trial running to integrated destination test event,OPR,OPR,PEW,PRG,OTE,OTE,2027-09-20 08:00:00,2027-08-22 16:00:00,-29,On track,39.0
+20261029,IF-01,PEW-TNC-M021,MTP-TNC-2010,Permanent power to Mesa Theme Park for pre-commissioning,MEP,MEP,PEW,MTP,TNC,TNC,2026-12-02 08:00:00,2026-11-27 16:00:00,-5,At risk,30.0
+20261029,IF-02,PEW-TNC-M021,LWP-TNC-2010,Permanent power to Lagoon Water Park for pre-commissioning,MEP,MEP,PEW,LWP,TNC,TNC,2027-01-15 08:00:00,2026-11-27 16:00:00,-49,On track,30.0
+20261029,IF-03,PEW-TNC-M031,DAR-TNC-2010,Permanent power to Dune Arena for pre-commissioning,MEP,MEP,PEW,DAR,TNC,TNC,2027-01-05 08:00:00,2027-01-11 16:00:00,6,Late,-13.0
+20261029,IF-04,PEW-TNC-M031,PBR-TNC-2010,Permanent power to Palm Boulevard (Retail & Dining) for pre-commissioning,MEP,MEP,PEW,PBR,TNC,TNC,2026-12-30 08:00:00,2027-01-11 16:00:00,12,Late,-13.0
+20261029,IF-05,PEW-TNC-M041,MTP-TNC-2110,District cooling to Mesa Theme Park for HVAC commissioning,MEP,MEP,PEW,MTP,TNC,TNC,2027-01-13 08:00:00,2027-01-12 16:00:00,-1,At risk,6.0
+20261029,IF-06,PEW-TNC-M041,LWP-TNC-2110,District cooling to Lagoon Water Park for HVAC commissioning,MEP,MEP,PEW,LWP,TNC,TNC,2027-02-04 08:00:00,2027-01-12 16:00:00,-23,On track,6.0
+20261029,IF-07,PEW-TNC-M041,DAR-TNC-2110,District cooling to Dune Arena for HVAC commissioning,MEP,MEP,PEW,DAR,TNC,TNC,2027-01-25 08:00:00,2027-01-12 16:00:00,-13,On track,6.0
+20261029,IF-08,PEW-TNC-M041,PBR-TNC-2110,District cooling to Palm Boulevard (Retail & Dining) for HVAC commissioning,MEP,MEP,PEW,PBR,TNC,TNC,2027-01-19 08:00:00,2027-01-12 16:00:00,-7,On track,6.0
+20261029,IF-09,MTP-CON-M142,MTP-TNC-2210,Mesa Theme Park construction complete to IST (construction > T&C),MWC,ICA,MTP,MTP,CON,TNC,2027-03-22 08:00:00,2027-02-09 16:00:00,-41,On track,52.0
+20261029,IF-10,LWP-CON-M142,LWP-TNC-2210,Lagoon Water Park construction complete to IST (construction > T&C),MWC,ICA,LWP,LWP,CON,TNC,2027-04-10 08:00:00,2027-03-30 16:00:00,-11,On track,28.0
+20261029,IF-11,DAR-CON-M142,DAR-TNC-2210,Dune Arena construction complete to IST (construction > T&C),MWC,ICA,DAR,DAR,CON,TNC,2027-04-05 08:00:00,2027-04-20 16:00:00,15,Late,-4.0
+20261029,IF-12,PBR-CON-M142,PBR-TNC-2210,Palm Boulevard (Retail & Dining) construction complete to IST (construction > T&C),MWC,ICA,PBR,PBR,CON,TNC,2027-03-20 08:00:00,2027-03-14 16:00:00,-6,At risk,4.0
+20261029,IF-13,MTP-TNC-M220,MTP-OPM-M120,Mesa Theme Park T&C complete to operator site access (T&C > operator),ICA,SSY,MTP,MTP,TNC,OPM,2027-04-06 08:00:00,2027-04-05 16:00:00,-1,At risk,26.0
+20261029,IF-14,LWP-TNC-M220,LWP-OPM-M120,Lagoon Water Park T&C complete to operator site access (T&C > operator),ICA,SSY,LWP,LWP,TNC,OPM,2027-04-25 08:00:00,2027-04-24 16:00:00,-1,At risk,28.0
+20261029,IF-15,DAR-TNC-M220,DAR-OPM-M120,Dune Arena T&C complete to operator site access (T&C > operator),ICA,SSY,DAR,DAR,TNC,OPM,2027-04-20 08:00:00,2027-05-05 16:00:00,15,Late,-4.0
+20261029,IF-16,PBR-TNC-M220,PBR-OPM-M120,Palm Boulevard (Retail & Dining) T&C complete to operator site access (T&C > operator),ICA,SSY,PBR,PBR,TNC,OPM,2027-04-04 08:00:00,2027-04-16 16:00:00,12,Late,-13.0
+20261029,IF-17,MTP-TNC-M220,MTP-HOV-3110,Mesa Theme Park T&C complete to authority inspection (T&C > handover),ICA,AAT,MTP,MTP,TNC,HOV,2027-04-06 08:00:00,2027-04-05 16:00:00,-1,At risk,26.0
+20261029,IF-18,LWP-TNC-M220,LWP-HOV-3110,Lagoon Water Park T&C complete to authority inspection (T&C > handover),ICA,AAT,LWP,LWP,TNC,HOV,2027-04-25 08:00:00,2027-04-24 16:00:00,-1,At risk,28.0
+20261029,IF-19,DAR-TNC-M220,DAR-HOV-3110,Dune Arena T&C complete to authority inspection (T&C > handover),ICA,AAT,DAR,DAR,TNC,HOV,2027-04-20 08:00:00,2027-05-05 16:00:00,15,Late,-4.0
+20261029,IF-20,PBR-TNC-M220,PBR-HOV-3110,Palm Boulevard (Retail & Dining) T&C complete to authority inspection (T&C > handover),ICA,AAT,PBR,PBR,TNC,HOV,2027-04-04 08:00:00,2027-04-16 16:00:00,12,Late,-13.0
+20261029,IF-21,MTP-HOV-M130,MTP-OPM-4130,Mesa Theme Park occupancy certificate to operator familiarisation,AAT,OPR,MTP,MTP,HOV,OPM,2027-06-01 08:00:00,2027-05-31 16:00:00,-1,At risk,18.0
+20261029,IF-22,LWP-HOV-M130,LWP-OPM-4130,Lagoon Water Park occupancy certificate to operator familiarisation,AAT,OPR,LWP,LWP,HOV,OPM,2027-06-18 08:00:00,2027-06-17 16:00:00,-1,At risk,15.0
+20261029,IF-23,DAR-HOV-M130,DAR-OPM-4130,Dune Arena occupancy certificate to operator familiarisation,AAT,OPR,DAR,DAR,HOV,OPM,2027-06-15 08:00:00,2027-06-30 16:00:00,15,Late,-4.0
+20261029,IF-24,PBR-HOV-M130,PBR-OPM-4130,Palm Boulevard (Retail & Dining) occupancy certificate to operator familiarisation,AAT,OPR,PBR,PBR,HOV,OPM,2027-05-28 08:00:00,2027-05-27 16:00:00,-1,At risk,20.0
+20261029,IF-25,MTP-HOV-M230,MTP-OTE-5010,Mesa Theme Park handover to operator to operational trials,PMO,OPR,MTP,MTP,HOV,OTE,2027-07-29 08:00:00,2027-05-31 16:00:00,-59,On track,69.0
+20261029,IF-26,LWP-HOV-M230,LWP-OTE-5010,Lagoon Water Park handover to operator to operational trials,PMO,OPR,LWP,LWP,HOV,OTE,2027-08-13 08:00:00,2027-06-17 16:00:00,-57,On track,66.0
+20261029,IF-27,DAR-HOV-M230,DAR-OTE-5010,Dune Arena handover to operator to operational trials,PMO,OPR,DAR,DAR,HOV,OTE,2027-08-12 08:00:00,2027-06-30 16:00:00,-43,On track,43.0
+20261029,IF-28,PBR-HOV-M230,PBR-OTE-5010,Palm Boulevard (Retail & Dining) handover to operator to operational trials,PMO,OPR,PBR,PBR,HOV,OTE,2027-07-23 08:00:00,2027-05-27 16:00:00,-57,On track,72.0
+20261029,IF-29,MTP-D1R-M020,PRG-D1R-6010,Mesa Theme Park Day 1 ready to programme go/no-go review,PMO,PMO,MTP,PRG,D1R,D1R,2027-09-30 08:00:00,2027-09-14 16:00:00,-16,On track,24.0
+20261029,IF-30,LWP-D1R-M020,PRG-D1R-6010,Lagoon Water Park Day 1 ready to programme go/no-go review,PMO,PMO,LWP,PRG,D1R,D1R,2027-09-30 08:00:00,2027-09-14 16:00:00,-16,On track,24.0
+20261029,IF-31,DAR-D1R-M020,PRG-D1R-6010,Dune Arena Day 1 ready to programme go/no-go review,PMO,PMO,DAR,PRG,D1R,D1R,2027-09-30 08:00:00,2027-10-14 16:00:00,14,Late,-5.0
+20261029,IF-32,PBR-D1R-M020,PRG-D1R-6010,Palm Boulevard (Retail & Dining) Day 1 ready to programme go/no-go review,PMO,PMO,PBR,PRG,D1R,D1R,2027-09-30 08:00:00,2027-09-08 16:00:00,-22,On track,30.0
+20261029,IF-33,PEW-TNC-M071,PEW-OTE-5010,Transit ready to transit trial running,ICA,OPR,PEW,PEW,TNC,OTE,2027-07-24 08:00:00,2027-07-23 16:00:00,-1,At risk,33.0
+20261029,IF-34,PEW-OTE-5010,PRG-OTE-5020,Transit trial running to integrated destination test event,OPR,OPR,PEW,PRG,OTE,OTE,2027-09-20 08:00:00,2027-08-22 16:00:00,-29,On track,39.0

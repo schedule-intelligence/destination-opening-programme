@@ -1,0 +1,120 @@
+"""Data dictionary: one definition per measure, used verbatim in the dashboard tooltips, the PowerPoint
+footnotes, the DAX in POWERBI.md and DATA_DICTIONARY.md."""
+from __future__ import annotations
+
+import pathlib
+
+# measure, definition, formula, source fields, grain, owner, unit
+MEASURES = [
+    ("Data date", "Status date of the schedule update; no remaining work is scheduled before it.",
+     "PROJECT.last_recalc_date", "PROJECT.last_recalc_date", "snapshot", "Programme Controls Manager", "date"),
+    ("Baseline in force", "Approved baseline used for variance in this update (BL0 until 30-Jul-2026, then BL1).",
+     "PROJECT.sum_base_proj_id -> baseline XER", "PROJECT.sum_base_proj_id", "snapshot", "Programme Controls Manager", "text"),
+    ("Day 1 forecast", "Early finish of the Day 1 Opening milestone (PRG-D1R-M999).", "TASK.early_end_date (Day 1)",
+     "TASK.early_end_date", "snapshot", "Programme Director", "date"),
+    ("Day 1 total float", "Working days between the Day 1 forecast and the 14-Oct-2027 Finish-On-or-Before target; negative = late.",
+     "TASK.total_float_hr_cnt / 8 (Day 1)", "TASK.total_float_hr_cnt", "snapshot", "Programme Director", "working days"),
+    ("Total float", "Late finish minus early finish in the activity calendar (P6 TF = LF - EF).",
+     "total_float_hr_cnt / day_hr_cnt", "TASK.total_float_hr_cnt; CALENDAR.day_hr_cnt", "activity x snapshot",
+     "Schedule owner", "working days"),
+    ("Free float", "Delay an activity can absorb without delaying any successor's early dates.",
+     "free_float_hr_cnt / day_hr_cnt", "TASK.free_float_hr_cnt", "activity x snapshot", "Schedule owner", "working days"),
+    ("Critical", "Incomplete activity with total float <= 0.", "total_float_d <= 0", "TASK.total_float_hr_cnt",
+     "activity x snapshot", "Planner", "flag"),
+    ("Near-critical", "Incomplete activity with 0 < total float <= threshold (default 10 working days, a parameter).",
+     "0 < total_float_d <= NearCriticalDays", "TASK.total_float_hr_cnt", "activity x snapshot", "Planner", "flag"),
+    ("Longest path", "Activity on the driving-relationship chain into Day 1 (P6 longest path); distinct from Critical.",
+     "driving_path_flag = 'Y'", "TASK.driving_path_flag", "activity x snapshot", "Planner", "flag"),
+    ("Finish variance vs BL0", "Forecast/actual finish minus BL0 finish; positive = later than baseline.",
+     "finish - bl0_finish", "TASK.early_end_date / act_end_date; BL0 TASK dates", "activity x snapshot",
+     "Schedule owner", "calendar days"),
+    ("Finish variance vs BL1", "Forecast/actual finish minus BL1 finish (BL1 approved 23-Jul-2026, CR-003).",
+     "finish - bl1_finish", "TASK dates; BL1 TASK dates", "activity x snapshot", "Schedule owner", "calendar days"),
+    ("Slip vs previous period", "Change in forecast finish since the previous data date; positive = slipped.",
+     "finish - prev_finish", "TASK dates of two consecutive updates", "activity x snapshot", "Schedule owner", "calendar days"),
+    ("Float erosion", "Change in Day 1 total float since the previous period; negative = float lost.",
+     "day1_tf_d - previous day1_tf_d", "TASK.total_float_hr_cnt (Day 1)", "snapshot", "Programme Controls Manager", "working days"),
+    ("Duration % complete", "Share of original duration consumed.", "(target_drtn - remain_drtn) / target_drtn",
+     "TASK.target_drtn_hr_cnt; TASK.remain_drtn_hr_cnt", "activity x snapshot", "Schedule owner", "%"),
+    ("Physical % complete", "Owner-reported physical progress.", "phys_complete_pct", "TASK.phys_complete_pct",
+     "activity x snapshot", "Schedule owner", "%"),
+    ("Weighted % complete (actual)", "Duration-weighted % complete of normal tasks (LOE and milestones excluded).",
+     "sum(dur x pct) / sum(dur)", "TASK.target_drtn_hr_cnt; remain_drtn_hr_cnt; status_code", "snapshot",
+     "Programme Controls Manager", "%"),
+    ("Planned % complete", "Baseline-weighted share of duration that should be complete at the data date (linear in working time).",
+     "sum(dur x elapsed_share_bl) / sum(dur)", "Baseline TASK dates", "snapshot", "Programme Controls Manager", "%"),
+    ("Look-back item", "Activity the previous update forecast to start or finish in the 14 days before the data date.",
+     "prev forecast in [DD-14, DD)", "Previous update TASK dates", "activity x snapshot", "Schedule owner", "flag"),
+    ("Look-ahead item", "Activity forecast to start or finish in the 14 days from the data date.",
+     "forecast in [DD, DD+14)", "TASK.early_start_date / early_end_date", "activity x snapshot", "Schedule owner", "flag"),
+    ("Interface gap", "Giver forecast finish minus receiver need-by date (receiver's baseline start); positive = late.",
+     "giver_forecast - need_by", "Giver/receiver TASK dates; baseline", "interface x snapshot", "Giver owner", "calendar days"),
+    ("Readiness gap", "Forecast minus latest date that still protects Day 1 (late finish), per readiness stage.",
+     "forecast - late_finish", "TASK.early_end_date; TASK.late_end_date", "asset x stage x snapshot", "Asset lead", "calendar days"),
+    ("DQ score", "Weighted schedule-quality score 0-100 over DCMA and update-discipline checks; Good >= 85, Fair 70-85, Poor < 70.",
+     "100 x sum(check score) / sum(weights)", "All checks", "snapshot", "Programme Controls Manager", "points"),
+    ("DCMA pass count", "Number of applicable DCMA checks passing their threshold.", "count(passed) over D01-D14",
+     "fact_dcma_check", "snapshot", "Programme Controls Manager", "count"),
+    ("CPLI", "Critical Path Length Index: (critical path length + Day 1 TF) / critical path length; target >= 0.95.",
+     "(CPL + TF) / CPL", "Day 1 dates; data date", "snapshot", "Programme Controls Manager", "ratio"),
+    ("BEI", "Baseline Execution Index: tasks completed / tasks due by the data date in the baseline in force; target >= 0.95.",
+     "completed / due", "TASK.status_code; baseline finish", "snapshot", "Programme Controls Manager", "ratio"),
+    ("Owner DQ", "Share of an owner's activities with no activity-level quality flag.", "1 - flagged / activities",
+     "fact_dcma_offender; owner code", "owner x snapshot", "Owner", "%"),
+    ("Reconciliation status", "All controls (source XER = model = dashboard) pass for the data date.", "all(pass)",
+     "fact_reconciliation", "snapshot", "Programme Controls Manager", "flag"),
+    ("Risk score", "Probability (1-5) x impact (1-5); High >= 15, Medium 8-14, Low < 8.", "probability x impact",
+     "risk register", "risk x snapshot", "Risk owner", "points"),
+    ("Scenario Day 1 impact", "Working days Day 1 moves earlier under a recovery scenario rescheduled by the CPM engine.",
+     "pos(base EF) - pos(scenario EF)", "Latest XER + scenario deltas", "scenario", "Programme Controls Manager", "working days"),
+    ("Float gain", "Change in Day 1 total float under a scenario.", "scenario TF - base TF", "Latest XER + deltas",
+     "scenario", "Programme Controls Manager", "working days"),
+]
+
+COLUMNS = ["measure", "definition", "formula", "source_fields", "grain", "owner", "unit"]
+
+
+def as_records() -> list[dict]:
+    return [dict(zip(COLUMNS, m)) for m in MEASURES]
+
+
+def write_markdown(path: pathlib.Path):
+    lines = ["# Data dictionary", "",
+             "Every measure used in the dashboard, the PowerPoint packs and the Power BI model, with one definition.",
+             "Generated by `python -m dop pipeline` from `dop/pipeline/dictionary.py`; the same records are embedded",
+             "in `docs/data/dashboard.json` (`definitions`). Units: working days use the activity calendar",
+             "(8 h/day); variances use calendar days; positive variance = later than the reference.", "",
+             "| Measure | Definition | Formula | Source fields | Grain | Owner | Unit |", "|---|---|---|---|---|---|---|"]
+    for m in MEASURES:
+        lines.append("| " + " | ".join(x.replace("|", "\\|") for x in m) + " |")
+    lines += ["", "## Tables (star schema, `output/csv/`)", "",
+              "| Table | Grain | Keys |", "|---|---|---|"]
+    for t, g, k in TABLES:
+        lines.append(f"| `{t}` | {g} | {k} |")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
+
+
+TABLES = [
+    ("dim_snapshot", "one row per data date", "snapshot_id"),
+    ("dim_activity", "one row per activity (union of all updates)", "activity_id"),
+    ("dim_wbs", "one row per WBS node with full path and levels", "wbs_id"),
+    ("dim_code", "one row per activity-code value", "code_type, code_value"),
+    ("dim_owner", "one row per owner organisation", "owner_code"),
+    ("dim_calendar", "one row per P6 calendar", "calendar_id"),
+    ("dim_date", "one row per calendar day 2025-2028", "date_key"),
+    ("fact_activity_snapshot", "activity x data date", "snapshot_id, activity_id"),
+    ("fact_relationship", "relationship x data date", "snapshot_id, pred_id, succ_id, rel_type"),
+    ("fact_milestone_trend", "milestone x data date", "snapshot_id, activity_id"),
+    ("fact_interface", "interface x data date", "snapshot_id, interface_id"),
+    ("fact_readiness", "asset x readiness stage x data date", "snapshot_id, asset_code, stage"),
+    ("fact_dcma_check", "check x data date", "snapshot_id, check_id"),
+    ("fact_dcma_offender", "offending item x check x data date", "snapshot_id, check_id, item"),
+    ("fact_owner_scorecard", "owner x data date", "snapshot_id, owner_code"),
+    ("fact_snapshot_summary", "data date", "snapshot_id"),
+    ("fact_reconciliation", "control x data date", "snapshot_id, control_id"),
+    ("fact_risk", "risk x data date", "snapshot_id, risk_id"),
+    ("fact_decision", "decision", "decision_id"),
+    ("fact_change", "change / baseline record", "change_id"),
+    ("fact_scenario", "recovery scenario on the latest update", "scenario_id"),
+    ("fact_s_curve", "month (plus data dates)", "date"),
+]

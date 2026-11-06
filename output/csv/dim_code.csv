@@ -1,0 +1,33 @@
+code_type,code_value,code_name
+Workstream,CON,Construction
+Workstream,TNC,Testing & Commissioning
+Workstream,HOV,Handover
+Workstream,OPM,Operator Mobilisation & Training
+Workstream,OTE,Operational Trials & Test Events
+Workstream,D1R,Day 1 Readiness
+Asset,MTP,Mesa Theme Park
+Asset,LWP,Lagoon Water Park
+Asset,DAR,Dune Arena
+Asset,PBR,Palm Boulevard (Retail & Dining)
+Asset,PEW,Programme Enabling Works
+Asset,PRG,Programme Integration & Day 1
+Owner,MWC,Main Works Contractor
+Owner,MEP,MEP & Systems Contractor
+Owner,ICA,Independent Commissioning Authority
+Owner,OPR,Destination Operator
+Owner,PMO,Programme Management Office
+Owner,AAT,Authority Approvals Team
+Owner,FMS,Facilities Management
+Owner,SSY,Security & Safety
+Phase,P1,Build
+Phase,P2,Commission
+Phase,P3,Handover
+Phase,P4,Prepare to operate
+Phase,P5,Open
+Interface,GIVER,Giver
+Interface,RECEIVER,Receiver
+Interface,NONE,None
+Readiness Gate,RG1,RG1 Construction complete
+Readiness Gate,RG2,RG2 T&C complete
+Readiness Gate,RG3,RG3 Ready to operate
+Readiness Gate,RG4,RG4 Day 1 go/no-go
