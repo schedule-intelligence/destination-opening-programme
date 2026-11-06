@@ -55,10 +55,10 @@ def cmd_run(args):
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="dop", description="Destination Opening Programme schedule intelligence")
     sub = ap.add_subparsers(dest="cmd", required=True)
-    sub.add_parser("generate", help="Phase 1: synthetic IMS, XER export, registers, truth files")
-    p = sub.add_parser("pipeline", help="Phase 2: parse XER, model, quality, reconciliation gate, outputs")
+    sub.add_parser("generate", help="build the fictional IMS: XER exports, registers, truth files")
+    p = sub.add_parser("pipeline", help="parse XER, build the model, run quality checks and the reconciliation gate, write outputs")
     p.add_argument("--near-critical", type=int, default=10, help="near-critical threshold in working days")
-    p = sub.add_parser("pptx", help="Phase 4: executive PowerPoint pack")
+    p = sub.add_parser("pptx", help="build an executive PowerPoint pack")
     p.add_argument("--data-date", required=True)
     p.add_argument("--pack", choices=["monthly", "fortnightly"], default="monthly")
     p = sub.add_parser("run", help="run everything")

@@ -3,4 +3,5 @@ __pycache__/
 *.pyc
 .pytest_cache/
 output/tmp/
-.forbidden_names.txt
+.confidential_terms.txt
+_build_notes/

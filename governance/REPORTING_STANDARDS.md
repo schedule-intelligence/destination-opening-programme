@@ -33,7 +33,7 @@ Colours: red `#C0392B`, amber `#D68910`, green `#1E8449`. RAG is always shown wi
 | Measure | Red | Amber | Green | Source |
 |---|---|---|---|---|
 | Total float / Day 1 total float | < 0 working days | 0 to 10 working days (near-critical) | > 10 working days | `near_critical_days` = 10 |
-| Interface status | Late: giver forecast after the need-by date | At risk: giver forecast less than 7 calendar days before the need-by date | On track (Complete is shown grey) | ASSUMPTIONS A18 |
+| Interface status | Late: giver forecast after the need-by date | At risk: giver forecast less than 7 calendar days before the need-by date | On track (Complete is shown grey) | [Design decision A18](../DESIGN_DECISIONS.md) |
 | Risk score (probability × impact) | High ≥ 15 | Medium 8 to 14 | Low < 8 | `dop/pipeline/model.py` |
 | DQ score | Poor < 70 | Fair 70 to < 85 | Good ≥ 85 | `BANDS` in `quality.py` |
 | Owner DQ | < 70 % | 70 to < 85 % | ≥ 85 % | same bands |
@@ -42,7 +42,7 @@ Colours: red `#C0392B`, amber `#D68910`, green `#1E8449`. RAG is always shown wi
 | Decision | Overdue (open after its need-by date) | Open | Closed | decision log |
 | Reconciliation status | Any control fails (nothing is published) | n/a | All controls pass (40/40 at each data date) | `reconcile.py` |
 
-The recommended recovery is the smallest set of options that leaves Day 1 total float of at least +5 working days (ASSUMPTIONS A16). At 29-Oct-2026 A alone leaves +2 d and B alone 0 d, so A + B is recommended: it leaves +8 wd (*Float gain* +15 wd).
+The recommended recovery is the smallest set of options that leaves Day 1 total float of at least +5 working days ([design decision A16](../DESIGN_DECISIONS.md)). At 29-Oct-2026 A alone leaves +2 d and B alone 0 d, so A + B is recommended: it leaves +8 wd (*Float gain* +15 wd).
 
 ## 4. Number and date formats
 

@@ -1,4 +1,4 @@
-"""Executive PowerPoint packs (Phase 4): monthly steering-committee pack and fortnightly flash.
+"""Executive PowerPoint packs: monthly steering-committee pack and fortnightly flash.
 
 Every number is read from ``docs/data/dashboard.json`` (the reconciled single source written by the pipeline),
 so the packs always tell the same story as the dashboard. Layout is drawn on the blank layout with explicit text
@@ -1556,7 +1556,7 @@ def s_recovery(dk: Deck):
     yb = bottom + 0.15
     paras = [P(R("Recommendation: ", 12, True, NAVY),
                R(f"approve {rec['options'].replace(',', ' + ')} ({rec['decision']}). It is the smallest option set "
-                 f"that restores at least {sg(margin, 'wd')} of Day 1 float (assumption A16); residual risk "
+                 f"that restores at least {sg(margin, 'wd')} of Day 1 float (design decision A16); residual risk "
                  f"{rec['residual_risk']}.", 12, False, TEXT), after=4),
              P(R("Enabling cost: ", 11, True, NAVY), R(rec["cost"] + ".", 11, False, TEXT)),
              P(R("Method: ", 11, True, NAVY), R("each option is a set of duration, logic and calendar changes "

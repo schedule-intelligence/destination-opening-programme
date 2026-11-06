@@ -1,4 +1,4 @@
-"""Phase 1 orchestration: simulate the programme, export P6 XER files (BL0, BL1, six updates),
+"""Schedule generation: simulate the programme, export P6 XER files (BL0, BL1, six updates),
 write the governance registers and the per-snapshot truth files used by the tests."""
 from __future__ import annotations
 

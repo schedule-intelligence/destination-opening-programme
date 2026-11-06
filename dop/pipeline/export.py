@@ -128,6 +128,8 @@ def build_dashboard_json(m: dict, run_ts: str, near_critical_days: int) -> dict:
             {"step": "Outputs", "detail": "docs/data/dashboard.json, output/xlsx, output/pptx"},
         ],
         "governance_docs": [
+            {"title": "Design", "path": "DESIGN.md"},
+            {"title": "Design decisions", "path": "DESIGN_DECISIONS.md"},
             {"title": "Scheduling framework", "path": "governance/SCHEDULING_FRAMEWORK.md"},
             {"title": "Planning & reporting calendar", "path": "governance/PLANNING_REPORTING_CALENDAR.md"},
             {"title": "RACI", "path": "governance/RACI.md"},

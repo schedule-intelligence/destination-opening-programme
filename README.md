@@ -8,6 +8,16 @@ a Power BI model and executive PowerPoint packs, with schedule-quality and recon
 > Fictional programme, fictional data. Schedules are produced by a custom CPM engine that follows Primavera P6
 > conventions and are exported in genuine P6 XER format. No P6 licence was used (see [Transparency](#transparency)).
 
+## Purpose and how it was built
+
+<!-- CANDIDATE TO CONFIRM WORDING -->
+This repository was built as a working demonstration for a planning & reporting and operational-readiness role.
+The scheduling logic, the storyline, the controls design and the governance content reflect the author's
+professional practice in programme planning and controls. The implementation was AI-assisted. Everything is
+reproducible from one command (`python -m dop run --all`) and verified by the automated test suite. The design is
+in [DESIGN.md](DESIGN.md) and the planning decisions behind it are in [DESIGN_DECISIONS.md](DESIGN_DECISIONS.md).
+<!-- /CANDIDATE TO CONFIRM WORDING -->
+
 ---
 
 ## The answer at 29-Oct-2026
@@ -31,7 +41,7 @@ fails if any control breaks.
 
 Mobile (360 px): [exec_mobile.png](docs/screenshots/exec_mobile.png) · other tabs: [milestones](docs/screenshots/tab2_milestones.png), [risks & recovery](docs/screenshots/tab5_risks.png), [about & method](docs/screenshots/tab8_about.png)
 
-## Two-minute tour (for the panel)
+## Two-minute tour
 
 1. **Executive Summary (30 s).** Read the headline sentence: status, risk and the decision needed. Then look at
    the Day 1 tiles against BL0, BL1 and last period, the RAG matrix (asset × workstream) and the two open decisions.
@@ -97,7 +107,11 @@ docs/                 GitHub Pages site (index.html, data/dashboard.json, downlo
 governance/           scheduling framework, reporting calendar, RACI, reporting standards, owner playbook
 powerbi/              Power BI theme and DAX measures (see POWERBI.md)
 tests/                pytest: hand-calculated CPM networks, invariants, XER round trip, truth, gate, integrity, outputs
+scripts/              dashboard verification (Playwright), DAX column check, confidentiality check
 ```
+
+Design: [DESIGN.md](DESIGN.md) (programme, storyline, data model, engine conventions, checks, controls, outputs) ·
+[DESIGN_DECISIONS.md](DESIGN_DECISIONS.md) (the planning decisions behind it).
 
 ## How to run
 
@@ -145,7 +159,7 @@ Individual steps: `python -m dop generate`, `python -m dop pipeline [--near-crit
 | B. Power BI model from P6 exports; automated progress, milestone, critical path, float, variance, slippage, look-ahead, risk and dependency reporting | `output/csv/` star schema; [POWERBI.md](POWERBI.md) with DAX; `powerbi/dop_theme.json` |
 | B. Drill-down portfolio → programme → project → workstream → WBS → activity | Dashboard breadcrumb and activity drawer; Power BI field parameters |
 | B. Data definitions and reconciliation controls aligned to the approved P6 schedule | [DATA_DICTIONARY.md](DATA_DICTIONARY.md); reconciliation gate (R01–R16); Reconciliation & Lineage tab; "Reconciled ✓" header |
-| C. Consulting-quality packs: executive summary, milestone outlook, critical path, two-week look-back and look-ahead, trend, decision log, recovery plan, owners and asks | `dop/pptx_gen.py` monthly (14 slides) and fortnightly (6 slides) packs |
+| C. Consulting-quality packs: executive summary, milestone outlook, critical path, two-week look-back and look-ahead, trend, decision log, recovery plan, owners and asks | `dop/pptx_gen.py` monthly (15 slides) and fortnightly (6 slides) packs |
 | Gap between delivery completion and operational readiness | Interfaces & Readiness Gap tab and slide; operator mobilisation, trials and Day 1 readiness in the same network |
 | Standards, templates, RACI, reporting calendar, quality checks, governance routines | [`governance/`](governance/) |
 | Coach schedule owners and reporting contributors | [SCHEDULE_OWNER_PLAYBOOK.md](governance/SCHEDULE_OWNER_PLAYBOOK.md); owner scorecard |
@@ -159,7 +173,7 @@ Individual steps: `python -m dop generate`, `python -m dop pipeline [--near-crit
   PROJECT, CALENDAR, PROJWBS, TASK, TASKPRED, ACTVTYPE, ACTVCODE and TASKACTV, P6 field names and enumerations
   (`TT_*`, `TK_*`, `CS_*`, `PR_*`), hours in `*_hr_cnt` and `clndr_data` calendars. Baselines are separate XER projects, as P6 exports them.
 - **Custom CPM engine (no P6 licence).** Forward and backward passes in working time with per-activity calendars;
-  FS/SS/FF/SF with lags on the successor's calendar (a P6 scheduling option, see ASSUMPTIONS A03); SNET, SNLT, FNET, FNLT, Start On, Finish On and
+  FS/SS/FF/SF with lags on the successor's calendar (a P6 scheduling option, see [design decision A03](DESIGN_DECISIONS.md)); SNET, SNLT, FNET, FNLT, Start On, Finish On and
   Mandatory constraints; data date with retained logic for out-of-sequence progress; TF = LF − EF in hours; free float;
   longest path traced through driving relationships, kept separate from TF ≤ 0; LOE spanning its predecessors. It is
   verified on hand-calculated networks and by re-scheduling every parsed XER: the engine reproduces the exported

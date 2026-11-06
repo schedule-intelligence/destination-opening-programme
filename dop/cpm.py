@@ -1,9 +1,9 @@
 """Critical Path Method engine (P6-style conventions).
 
-Conventions (see PLAN.md section 5 and ASSUMPTIONS.md):
+Conventions (see DESIGN.md section 5 and DESIGN_DECISIONS.md):
 * Integer hours; each activity is scheduled in its own calendar's work positions.
 * Lags are in working hours on the SUCCESSOR's calendar (a P6 "calendar for scheduling relationship lag" option;
-  P6 ships with the predecessor calendar as default - see ASSUMPTIONS A03).
+  P6 ships with the predecessor calendar as default - see DESIGN_DECISIONS.md A03).
 * Data date: no remaining work before it. Completed activities keep actuals, have no float.
 * In-progress activities: remaining duration starts at max(data date, logic): retained logic.
 * Open ends: late finish = project "must finish by" if given, else project early finish.

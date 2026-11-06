@@ -1,5 +1,8 @@
-"""Fail if any forbidden name (from the git-ignored .forbidden_names.txt) appears in
-tracked/untracked files, inside Office/zip payloads, or in the commit log."""
+"""Guards against real organisation, venue or person names leaking into a public portfolio.
+The term list is git-ignored.
+
+Scans tracked and untracked (not ignored) files, the XML inside PPTX/XLSX payloads, and the commit log.
+Exits 1 and lists the hits if any term from `.confidential_terms.txt` is found."""
 import io
 import pathlib
 import re
@@ -8,9 +11,9 @@ import sys
 import zipfile
 
 root = pathlib.Path(__file__).resolve().parents[1]
-lst = root / ".forbidden_names.txt"
+lst = root / ".confidential_terms.txt"
 if not lst.exists():
-    print("forbidden-name list missing; skipping")
+    print("confidential-term list missing; skipping")
     sys.exit(0)
 names = [n.strip() for n in lst.read_text(encoding="utf-8").splitlines() if n.strip()]
 pat = re.compile("|".join(r"\b" + re.escape(n) + r"\b" for n in names), re.I)
@@ -19,12 +22,12 @@ files = subprocess.run(["git", "ls-files", "-co", "--exclude-standard"], cwd=roo
 hits = []
 for f in filter(None, files):
     p = root / f
-    if not p.is_file() or p.name == ".forbidden_names.txt":
+    if not p.is_file() or p.name == ".confidential_terms.txt":
         continue
-    if p.suffix in {".png", ".jpg", ".pdf", ".ico"}:
+    if p.suffix in {".png", ".jpg", ".gif", ".mp4", ".pdf", ".ico"}:
         continue  # compressed binary payloads; random byte runs can spell a short token by chance
     data = p.read_bytes()
-    if p.suffix in {".pptx", ".xlsx"}:
+    if p.suffix in {".pptx", ".xlsx", ".pbix"}:
         try:
             with zipfile.ZipFile(io.BytesIO(data)) as z:
                 data = b" ".join(z.read(n) for n in z.namelist() if n.endswith(".xml"))
@@ -37,7 +40,7 @@ log = subprocess.run(["git", "log", "--all", "--format=%B"], cwd=root,
                      capture_output=True, text=True).stdout
 hits += [f"commit message: {m.group(0)}" for m in pat.finditer(log)]
 if hits:
-    print("FORBIDDEN NAMES FOUND:")
+    print("CONFIDENTIAL TERMS FOUND:")
     print("\n".join(hits[:50]))
     sys.exit(1)
-print(f"forbidden-name check passed ({len([f for f in files if f])} files + commit log)")
+print(f"confidentiality check passed ({len([f for f in files if f])} files + commit log)")

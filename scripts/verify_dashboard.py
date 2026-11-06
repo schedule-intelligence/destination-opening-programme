@@ -49,9 +49,9 @@ def signed(n, unit: str = "") -> str:
     return s + (" " + unit if unit else "")
 
 
-def _forbidden_pattern():
-    """Same pattern as scripts/check_forbidden.py (list kept in the git-ignored file)."""
-    lst = ROOT / ".forbidden_names.txt"
+def _confidential_pattern():
+    """Same pattern as scripts/check_confidentiality.py (term list kept in the git-ignored file)."""
+    lst = ROOT / ".confidential_terms.txt"
     if not lst.exists():
         return None
     names = [n.strip() for n in lst.read_text(encoding="utf-8").splitlines() if n.strip()]
@@ -84,9 +84,9 @@ def _png_rewrite(data: bytes, level: int, chunk: int) -> bytes:
 
 
 def scrub_png(path: pathlib.Path) -> bool:
-    """Compressed image bytes can spell a forbidden token by chance; re-encode until they do not.
+    """Compressed image bytes can spell a confidential term by chance; re-encode until they do not.
     Returns False if no clean encoding was found."""
-    pat = _forbidden_pattern()
+    pat = _confidential_pattern()
     if pat is None:
         return True
     data = path.read_bytes()
@@ -448,7 +448,7 @@ def main() -> int:
     for png in sorted(SHOTS.glob("*.png")):
         if not scrub_png(png):
             failures.append(f"could not produce a clean encoding of {png.name}")
-    checks.append("screenshots pass the forbidden-name byte scan")
+    checks.append("screenshots pass the confidential-term byte scan")
 
     failures = col.errors + failures
     print("Dashboard verification")
