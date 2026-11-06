@@ -1,0 +1,273 @@
+{
+ "snapshot": "S3",
+ "data_date": "2026-07-30",
+ "injected": [
+  {
+   "check": "U03",
+   "item": "LWP-CON-1030",
+   "description": "Completed activity still carries 16 h remaining"
+  },
+  {
+   "check": "D01",
+   "item": "MTP-OPM-4030",
+   "description": "open end (no successor)"
+  },
+  {
+   "check": "D01",
+   "item": "MTP-OPM-4030",
+   "description": "open end (no successor)"
+  },
+  {
+   "check": "D01",
+   "item": "LWP-HOV-3210",
+   "description": "no predecessor; constraint used instead of logic"
+  },
+  {
+   "check": "D05",
+   "item": "PBR-HOV-3110",
+   "description": "hard constraint"
+  },
+  {
+   "check": "U12",
+   "item": "PBR-CON-1310->PBR-CON-1320:FS",
+   "description": "long lag"
+  },
+  {
+   "check": "U12",
+   "item": "DAR-CON-1040->DAR-CON-1410:FS",
+   "description": "long lag"
+  },
+  {
+   "check": "U12",
+   "item": "PEW-TNC-2050->PEW-HOV-3010:FS",
+   "description": "long lag"
+  },
+  {
+   "check": "D02",
+   "item": "MTP-HOV-3010->MTP-HOV-3220:FS",
+   "description": "negative lag"
+  },
+  {
+   "check": "D02",
+   "item": "PEW-CON-1150->PEW-TNC-2070:FS",
+   "description": "negative lag"
+  },
+  {
+   "check": "U10",
+   "item": "LWP-OTE-5020->LWP-OTE-5110:SF",
+   "description": "SF relationship"
+  },
+  {
+   "check": "U10",
+   "item": "PEW-OTE-5010->PEW-OTE-5020:SF",
+   "description": "SF relationship"
+  },
+  {
+   "check": "U05",
+   "item": "PEW-CON-1170",
+   "description": "missing owner code"
+  },
+  {
+   "check": "U05",
+   "item": "PBR-OTE-5030",
+   "description": "missing workstream code"
+  },
+  {
+   "check": "U06",
+   "item": "PEW-CON-1030",
+   "description": "duplicate name"
+  },
+  {
+   "check": "U06",
+   "item": "PEW-CON-1040",
+   "description": "duplicate name"
+  }
+ ],
+ "expected": {
+  "D01": [
+   "LWP-HOV-3210",
+   "MTP-OPM-4030",
+   "PEW-HOV-3020"
+  ],
+  "D02": [
+   "MTP-HOV-3010->MTP-HOV-3220:FS",
+   "PEW-CON-1150->PEW-TNC-2070:FS"
+  ],
+  "D03": [
+   "DAR-CON-1040->DAR-CON-1410:FS",
+   "DAR-CON-1132->DAR-CON-1135:SS",
+   "DAR-CON-1132->DAR-CON-1220:FF",
+   "DAR-CON-1132->DAR-CON-1220:SS",
+   "DAR-OTE-5010->DAR-OTE-5030:SS",
+   "LWP-CON-1132->LWP-CON-1135:SS",
+   "LWP-OTE-5010->LWP-OTE-5030:SS",
+   "MTP-CON-1132->MTP-CON-1135:SS",
+   "MTP-OTE-5010->MTP-OTE-5030:SS",
+   "PBR-CON-1132->PBR-CON-1135:SS",
+   "PBR-CON-1310->PBR-CON-1320:FS",
+   "PBR-OTE-5010->PBR-OTE-5030:SS",
+   "PEW-CON-1060->PEW-CON-1070:SS",
+   "PEW-OTE-5010->PEW-OTE-5020:SF",
+   "PEW-TNC-2050->PEW-HOV-3010:FS",
+   "PRG-OPM-4010->DAR-OPM-4010:SS",
+   "PRG-OPM-4010->LWP-OPM-4010:SS",
+   "PRG-OPM-4010->MTP-OPM-4010:SS",
+   "PRG-OPM-4010->PBR-OPM-4010:SS"
+  ],
+  "D04": [
+   "DAR-CON-1010->DAR-CON-9010:SS",
+   "DAR-CON-1132->DAR-CON-1135:SS",
+   "DAR-CON-1132->DAR-CON-1220:FF",
+   "DAR-CON-1132->DAR-CON-1220:SS",
+   "DAR-CON-1410->DAR-CON-1430:FF",
+   "DAR-CON-M142->DAR-CON-9010:FF",
+   "DAR-OTE-5010->DAR-OTE-5030:SS",
+   "LWP-CON-1010->LWP-CON-9010:SS",
+   "LWP-CON-1132->LWP-CON-1135:SS",
+   "LWP-CON-1410->LWP-CON-1430:FF",
+   "LWP-CON-M142->LWP-CON-9010:FF",
+   "LWP-OTE-5010->LWP-OTE-5030:SS",
+   "LWP-OTE-5020->LWP-OTE-5110:SF",
+   "MTP-CON-1010->MTP-CON-9010:SS",
+   "MTP-CON-1132->MTP-CON-1135:SS",
+   "MTP-CON-1410->MTP-CON-1430:FF",
+   "MTP-CON-M142->MTP-CON-9010:FF",
+   "MTP-OTE-5010->MTP-OTE-5030:SS",
+   "PBR-CON-1010->PBR-CON-9010:SS",
+   "PBR-CON-1132->PBR-CON-1135:SS",
+   "PBR-CON-1410->PBR-CON-1430:FF",
+   "PBR-CON-M142->PBR-CON-9010:FF",
+   "PBR-OTE-5010->PBR-OTE-5030:SS",
+   "PEW-CON-1010->PEW-CON-9010:SS",
+   "PEW-CON-1060->PEW-CON-1070:SS",
+   "PEW-CON-1150->PEW-CON-9010:FF",
+   "PEW-OTE-5010->PEW-OTE-5020:SF",
+   "PRG-D1R-M000->PRG-D1R-9010:SS",
+   "PRG-D1R-M010->PRG-OPM-4030:SS",
+   "PRG-D1R-M999->PRG-D1R-9010:FF",
+   "PRG-OPM-4010->DAR-OPM-4010:SS",
+   "PRG-OPM-4010->LWP-OPM-4010:SS",
+   "PRG-OPM-4010->MTP-OPM-4010:SS",
+   "PRG-OPM-4010->PBR-OPM-4010:SS"
+  ],
+  "D05": [
+   "PBR-HOV-3110",
+   "PRG-D1R-M999"
+  ],
+  "D06": [
+   "DAR-CON-1135",
+   "DAR-CON-1140",
+   "DAR-CON-1410",
+   "DAR-CON-1430",
+   "DAR-HOV-3210",
+   "DAR-HOV-3220",
+   "DAR-HOV-M230",
+   "DAR-OPM-M120",
+   "DAR-TNC-2160",
+   "LWP-CON-1135",
+   "LWP-CON-1140",
+   "LWP-CON-1410",
+   "LWP-CON-1430",
+   "LWP-HOV-3210",
+   "LWP-HOV-3220",
+   "LWP-HOV-M230",
+   "LWP-OPM-M120",
+   "LWP-TNC-2130",
+   "LWP-TNC-2160",
+   "MTP-CON-1135",
+   "MTP-CON-1140",
+   "MTP-CON-1150",
+   "MTP-CON-1225",
+   "MTP-CON-1230",
+   "MTP-CON-1320",
+   "MTP-CON-1330",
+   "MTP-CON-1340",
+   "MTP-CON-1410",
+   "MTP-CON-1430",
+   "MTP-CON-M142",
+   "MTP-HOV-3010",
+   "MTP-HOV-3210",
+   "MTP-HOV-3220",
+   "MTP-HOV-M230",
+   "MTP-OPM-4030",
+   "MTP-OPM-M120",
+   "MTP-TNC-2130",
+   "MTP-TNC-2160",
+   "PBR-CON-1140",
+   "PBR-HOV-3210",
+   "PBR-HOV-3220",
+   "PBR-HOV-M230",
+   "PBR-OPM-M120",
+   "PEW-CON-1080",
+   "PEW-CON-1090",
+   "PEW-CON-1110",
+   "PEW-CON-1120",
+   "PEW-CON-1160",
+   "PEW-CON-1170",
+   "PEW-HOV-3010",
+   "PEW-HOV-3020",
+   "PEW-OPM-4010",
+   "PEW-OTE-5020",
+   "PEW-TNC-2050",
+   "PEW-TNC-2060",
+   "PRG-D1R-M010",
+   "PRG-OPM-4010",
+   "PRG-OPM-4020",
+   "PRG-OPM-4030",
+   "PRG-OPM-4050",
+   "PRG-OPM-4060",
+   "PRG-OTE-5010"
+  ],
+  "D07": [],
+  "D08": [
+   "DAR-CON-1112",
+   "DAR-CON-1120",
+   "PEW-CON-1130",
+   "PRG-OPM-4010"
+  ],
+  "D09": [],
+  "D11": [],
+  "U01": [],
+  "U02": [],
+  "U03": [
+   "LWP-CON-1030"
+  ],
+  "U04": [],
+  "U05": [
+   "PBR-OTE-5030",
+   "PEW-CON-1170"
+  ],
+  "U06": [
+   "PEW-CON-1030",
+   "PEW-CON-1040"
+  ],
+  "U07": [],
+  "U08": [],
+  "U09": [],
+  "U10": [
+   "LWP-OTE-5020->LWP-OTE-5110:SF",
+   "PEW-OTE-5010->PEW-OTE-5020:SF"
+  ],
+  "U11": [],
+  "U12": [
+   "DAR-CON-1040->DAR-CON-1410:FS",
+   "DAR-CON-1132->DAR-CON-1220:SS",
+   "PBR-CON-1310->PBR-CON-1320:FS",
+   "PEW-TNC-2050->PEW-HOV-3010:FS"
+  ]
+ },
+ "metrics": {
+  "incomplete": 252,
+  "relationships_incomplete_succ": 459,
+  "due": 32,
+  "completed": 32,
+  "bei": 1.0,
+  "cpli": 1.019,
+  "cp_test_pass": true,
+  "cp_test_activity": "DAR-CON-1112",
+  "cp_test_delta_days": 600.0,
+  "day1_tf_days": 8.0
+ },
+ "xer": "DOP_UPD_2026-07-30.xer",
+ "baseline": "BL1"
+}

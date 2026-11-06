@@ -1,0 +1,123 @@
+"""Fictional governance registers that live outside P6: risks, decisions, changes, recovery options.
+They are inputs to the pipeline (data/registers/*), each linked to activities by task_code."""
+from __future__ import annotations
+
+RISKS = [
+    # id, title, cause, effect, owner, linked, mitigation, mitigation_owner, impact_days, scores S1..S6 (P x I)
+    ("R-01", "Arena MEP plant delivery and second-fix productivity", "Late chiller/switchgear factory tests; MEP labour shortage",
+     "Arena ready-for-commissioning slips and drives Day 1", "MEP", "DAR-CON-1105;DAR-CON-1131;DAR-CON-1132",
+     "Second MEP crew and extended shifts; weekly productivity tracking", "MEP Package Manager", 15,
+     [(3, 4), (4, 4), (4, 4), (4, 5), (4, 5), (4, 4)]),
+    ("R-02", "North-loop permanent power energisation window", "Utility provider controls the energisation slot",
+     "Arena and boulevard pre-commissioning cannot start", "MEP", "PEW-TNC-2030;PEW-TNC-M031",
+     "Escalate slot to utility; temporary generator plan for pre-commissioning", "Programme Director", 10,
+     [(2, 3), (2, 3), (3, 3), (4, 4), (4, 4), (3, 4)]),
+    ("R-03", "Authority fire-strategy approval for the arena", "Authority review of smoke-extract design",
+     "Additional works and re-test before occupancy", "AAT", "DAR-CON-1250;DAR-HOV-3110;DAR-HOV-M130",
+     "Pre-submission meetings; early witness testing", "Approvals Manager", 20,
+     [(2, 3), (3, 3), (3, 3), (3, 4), (5, 5), (4, 5)]),
+    ("R-04", "Operator access to the arena restricted until fire sign-off", "Authority condition on site access",
+     "Operator familiarisation and training compressed", "SSY", "DAR-OPM-M120;DAR-OPM-4130",
+     "Phased handover with early access to completed zones (Recovery B)", "Head of Security & Safety", 12,
+     [(2, 2), (2, 2), (2, 3), (4, 4), (4, 4), (4, 4)]),
+    ("R-05", "Ride certification capacity of the third-party body", "Single certifier for all rides",
+     "Theme-park T&C complete slips", "ICA", "MTP-TNC-2145;MTP-TNC-M220",
+     "Book certifier slots now; split certification by ride", "Lead Commissioning Manager", 8,
+     [(3, 3), (3, 4), (3, 4), (3, 4), (3, 4), (3, 3)]),
+    ("R-06", "Front-line recruitment pipeline", "Competitive labour market",
+     "Training starts late; test events under-staffed", "OPR", "PRG-OPM-4010;MTP-OPM-4015;DAR-OPM-4015",
+     "Early offers, retention bonus, agency standby", "Operator Readiness Lead", 6,
+     [(3, 3), (3, 3), (3, 4), (3, 4), (3, 3), (3, 3)]),
+    ("R-07", "Transit operating certificate timing", "Certificate depends on dynamic testing evidence",
+     "Destination test event without transit", "AAT", "PEW-HOV-3030;PEW-TNC-M071",
+     "Agree evidence pack with authority; bus-bridge contingency", "Approvals Manager", 5,
+     [(2, 4), (2, 4), (2, 4), (3, 4), (3, 4), (3, 4)]),
+    ("R-08", "Mandatory Finish on boulevard inspection masks slippage", "Hard constraint entered by planner",
+     "Forecast shows on time while logic says late; false assurance", "PMO", "PBR-HOV-3110",
+     "Remove the hard constraint; replace with a target milestone and report float", "Programme Controls Manager", 0,
+     [(2, 2), (2, 2), (2, 3), (2, 3), (3, 3), (3, 3)]),
+    ("R-09", "Commissioning resource clash across assets in Q2 2027", "Theme park, arena and water park IST overlap",
+     "ICA witness capacity becomes the constraint", "ICA", "MTP-TNC-2140;DAR-TNC-2210;LWP-TNC-2210",
+     "Resource-levelled ICA plan; second witness team", "Lead Commissioning Manager", 7,
+     [(3, 3), (3, 3), (3, 4), (3, 4), (4, 4), (4, 4)]),
+    ("R-10", "Ticketing, CRM and IT integration readiness", "Multiple vendors; late interface specifications",
+     "Ticketing trials fail; Day 1 guest flow risk", "OPR", "PRG-OTE-5010;DAR-OTE-5030",
+     "Integration test lab from Q1 2027; vendor single point of accountability", "Operator Readiness Lead", 4,
+     [(2, 3), (2, 3), (2, 3), (3, 3), (3, 3), (3, 3)]),
+]
+
+DECISIONS = [
+    # id, ask, owner, raised (k), needed_by, status, closed_on, linked, outcome
+    ("D-01", "Approve the BL0 integrated master schedule", "Steering Committee", 0, "2026-04-30", "Closed", "2026-04-28",
+     "PRG-D1R-M999", "BL0 approved"),
+    ("D-02", "Approve additional acoustic treatment scope for the arena bowl (CR-002)", "Programme Director", 2, "2026-06-25",
+     "Closed", "2026-06-22", "DAR-CON-1240", "Approved within contingency"),
+    ("D-03", "Approve CR-003 zone-based re-sequence and premium scope; re-baseline to BL1", "Steering Committee", 3,
+     "2026-07-30", "Closed", "2026-07-23", "DAR-CON-M142", "Approved; BL1 issued 30-Jul-2026"),
+    ("D-04", "Agree the arena T&C compression plan with the commissioning authority", "Lead Commissioning Manager", 4,
+     "2026-08-27", "Closed", "2026-08-20", "DAR-TNC-M220", "Agreed; overlaps added"),
+    ("D-05", "Escalate the North-loop energisation window to the utility provider", "Programme Director", 4, "2026-09-10",
+     "Closed", "2026-09-08", "PEW-TNC-M031", "Escalated; window confirmed early January"),
+    ("D-06", "Approve second MEP crew and extended shifts on the arena (contractor recovery)", "MWC Project Director", 5,
+     "2026-10-08", "Closed", "2026-10-05", "DAR-CON-1132", "Approved; crew mobilised 12-Oct-2026"),
+    ("D-07", "Approve zone-based parallel commissioning of the arena (Recovery A)", "Programme Director", 6, "2026-11-12",
+     "Open", "", "DAR-TNC-M220", ""),
+    ("D-08", "Approve phased handover with early operator access to completed arena zones (Recovery B)",
+     "Steering Committee", 6, "2026-11-26", "Open", "", "DAR-OPM-4130", ""),
+    ("D-09", "Remove the Mandatory Finish on the boulevard authority inspection", "Programme Controls Manager", 5,
+     "2026-10-15", "Open", "", "PBR-HOV-3110", ""),
+]
+
+CHANGES = [
+    # id, title, reason, type, raised(k), approver, approval_date, status, baseline_effect, linked
+    ("CR-001", "Approve BL0 integrated master schedule", "Programme baseline", "Baseline", 0, "Steering Committee",
+     "2026-04-28", "Approved", "BL0 created", "PRG-D1R-M999"),
+    ("CR-002", "Arena acoustic treatment to seating bowl", "Operator requirement after acoustic review", "Scope", 2,
+     "Programme Director", "2026-06-22", "Approved", "No re-baseline (added to forecast)", "DAR-CON-1240"),
+    ("CR-003", "Arena zone-based FOH re-sequence plus premium suites and finishes scope", "Mitigate MEP delay; client scope",
+     "Scope & sequence", 3, "Steering Committee", "2026-07-23", "Approved", "BL1 created 30-Jul-2026", "DAR-CON-M142"),
+    ("CR-004", "Arena T&C compression (overlaps, added commissioning teams)", "Recover float lost to MEP", "Sequence", 4,
+     "Lead Commissioning Manager", "2026-08-20", "Approved", "No re-baseline", "DAR-TNC-M220"),
+    ("CR-005", "Arena fire-strategy changes: additional smoke extract works", "Authority fire-strategy review", "Scope", 5,
+     "Programme Director", "2026-09-22", "Approved", "No re-baseline; variance reported against BL1", "DAR-CON-1250"),
+    ("CR-006", "Recovery options A + B for the arena (zone commissioning, phased handover)", "Recover Day 1", "Sequence",
+     6, "Steering Committee", "", "Pending", "Subject to D-07 / D-08", "DAR-TNC-2210"),
+]
+
+RECOVERY_OPTIONS = [
+    {"id": "A", "name": "Commission the arena by zone in parallel",
+     "description": "Start IST zone by zone once final finishes are under way, run HVAC/electrical/fire commissioning "
+                    "in parallel (SS links), add a second ICA witness team; correct the LOE link that holds IST.",
+     "owner": "Lead Commissioning Manager", "decision": "D-07", "cost": "Second ICA witness team (8 weeks)",
+     "deltas": [{"op": "rel_remove", "pred": "DAR-CON-M142", "succ": "DAR-TNC-2210"},
+                {"op": "rel_remove", "pred": "DAR-CON-9010", "succ": "DAR-TNC-2210"},
+                {"op": "rel_add", "pred": "DAR-CON-1225", "succ": "DAR-TNC-2210", "type": "FS", "lag_days": 0},
+                {"op": "rel_add", "pred": "DAR-CON-M142", "succ": "DAR-TNC-2210", "type": "FF", "lag_days": 5},
+                {"op": "rel_set", "pred": "DAR-TNC-2120", "succ": "DAR-TNC-2130", "type": "SS", "lag_days": 8},
+                {"op": "dur_factor", "id": "DAR-TNC-2110", "factor": 0.85},
+                {"op": "dur_factor", "id": "DAR-TNC-2130", "factor": 0.85}]},
+    {"id": "B", "name": "Phased handover with early operator access",
+     "description": "Operator familiarisation starts in completed zones under a temporary occupancy permit, linked to "
+                    "IST progress instead of the full occupancy certificate.",
+     "owner": "Operator Readiness Lead", "decision": "D-08", "cost": "Temporary occupancy permit; zone security staffing",
+     "deltas": [{"op": "rel_remove", "pred": "DAR-HOV-M130", "succ": "DAR-OPM-4130"},
+                {"op": "rel_add", "pred": "DAR-HOV-3110", "succ": "DAR-OPM-4130", "type": "FS", "lag_days": 0},
+                {"op": "constraint", "id": "DAR-OPM-M120", "type": "CS_MSOA", "date": "2027-05-29"}]},
+    {"id": "C", "name": "Extra training shifts",
+     "description": "Run SOP validation and classroom training on the 7-day calendar with double shifts.",
+     "owner": "Operator Readiness Lead", "decision": "", "cost": "Overtime and trainer agency fees",
+     "deltas": [{"op": "calendar", "id": "DAR-OPM-4140", "cal": 3},
+                {"op": "dur_factor", "id": "DAR-OPM-4140", "factor": 0.75},
+                {"op": "dur_factor", "id": "DAR-OPM-4110", "factor": 0.75}]},
+]
+SCENARIO_COMBOS = [("A", ["A"]), ("B", ["B"]), ("C", ["C"]), ("A+B", ["A", "B"]), ("A+B+C", ["A", "B", "C"])]
+
+REPORTING_STEPS = [  # T-day offsets relative to the data date (working days, office calendar)
+    ("T-2", "Progress updates due from schedule owners"),
+    ("T0", "Data date / cut-off; P6 schedule frozen for the period"),
+    ("T+1", "Planner QA: DCMA and update-discipline checks; owner queries issued"),
+    ("T+2", "Schedule re-run (F9), XER export, pipeline run and reconciliation gate"),
+    ("T+3", "Dashboard refresh and draft pack; owner sign-off of variances"),
+    ("T+4", "Pack issued (monthly steering committee / fortnightly flash)"),
+    ("T+5", "Forum: steering committee (monthly) or delivery review (fortnightly)"),
+]

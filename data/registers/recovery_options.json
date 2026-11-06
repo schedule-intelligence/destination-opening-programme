@@ -1,0 +1,106 @@
+[
+  {
+    "id": "A",
+    "name": "Commission the arena by zone in parallel",
+    "description": "Start IST zone by zone once final finishes are under way, run HVAC/electrical/fire commissioning in parallel (SS links), add a second ICA witness team; correct the LOE link that holds IST.",
+    "owner": "Lead Commissioning Manager",
+    "decision": "D-07",
+    "cost": "Second ICA witness team (8 weeks)",
+    "deltas": [
+      {
+        "op": "rel_remove",
+        "pred": "DAR-CON-M142",
+        "succ": "DAR-TNC-2210"
+      },
+      {
+        "op": "rel_remove",
+        "pred": "DAR-CON-9010",
+        "succ": "DAR-TNC-2210"
+      },
+      {
+        "op": "rel_add",
+        "pred": "DAR-CON-1225",
+        "succ": "DAR-TNC-2210",
+        "type": "FS",
+        "lag_days": 0
+      },
+      {
+        "op": "rel_add",
+        "pred": "DAR-CON-M142",
+        "succ": "DAR-TNC-2210",
+        "type": "FF",
+        "lag_days": 5
+      },
+      {
+        "op": "rel_set",
+        "pred": "DAR-TNC-2120",
+        "succ": "DAR-TNC-2130",
+        "type": "SS",
+        "lag_days": 8
+      },
+      {
+        "op": "dur_factor",
+        "id": "DAR-TNC-2110",
+        "factor": 0.85
+      },
+      {
+        "op": "dur_factor",
+        "id": "DAR-TNC-2130",
+        "factor": 0.85
+      }
+    ]
+  },
+  {
+    "id": "B",
+    "name": "Phased handover with early operator access",
+    "description": "Operator familiarisation starts in completed zones under a temporary occupancy permit, linked to IST progress instead of the full occupancy certificate.",
+    "owner": "Operator Readiness Lead",
+    "decision": "D-08",
+    "cost": "Temporary occupancy permit; zone security staffing",
+    "deltas": [
+      {
+        "op": "rel_remove",
+        "pred": "DAR-HOV-M130",
+        "succ": "DAR-OPM-4130"
+      },
+      {
+        "op": "rel_add",
+        "pred": "DAR-HOV-3110",
+        "succ": "DAR-OPM-4130",
+        "type": "FS",
+        "lag_days": 0
+      },
+      {
+        "op": "constraint",
+        "id": "DAR-OPM-M120",
+        "type": "CS_MSOA",
+        "date": "2027-05-29"
+      }
+    ]
+  },
+  {
+    "id": "C",
+    "name": "Extra training shifts",
+    "description": "Run SOP validation and classroom training on the 7-day calendar with double shifts.",
+    "owner": "Operator Readiness Lead",
+    "decision": "",
+    "cost": "Overtime and trainer agency fees",
+    "deltas": [
+      {
+        "op": "calendar",
+        "id": "DAR-OPM-4140",
+        "cal": 3
+      },
+      {
+        "op": "dur_factor",
+        "id": "DAR-OPM-4140",
+        "factor": 0.75
+      },
+      {
+        "op": "dur_factor",
+        "id": "DAR-OPM-4110",
+        "factor": 0.75
+      }
+    ]
+  }
+]
