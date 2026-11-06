@@ -21,6 +21,8 @@ for f in filter(None, files):
     p = root / f
     if not p.is_file() or p.name == ".forbidden_names.txt":
         continue
+    if p.suffix in {".png", ".jpg", ".pdf", ".ico"}:
+        continue  # compressed binary payloads; random byte runs can spell a short token by chance
     data = p.read_bytes()
     if p.suffix in {".pptx", ".xlsx"}:
         try:

@@ -23,7 +23,7 @@ CHECKS = [
     ("D03", "Lags", "DCMA", "pct_max", 5.0, 4, "Share of relationships (incomplete successor) with a positive lag", "lags"),
     ("D04", "Relationship types (FS)", "DCMA", "pct_min", 90.0, 4, "Share of relationships that are Finish-to-Start", "relationship-types"),
     ("D05", "Hard constraints", "DCMA", "pct_max", 5.0, 8, "Share of incomplete activities with MSO/MFO/SNLT/FNLT/Start On/Finish On", "hard-constraints"),
-    ("D06", "High float (> 44 d)", "DCMA", "pct_max", 5.0, 6, "Share of incomplete activities with total float above 44 working days", "high-float"),
+    ("D06", "High float (> 44 d)", "DCMA", "pct_max", 5.0, 5, "Share of incomplete activities with total float above 44 working days", "high-float"),
     ("D07", "Negative float", "DCMA", "count_max", 0, 10, "Incomplete activities with total float below zero", "negative-float"),
     ("D08", "High duration (> 44 d)", "DCMA", "pct_max", 5.0, 5, "Share of incomplete tasks with original duration above 44 working days", "high-duration"),
     ("D09", "Invalid dates", "DCMA", "count_max", 0, 10, "Actual dates after the data date, or forecast dates before it", "invalid-dates"),

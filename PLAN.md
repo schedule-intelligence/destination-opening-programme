@@ -145,7 +145,7 @@ Recovery options (applied to S6 and rescheduled by the engine):
   (cumulative working hours). Start-type dates take the first working moment of a position and
   finish-type dates take the last, as P6 does (a finish is shown at 16:00, the next start at 08:00).
 - Forward pass in topological order; backward pass in reverse. All four relationship types are supported,
-  with lags in working hours on the **successor's calendar** (the P6 default). Negative lags are allowed.
+  with lags in working hours on the **successor's calendar** (a P6 scheduling option; P6's shipped default is the predecessor calendar, see ASSUMPTIONS A03). Negative lags are allowed.
 - Constraints: SNET (`CS_MSOA`), SNLT (`CS_MSOB`), FNET (`CS_MEOA`), FNLT (`CS_MEOB`), Start On (`CS_MSO`),
   Finish On (`CS_MEO`), Mandatory Start (`CS_MANDSTART`), Mandatory Finish (`CS_MANDFIN`).
   ALAP is not used.
@@ -174,7 +174,7 @@ DCMA 14-point (denominator = incomplete normal tasks and milestones, excluding L
 | D03 | Lags (relationships with positive lag) | ≤ 5 % | 4 |
 | D04 | FS relationships | ≥ 90 % | 4 |
 | D05 | Hard constraints (MSO/MFO/SNLT/FNLT/Start On/Finish On) | ≤ 5 % | 8 |
-| D06 | High float (> 44 d) | ≤ 5 % | 6 |
+| D06 | High float (> 44 d) | ≤ 5 % | 5 |
 | D07 | Negative float | 0 | 10 |
 | D08 | High duration (> 44 d, original) | ≤ 5 % | 5 |
 | D09 | Invalid dates (actual > DD, forecast < DD) | 0 | 10 |
@@ -189,7 +189,7 @@ U02 actuals after data date (shown in D09 too), U03 remaining duration on comple
 U04 progress without actual start (2), U05 missing activity codes (2), U06 duplicate names within an
 asset (1), U07 LOE on the critical path (1), U08 data date matches the cut-off (1), U09 stale in-progress
 activities (2), U10 SF relationships (1), U11 activities missing from the baseline in force (1),
-U12 long lags > 20 d (0, informational). Weights sum to 100 (U02 carries 0, as D09 already covers it).
+U12 long lags > 20 d (0, informational). Weights sum to 100 (D06 carries 5; U02 carries 0, as D09 already covers it).
 A pass scores the full weight. A failed % check scores weight × max(0, 1 − (value − threshold)/threshold).
 A failed count check scores weight × max(0, 1 − count/5). Bands: ≥ 85 Good, 70–85 Fair, < 70 Poor.
 Owner scorecard: per owner, the share of incomplete activities with no activity-level issue, plus

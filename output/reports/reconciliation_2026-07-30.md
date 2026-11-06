@@ -1,12 +1,12 @@
 # Reconciliation report: 2026-07-30
 
 Source: `DOP_UPD_2026-07-30.xer` (SHA-256 `212d7ec1aa7ab7a8...`)  
-Result: **FAIL**, 39/40 controls  
-DQ score: 89.7
+Result: **PASS**, 40/40 controls  
+DQ score: 90.6
 
 | Control | Source (XER) | Model (CSV) | Dashboard (JSON) | Delta | Result |
 |---|---|---|---|---|---|
-| R01 Activity count | 290 | 290 | 290 | 0 | FAIL |
+| R01 Activity count | 290 | 290 | 290 | 0 | pass |
 | R02.TK_Active Activities by status - TK_Active | 17 | 17 | 17 | 0 | pass |
 | R02.TK_Complete Activities by status - TK_Complete | 32 | 32 | 32 | 0 | pass |
 | R02.TK_NotStart Activities by status - TK_NotStart | 241 | 241 | 241 | 0 | pass |

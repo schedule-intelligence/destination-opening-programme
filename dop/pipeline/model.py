@@ -224,10 +224,11 @@ def build_model(root: pathlib.Path, bls: dict, ups: list, run_ts: str, near_crit
                             bei=round(q["bei"], 3)))
         prev_rows = byc
     fact_activity = pd.DataFrame(fas)
+    loe_ids = {c for c, r in acts_all.items() if r["task_type"] == "TT_LOE"}
     # counts and float erosion per snapshot
     for srow in summary:
         f = fact_activity[fact_activity.snapshot_id == srow["snapshot_id"]]
-        inc = f[f.status != "TK_Complete"]
+        inc = f[(f.status != "TK_Complete") & ~f.activity_id.isin(loe_ids)]   # LOE excluded, as in R12 / D07
         srow.update(critical_count=int(inc.is_critical.sum()), near_critical_count=int(inc.is_near_critical.sum()),
                     longest_path_count=int(f.is_longest_path.sum()), negative_float_count=int((inc.total_float_d < 0).sum()),
                     min_float_d=float(inc.total_float_d.min()), avg_float_d=round(float(inc.total_float_d.mean()), 1),

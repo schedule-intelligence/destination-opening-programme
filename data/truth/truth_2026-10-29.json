@@ -181,6 +181,7 @@
    "PEW-TNC-2050",
    "PEW-TNC-2060",
    "PRG-D1R-M010",
+   "PRG-OPM-4020",
    "PRG-OPM-4030",
    "PRG-OPM-4050",
    "PRG-OPM-4060",
@@ -234,7 +235,8 @@
    "PEW-CON-1110",
    "PEW-CON-1120",
    "PEW-CON-1160",
-   "PEW-HOV-3020"
+   "PEW-HOV-3020",
+   "PRG-OPM-4020"
   ],
   "U01": [],
   "U02": [],
@@ -266,11 +268,11 @@
   ]
  },
  "metrics": {
-  "incomplete": 229,
-  "relationships_incomplete_succ": 427,
+  "incomplete": 230,
+  "relationships_incomplete_succ": 428,
   "due": 59,
-  "completed": 56,
-  "bei": 0.949,
+  "completed": 55,
+  "bei": 0.932,
   "cpli": 0.98,
   "cp_test_pass": true,
   "cp_test_activity": "DAR-CON-1132",

@@ -1,15 +1,15 @@
 # Reconciliation report: 2026-10-29
 
-Source: `DOP_UPD_2026-10-29.xer` (SHA-256 `b97ca096731b93c9...`)  
-Result: **FAIL**, 39/40 controls  
-DQ score: 75.4
+Source: `DOP_UPD_2026-10-29.xer` (SHA-256 `bf458482b5583046...`)  
+Result: **PASS**, 40/40 controls  
+DQ score: 75.3
 
 | Control | Source (XER) | Model (CSV) | Dashboard (JSON) | Delta | Result |
 |---|---|---|---|---|---|
-| R01 Activity count | 291 | 291 | 291 | 0 | FAIL |
+| R01 Activity count | 291 | 291 | 291 | 0 | pass |
 | R02.TK_Active Activities by status - TK_Active | 31 | 31 | 31 | 0 | pass |
-| R02.TK_Complete Activities by status - TK_Complete | 56 | 56 | 56 | 0 | pass |
-| R02.TK_NotStart Activities by status - TK_NotStart | 204 | 204 | 204 | 0 | pass |
+| R02.TK_Complete Activities by status - TK_Complete | 55 | 55 | 55 | 0 | pass |
+| R02.TK_NotStart Activities by status - TK_NotStart | 205 | 205 | 205 | 0 | pass |
 | R03.DAR Activities by asset - DAR | 61 | 61 | 61 | 0 | pass |
 | R03.LWP Activities by asset - LWP | 59 | 59 | 59 | 0 | pass |
 | R03.MTP Activities by asset - MTP | 59 | 59 | 59 | 0 | pass |
@@ -39,10 +39,10 @@ DQ score: 75.4
 | R09.PRG-D1R-M030 Key milestone finish - PRG-D1R-M030 | 2027-08-26 | 2027-08-26 | 2027-08-26 |  | pass |
 | R09.PRG-D1R-M040 Key milestone finish - PRG-D1R-M040 | 2027-10-21 | 2027-10-21 | 2027-10-21 |  | pass |
 | R09.PRG-D1R-M999 Key milestone finish - PRG-D1R-M999 | 2027-10-21 | 2027-10-21 | 2027-10-21 |  | pass |
-| R10 Sum of remaining duration (h) | 42832.0 | 42832.0 | 42832 | 0.0 | pass |
-| R11 Weighted % complete | 38.84 | 38.84 | 38.84 | 0.0 | pass |
+| R10 Sum of remaining duration (h) | 42984.0 | 42984.0 | 42984 | 0.0 | pass |
+| R11 Weighted % complete | 38.58 | 38.58 | 38.58 | 0.0 | pass |
 | R12 Critical activity count | 39 | 39 | 39 | 0 | pass |
 | R13 Data date | 2026-10-29 | 2026-10-29 | 2026-10-29 |  | pass |
 | R14 Baseline reference | BL1 | BL1 | BL1 |  | pass |
-| R15 Source file SHA-256 | b97ca096731b93c9... | b97ca096731b93c92e3... | b97ca096731b93c92e3... |  | pass |
+| R15 Source file SHA-256 | bf458482b5583046... | bf458482b5583046c5a... | bf458482b5583046c5a... |  | pass |
 | R16 Engine re-schedule matches P6 dates | 291 | 291 | 291 | 0 | pass |

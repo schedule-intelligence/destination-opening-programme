@@ -268,10 +268,11 @@ def write_registers(snaps: list[Snapshot], root: pathlib.Path):
     for k, d in enumerate(DATA_DATES[1:], start=1):
         for step, desc in REPORTING_STEPS:
             off = int(step[1:]) if step != "T0" else 0
-            day = CALS[2].add(to_time(d), off * HOURS_PER_DAY, finish=False) if off >= 0 else \
-                CALS[2].start_at(CALS[2].pos(to_time(d)) + off * HOURS_PER_DAY)
-            cal.append([SNAPSHOT_LABELS[k], d.isoformat(), step, fmt_time(day)[:10], desc,
-                        "monthly" if True else ""])
+            if off == 0:   # the cut-off is the data date itself, even when it falls in a holiday block
+                day = to_time(d)
+            else:
+                day = CALS[2].start_at(CALS[2].pos(to_time(d)) + off * HOURS_PER_DAY)
+            cal.append([SNAPSHOT_LABELS[k], d.isoformat(), step, fmt_time(day)[:10], desc, "monthly"])
     write_csv(reg / "reporting_calendar.csv", ["period", "data_date", "step", "date", "activity", "cycle"], cal)
     storyline = [[e["frm"], e["to"] if e["to"] < 99 else "", e["op"], e.get("id", e.get("pred", "")),
                   e.get("succ", ""), e.get("issue", ""), e.get("why", "")] for e in EVENTS]

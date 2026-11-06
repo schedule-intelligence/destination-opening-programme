@@ -99,7 +99,7 @@ EVENTS = [
 ]
 
 # progress events applied in the period that ends at snapshot k
-STALLS = {4: ["PEW-CON-1110"], 5: ["PEW-CON-1110", "MTP-CON-1310"]}
+STALLS = {4: ["PEW-CON-1110"], 5: ["PEW-CON-1110", "PRG-OPM-4020"]}
 FORCE_START = {2: {"DAR-CON-1112": D(2026, 6, 13)}}   # out-of-sequence: starts before its FS predecessor finishes
 
 

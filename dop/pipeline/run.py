@@ -33,8 +33,9 @@ def run_pipeline(root: pathlib.Path, near_critical_days: int = 10, json_path: pa
     m = build_model(root, bls, ups, run_ts, near_critical_days)
     js = build_dashboard_json(m, run_ts, near_critical_days)
     jpath = json_path or root / "docs" / "data" / "dashboard.json"
-    write_json(js, jpath)
-    on_disk = json.loads(jpath.read_text(encoding="utf-8"))   # reconcile against what was actually written
+    staging = jpath.with_name(jpath.stem + ".staging.json")
+    write_json(js, staging)
+    on_disk = json.loads(staging.read_text(encoding="utf-8"))   # reconcile against what was actually written
     bl_ids = {str(s.project["proj_id"]): name for name, s in bls.items()}
     controls = []
     for s in ups:
@@ -43,6 +44,15 @@ def run_pipeline(root: pathlib.Path, near_critical_days: int = 10, json_path: pa
         flagged = {i for c in INTEGRITY_CHECKS for i in q["offenders"][c]}
         controls += reconcile(s, m, on_disk, bl_ids, flagged)
     m["fact_reconciliation"] = pd.DataFrame(controls)
+    failed = [c for c in controls if not c["passed"]]
+    if failed:  # the gate: nothing downstream (CSV, XLSX, reports, dictionary) is published from a failed run
+        for c in failed[:20]:
+            print(f"  FAIL {c['snapshot_id']} {c['control_id']}: source={c['source_value']} model={c['model_value']} "
+                  f"dashboard={c['dashboard_value']}")
+        print(f"[pipeline] RECONCILIATION GATE FAILED ({len(failed)} controls); nothing published, "
+              f"previous outputs left unchanged")
+        staging.unlink(missing_ok=True)
+        return 1
     for s in ups:
         sid = snap_id(s.data_date)
         cs = [c for c in controls if c["snapshot_id"] == sid]
@@ -54,19 +64,12 @@ def run_pipeline(root: pathlib.Path, near_critical_days: int = 10, json_path: pa
         write_recon_report(cs, s, root / "output" / "reports" / f"reconciliation_{d}.md", m["_quality"][sid]["dq_score"])
         write_workbook(m, sid, cs, root / "output" / "xlsx" / f"DOP_controls_{d}.xlsx")
     write_json(js, jpath)
+    staging.unlink(missing_ok=True)
     write_csvs(m, root / "output" / "csv")
     write_markdown(root / "DATA_DICTIONARY.md")
-    failed = [c for c in controls if not c["passed"]]
-    n_ok = len(controls) - len(failed)
-    say(f"[pipeline] reconciliation: {n_ok}/{len(controls)} controls pass across {len(ups)} data dates")
+    say(f"[pipeline] reconciliation: {len(controls)}/{len(controls)} controls pass across {len(ups)} data dates")
     for s in m["fact_snapshot_summary"].itertuples():
         say(f"  {s.label} {s.data_date}  Day 1 {s.day1_forecast:%d-%b-%Y}  TF {s.day1_tf_d:+.0f} d  "
             f"DQ {s.dq_score:.0f} ({s.dq_rating})  critical {s.critical_count}")
     say(f"[pipeline] done in {time.perf_counter() - t0:.1f} s")
-    if failed:
-        for c in failed[:20]:
-            print(f"  FAIL {c['snapshot_id']} {c['control_id']}: source={c['source_value']} model={c['model_value']} "
-                  f"dashboard={c['dashboard_value']}")
-        print("[pipeline] RECONCILIATION GATE FAILED")
-        return 1
     return 0

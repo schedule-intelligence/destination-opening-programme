@@ -1,12 +1,12 @@
 # Reconciliation report: 2026-09-24
 
-Source: `DOP_UPD_2026-09-24.xer` (SHA-256 `4acba2ca5b31e1c5...`)  
-Result: **FAIL**, 39/40 controls  
-DQ score: 79.6
+Source: `DOP_UPD_2026-09-24.xer` (SHA-256 `333e0124c4c857b9...`)  
+Result: **PASS**, 40/40 controls  
+DQ score: 80.0
 
 | Control | Source (XER) | Model (CSV) | Dashboard (JSON) | Delta | Result |
 |---|---|---|---|---|---|
-| R01 Activity count | 291 | 291 | 291 | 0 | FAIL |
+| R01 Activity count | 291 | 291 | 291 | 0 | pass |
 | R02.TK_Active Activities by status - TK_Active | 22 | 22 | 22 | 0 | pass |
 | R02.TK_Complete Activities by status - TK_Complete | 45 | 45 | 45 | 0 | pass |
 | R02.TK_NotStart Activities by status - TK_NotStart | 224 | 224 | 224 | 0 | pass |
@@ -39,10 +39,10 @@ DQ score: 79.6
 | R09.PRG-D1R-M030 Key milestone finish - PRG-D1R-M030 | 2027-09-02 | 2027-09-02 | 2027-09-02 |  | pass |
 | R09.PRG-D1R-M040 Key milestone finish - PRG-D1R-M040 | 2027-10-28 | 2027-10-28 | 2027-10-28 |  | pass |
 | R09.PRG-D1R-M999 Key milestone finish - PRG-D1R-M999 | 2027-10-28 | 2027-10-28 | 2027-10-28 |  | pass |
-| R10 Sum of remaining duration (h) | 49312.0 | 49312.0 | 49312 | 0.0 | pass |
-| R11 Weighted % complete | 30.27 | 30.27 | 30.27 | 0.0 | pass |
+| R10 Sum of remaining duration (h) | 49464.0 | 49464.0 | 49464 | 0.0 | pass |
+| R11 Weighted % complete | 30.01 | 30.01 | 30.01 | 0.0 | pass |
 | R12 Critical activity count | 43 | 43 | 43 | 0 | pass |
 | R13 Data date | 2026-09-24 | 2026-09-24 | 2026-09-24 |  | pass |
 | R14 Baseline reference | BL1 | BL1 | BL1 |  | pass |
-| R15 Source file SHA-256 | 4acba2ca5b31e1c5... | 4acba2ca5b31e1c5a54... | 4acba2ca5b31e1c5a54... |  | pass |
+| R15 Source file SHA-256 | 333e0124c4c857b9... | 333e0124c4c857b9570... | 333e0124c4c857b9570... |  | pass |
 | R16 Engine re-schedule matches P6 dates | 291 | 291 | 291 | 0 | pass |
