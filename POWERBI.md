@@ -1,0 +1,1543 @@
+# Power BI build guide
+
+This guide rebuilds the DOP schedule-intelligence dashboard in Power BI Desktop from the reconciled star schema
+in `output/csv/`. When you follow it, the report reproduces the published numbers for every data date. For the
+latest update (29-Oct-2026) those are: Day 1 forecast 21-Oct-2027, Day 1 total float −7 working days, 41 critical
+activities, DQ score 75.4 and 40 of 40 reconciliation controls passing. Allow about two hours for the build. The model
+uses 22 CSV tables, 96 measures, one theme and nine report pages.
+
+> **Transparency.** All data in this repository is fictional. The author does not have Primavera P6. The schedules
+> are produced by a custom CPM engine that follows P6 conventions (retained logic, lags on the successor calendar,
+> TF = LF − EF). They are exported in genuine P6 XER format and then read by the same pipeline that would read a
+> real P6 export. The CSVs are therefore exactly what a P6-fed pipeline produces. Replacing the XER files with real
+> exports changes the data, not the model.
+
+Files used:
+
+| File | Purpose |
+|---|---|
+| `output/csv/*.csv` | Star schema: 7 dimensions and 15 facts, 6 monthly updates (28-May-2026 to 29-Oct-2026) |
+| [`powerbi/measures.dax`](https://github.com/schedule-intelligence/destination-opening-programme/blob/main/powerbi/measures.dax) | Every measure in one DAX query: paste it into DAX query view and add all measures in one step |
+| [`powerbi/dop_theme.json`](https://github.com/schedule-intelligence/destination-opening-programme/blob/main/powerbi/dop_theme.json) | Report theme in the shared palette (dashboard, Power BI and PowerPoint match) |
+| [`DATA_DICTIONARY.md`](https://github.com/schedule-intelligence/destination-opening-programme/blob/main/DATA_DICTIONARY.md) | One definition per measure; measure names below match it |
+| `docs/data/dashboard.json` | Source of the Definitions page (same records as the data dictionary) |
+| `scripts/check_dax_columns.py` | Checks that every table, column and measure referenced here exists |
+
+Contents: [1 Data flow](#1-data-flow) · [2 Power Query](#2-get-the-data-and-shape-it-in-power-query) ·
+[3 Relationships](#3-relationships) · [4 Helper tables and parameters](#4-helper-tables-and-parameters) ·
+[5 Measures](#5-measures) · [6 Report pages](#6-report-pages) ·
+[7 Drill-through, field parameters, bookmarks](#7-drill-through-field-parameters-and-bookmarks) ·
+[8 Refresh](#8-refresh-process) · [9 Row-level security](#9-row-level-security) ·
+[10 Performance](#10-performance-notes) · [11 Validation](#11-validation) ·
+[12 Aligning with the approved P6 schedule](#12-aligning-with-the-approved-p6-schedule)
+
+---
+
+## 1. Data flow
+
+```
+P6 XER exports            pipeline (python -m dop pipeline)                        Power BI
+data/xer/                 parse every XER table -> CPM re-schedule + quality       output/csv (22 tables)
+  DOP_BL0.xer, DOP_BL1.xer  -> star schema -> dashboard.json                        -> Power Query types
+  DOP_UPD_<date>.xer        -> reconciliation gate (XER = model = dashboard)         -> star-schema model
+                            -> exit 0 only if every control passes                   -> measures, pages
+```
+
+| Role | Tables |
+|---|---|
+| Dimensions | `dim_snapshot` (data date), `dim_activity`, `dim_wbs`, `dim_owner`, `dim_calendar`, `dim_date`, `dim_code` |
+| Activity facts | `fact_activity_snapshot` (activity × update, the main fact), `fact_relationship`, `fact_milestone_trend` |
+| Programme facts | `fact_snapshot_summary` (one row per update), `fact_s_curve`, `fact_readiness`, `fact_interface` |
+| Quality and controls | `fact_dcma_check`, `fact_dcma_offender`, `fact_owner_scorecard`, `fact_reconciliation` |
+| Registers | `fact_risk` (per update), `fact_decision`, `fact_change`, `fact_scenario` (latest update) |
+
+Grain and keys for every table are listed in the
+[data dictionary](https://github.com/schedule-intelligence/destination-opening-programme/blob/main/DATA_DICTIONARY.md#tables-star-schema-outputcsv).
+
+---
+
+## 2. Get the data and shape it in Power Query
+
+The CSVs are UTF-8 and comma-separated. Dates are ISO (`2027-10-21` or `2027-10-21 16:00:00`), booleans are
+`True`/`False`, and an empty field means null. Convert each type explicitly, as below. Do not rely on
+auto-detection, which reads ISO dates by the machine locale and leaves booleans as text.
+
+**Step 1: parameters.** Go to Home > Manage parameters > New. Create `CsvFolder` (Text), for example
+`V:\schedule-intelligence\output\csv` or the published share `\\<file-server>\DOP\powerbi\csv`. Create
+`DashboardJson` (Text) as the full path to `docs\data\dashboard.json` (on the share,
+`\\<file-server>\DOP\powerbi\dashboard.json`). If you use row-level security, also create `SecurityMapFile`
+(Text, section 9). Set File > Options > Current file >
+Regional settings > Locale for import to **English (United Kingdom)**.
+
+**Step 2: one loader function.** Go to New Source > Blank query > Advanced Editor, paste the code and name the
+query `fnLoadCsv`. Use the Folder connector (one data source for the gateway, see section 8). If you only need a
+quick local build, Get Data > Text/CSV works too, as long as you apply the same type rules.
+
+```m
+// fnLoadCsv: load one star-schema CSV from CsvFolder and apply explicit types (en-GB, ISO dates)
+(name as text, dateCols as list, logicalCols as list, intCols as list, numberCols as list) as table =>
+let
+    Files    = Folder.Files(CsvFolder),
+    Content  = Files{[Name = name & ".csv"]}[Content],
+    Raw      = Csv.Document(Content, [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+    Promoted = Table.PromoteHeaders(Raw, [PromoteAllScalars = true]),
+    Cols     = Table.ColumnNames(Promoted),
+    // empty field -> null (CSV has no other null marker)
+    Nulls    = Table.ReplaceValue(Promoted, "", null, Replacer.ReplaceValue, Cols),
+    // datetimes keep the date only: P6 shows finishes at 16:00 and starts at 08:00, reporting is by day
+    AsDate   = Table.TransformColumns(Nulls, List.Transform(List.Intersect({dateCols, Cols}), (c) =>
+                 {c, each if _ = null then null
+                          else Date.FromText(Text.Start(_, 10), [Format = "yyyy-MM-dd", Culture = "en-GB"]),
+                  type nullable date})),
+    AsBool   = Table.TransformColumns(AsDate, List.Transform(List.Intersect({logicalCols, Cols}), (c) =>
+                 {c, each if _ = "True" then true else if _ = "False" then false else null,
+                  type nullable logical})),
+    AsInt    = Table.TransformColumns(AsBool, List.Transform(List.Intersect({intCols, Cols}), (c) =>
+                 {c, each if _ = null then null else Int64.From(Number.FromText(_, "en-GB")), Int64.Type})),
+    AsNum    = Table.TransformColumns(AsInt, List.Transform(List.Intersect({numberCols, Cols}), (c) =>
+                 {c, each if _ = null then null else try Number.FromText(_, "en-GB") otherwise null,
+                  type nullable number})),
+    TextCols = List.Difference(Cols, dateCols & logicalCols & intCols & numberCols),
+    Typed    = Table.TransformColumnTypes(AsNum, List.Transform(TextCols, (c) => {c, type text}))
+in
+    Typed
+```
+
+**Step 3: one query per table.** Create a blank query for each table, name it exactly as the CSV (the measures
+use these names) and set its formula to the expression below. Lists are: date, logical, whole number and
+decimal columns. Every other column is text.
+
+```m
+dim_activity           = fnLoadCsv("dim_activity", {}, {"is_milestone", "in_bl0", "in_bl1"}, {"calendar_id", "wbs_id", "first_snapshot_id"}, {})
+dim_calendar           = fnLoadCsv("dim_calendar", {}, {}, {"calendar_id", "working_days", "holiday_exceptions"}, {"hours_per_day", "hours_per_week"})
+dim_code               = fnLoadCsv("dim_code", {}, {}, {}, {})
+dim_date               = fnLoadCsv("dim_date", {"date"}, {"is_weekend"}, {"date_key", "year", "month", "iso_week"}, {})
+dim_owner              = fnLoadCsv("dim_owner", {}, {}, {}, {})
+dim_snapshot           = fnLoadCsv("dim_snapshot", {"data_date", "cutoff_expected"}, {"is_latest"}, {"snapshot_id"}, {})
+dim_wbs                = fnLoadCsv("dim_wbs", {}, {"proj_node"}, {"wbs_id", "level", "parent_wbs_id"}, {})
+fact_activity_snapshot = fnLoadCsv("fact_activity_snapshot",
+                           {"actual_start", "actual_finish", "start", "finish", "late_start", "late_finish", "bl0_start", "bl0_finish",
+                            "bl1_start", "bl1_finish", "bl_start", "bl_finish", "prev_finish", "constraint_date"},
+                           {"is_critical", "is_near_critical", "is_longest_path", "lookback_achieved", "lookahead_start", "lookahead_finish", "lookahead"},
+                           {"snapshot_id"},
+                           {"pct_duration", "pct_physical", "orig_dur_d", "rem_dur_d", "total_float_d", "free_float_d", "var_finish_bl0_d",
+                            "var_finish_bl1_d", "var_finish_bl_d", "slip_vs_prev_d", "planned_pct_bl"})
+fact_change            = fnLoadCsv("fact_change", {"raised_data_date", "approval_date"}, {}, {"day1_impact_days"}, {})
+fact_dcma_check        = fnLoadCsv("fact_dcma_check", {}, {"passed"}, {"snapshot_id", "weight", "denominator", "count"}, {"threshold", "value", "score"})
+fact_dcma_offender     = fnLoadCsv("fact_dcma_offender", {}, {}, {"snapshot_id"}, {})
+fact_decision          = fnLoadCsv("fact_decision", {"raised_data_date", "needed_by", "closed_on", "linked_forecast"}, {"overdue"}, {"days_to_need"}, {"linked_tf_d"})
+fact_interface         = fnLoadCsv("fact_interface", {"need_by", "giver_forecast"}, {}, {"snapshot_id", "gap_days"}, {"giver_tf_d"})
+fact_milestone_trend   = fnLoadCsv("fact_milestone_trend", {"forecast_finish", "bl0_finish", "bl1_finish"}, {}, {"snapshot_id"},
+                           {"var_bl0_d", "var_bl1_d", "movement_vs_prev_d", "total_float_d"})
+fact_owner_scorecard   = fnLoadCsv("fact_owner_scorecard", {}, {},
+                           {"snapshot_id", "activities", "incomplete", "flagged", "update_issues", "logic_issues", "n_D01", "n_D05", "n_D06", "n_D07",
+                            "n_D08", "n_D09", "n_D11", "n_U01", "n_U03", "n_U04", "n_U05", "n_U06", "n_U07", "n_U09", "n_U11"},
+                           {"owner_dq"})
+fact_readiness         = fnLoadCsv("fact_readiness", {"forecast", "baseline", "need_by"}, {}, {"snapshot_id"}, {"gap_d", "var_bl_d", "span_from_prev_d", "total_float_d"})
+fact_reconciliation    = fnLoadCsv("fact_reconciliation", {}, {"passed"}, {"snapshot_id"}, {"delta"})
+fact_relationship      = fnLoadCsv("fact_relationship", {}, {"is_driving"}, {"snapshot_id"}, {"lag_d", "slack_d"})
+fact_risk              = fnLoadCsv("fact_risk", {}, {}, {"snapshot_id", "probability", "impact", "score", "trend", "schedule_impact_days"}, {"min_linked_float_d"})
+fact_s_curve           = fnLoadCsv("fact_s_curve", {"date"}, {}, {}, {"planned_bl0", "planned_bl1", "forecast", "actual"})
+fact_scenario          = fnLoadCsv("fact_scenario", {"day1_forecast"}, {"recommended"}, {"neg_float_count", "near_critical_count"}, {"day1_impact_days", "day1_tf_d", "float_gain_d"})
+fact_snapshot_summary  = fnLoadCsv("fact_snapshot_summary", {"data_date", "day1_forecast"}, {},
+                           {"snapshot_id", "critical_count", "near_critical_count", "longest_path_count", "negative_float_count", "activities",
+                            "complete", "in_progress", "not_started"},
+                           {"day1_tf_d", "day1_var_bl0_d", "day1_var_bl1_d", "dq_score", "cpli", "bei", "min_float_d", "avg_float_d",
+                            "float_erosion_d", "day1_movement_d"})
+```
+
+Null handling to keep in mind:
+
+- `total_float_d` and `free_float_d` are null for completed activities, because P6 holds no float on them. The
+  measures filter to incomplete work, so nulls never count as zero float.
+- `lookback_event` and `lookback_achieved` are null unless the activity was a look-back item. Use strict
+  equality (`== FALSE ()`) when you count misses, because in DAX `BLANK () = FALSE ()` is true.
+- `fact_dcma_check[passed]` is null for D10 (resources, not applicable). It counts as neither a pass nor a fail.
+- `fact_reconciliation[source_value]`, `model_value` and `dashboard_value` hold numbers, dates or SHA-256 hashes,
+  so they stay text. `delta` becomes a decimal number, and non-numeric controls give null.
+- `prev_finish` and `slip_vs_prev_d` are null for an activity that first appears in an update.
+
+**Step 4: three small additions in Power Query.** Replace the step 3 formula of `dim_snapshot` and
+`fact_readiness` with the full queries below, and add a new blank query named `definitions`.
+
+```m
+// dim_snapshot: a slicer label whose latest value stays "Latest update", so the saved selection survives refresh
+let
+    Source = fnLoadCsv("dim_snapshot", {"data_date", "cutoff_expected"}, {"is_latest"}, {"snapshot_id"}, {}),
+    Added  = Table.AddColumn(Source, "slicer_label", each
+                 if [is_latest] then "Latest update"
+                 else Date.ToText([data_date], [Format = "dd-MMM-yyyy", Culture = "en-GB"]), type text)
+in
+    Added
+
+// fact_readiness: stage order for the readiness chain (sort the stage column by this)
+let
+    Source = fnLoadCsv("fact_readiness", {"forecast", "baseline", "need_by"}, {}, {"snapshot_id"},
+                 {"gap_d", "var_bl_d", "span_from_prev_d", "total_float_d"}),
+    Added  = Table.AddColumn(Source, "stage_order", each 1 + List.PositionOf(
+                 {"Construction complete", "T&C complete", "Handover to operator", "Operator trained",
+                  "Trials & test events complete", "Day 1 ready"}, [stage]), Int64.Type)
+in
+    Added
+
+// definitions: the measure definitions for the About & method page (same records as DATA_DICTIONARY.md)
+let
+    Source = Table.FromRecords(Json.Document(File.Contents(DashboardJson))[definitions]),
+    Typed  = Table.TransformColumnTypes(Source, List.Transform(Table.ColumnNames(Source), (c) => {c, type text}))
+in
+    Typed
+```
+
+Finally, set sort-by columns: `dim_date[month_name]` by `month`, `dim_snapshot[label]` and
+`dim_snapshot[slicer_label]` by `data_date`, and `fact_readiness[stage]` by `stage_order`. Mark `dim_date` as
+the date table on `dim_date[date]`.
+
+---
+
+## 3. Relationships
+
+Single-direction filters run from each dimension to its facts. The only one-to-one in the data,
+`fact_snapshot_summary` to `dim_snapshot`, is still set as many-to-one so that the summary never filters the
+dimension. Delete any relationship that Power BI auto-detects and is not listed here.
+
+| From (many) | To (one) | Cardinality | Cross-filter | Active | Purpose |
+|---|---|---|---|---|---|
+| `fact_activity_snapshot[snapshot_id]` | `dim_snapshot[snapshot_id]` | * : 1 | Single | Yes | Data-date slicer |
+| `fact_activity_snapshot[activity_id]` | `dim_activity[activity_id]` | * : 1 | Single | Yes | Asset / workstream / package / owner |
+| `fact_activity_snapshot[finish]` | `dim_date[date]` | * : 1 | Single | **Yes** | Forecast (or actual) finish on the date axis |
+| `fact_activity_snapshot[bl0_finish]` | `dim_date[date]` | * : 1 | Single | **No** | BL0 finish; used with `USERELATIONSHIP` |
+| `fact_activity_snapshot[bl1_finish]` | `dim_date[date]` | * : 1 | Single | **No** | BL1 finish; used with `USERELATIONSHIP` |
+| `fact_snapshot_summary[snapshot_id]` | `dim_snapshot[snapshot_id]` | * : 1 | Single | Yes | Programme KPIs per update |
+| `fact_milestone_trend[snapshot_id]` | `dim_snapshot[snapshot_id]` | * : 1 | Single | Yes | Milestone trend |
+| `fact_milestone_trend[activity_id]` | `dim_activity[activity_id]` | * : 1 | Single | Yes | |
+| `fact_relationship[snapshot_id]` | `dim_snapshot[snapshot_id]` | * : 1 | Single | Yes | Logic per update |
+| `fact_relationship[succ_id]` | `dim_activity[activity_id]` | * : 1 | Single | Yes | Predecessors (drivers) of the selected activity |
+| `fact_interface[snapshot_id]` | `dim_snapshot[snapshot_id]` | * : 1 | Single | Yes | |
+| `fact_interface[giver_id]` | `dim_activity[activity_id]` | * : 1 | Single | Yes | Filter interfaces by the giver's asset and owner |
+| `fact_readiness[snapshot_id]` | `dim_snapshot[snapshot_id]` | * : 1 | Single | Yes | |
+| `fact_readiness[activity_id]` | `dim_activity[activity_id]` | * : 1 | Single | Yes | |
+| `fact_dcma_check[snapshot_id]` | `dim_snapshot[snapshot_id]` | * : 1 | Single | Yes | |
+| `fact_dcma_offender[snapshot_id]` | `dim_snapshot[snapshot_id]` | * : 1 | Single | Yes | |
+| `fact_dcma_offender[activity_id]` | `dim_activity[activity_id]` | * : 1 | Single | Yes | U08 items (data date vs cut-off) are not activities and show as blank |
+| `fact_owner_scorecard[snapshot_id]` | `dim_snapshot[snapshot_id]` | * : 1 | Single | Yes | |
+| `fact_owner_scorecard[owner_code]` | `dim_owner[owner_code]` | * : 1 | Single | Yes | |
+| `fact_reconciliation[snapshot_id]` | `dim_snapshot[snapshot_id]` | * : 1 | Single | Yes | |
+| `fact_risk[snapshot_id]` | `dim_snapshot[snapshot_id]` | * : 1 | Single | Yes | |
+| `fact_risk[owner_code]` | `dim_owner[owner_code]` | * : 1 | Single | Yes | |
+| `fact_s_curve[date]` | `dim_date[date]` | * : 1 | Single | Yes | S-curve on the shared date axis |
+| `dim_activity[wbs_id]` | `dim_wbs[wbs_id]` | * : 1 | Single | Yes | P6 WBS hierarchy |
+| `dim_activity[owner_code]` | `dim_owner[owner_code]` | * : 1 | Single | Yes | Owner filter and row-level security |
+| `dim_activity[calendar_id]` | `dim_calendar[calendar_id]` | * : 1 | Single | Yes | Working-day calendar of each activity |
+
+Design notes:
+
+- **Disconnected on purpose.** `fact_decision`, `fact_change` and `fact_scenario` describe the latest update and
+  the change register, not an activity grain, so they have no relationships. `dim_code` is a lookup for labels.
+  `fact_interface[receiver_id]` and `fact_relationship[pred_id]` stay unrelated. A second active path from
+  `dim_activity` would make the model ambiguous. If you need a successor list, add a reference copy of
+  `dim_activity` (`dim_activity_succ`) related to `fact_relationship[pred_id]`.
+- **One filter path per question.** Owner filters reach activity facts through `dim_activity`, and reach risks and
+  the owner scorecard directly. No table can be reached by two paths, so the model has no bidirectional filters.
+- **Hierarchies.** In `dim_activity`, create *Programme*: `asset_name` > `workstream_name` > `package_name` >
+  `activity_name`. This matches the dashboard breadcrumb. In `dim_wbs`, create *P6 WBS*: `level1` > `level2` >
+  `level3` > `wbs_name`. The pipeline has already flattened the parent-child WBS (`parent_wbs_id`) into these
+  levels, so `PATH ()` columns are not needed. In `dim_date`, create *Calendar*: `year` > `quarter` > `month_name`
+  > `date`.
+- **Data-date slicer.** Use `dim_snapshot[slicer_label]` as a single-select dropdown slicer, synced across
+  pages 1 to 7. Set it to "Latest update". Trend visuals (Day 1 float, DQ, the reconciliation history) must show
+  all six updates. For each of them, Format > Edit interactions > set the slicer to *None*.
+
+---
+
+## 4. Helper tables and parameters
+
+1. **Measure table.** Go to Home > Enter data, create an empty table named `_Measures` and load it. After the
+   measures are added, hide its placeholder column. The table then shows a calculator icon at the top of the
+   field list.
+2. **Near-critical threshold (what-if).** Go to Modeling > New parameter > Numeric range. Set the name to
+   `Near-critical threshold`, whole number, minimum 0, maximum 30, increment 1, default **10** (the pipeline
+   default), and tick *Add slicer to this page*. Power BI creates the table `GENERATESERIES ( 0, 30, 1 )` and
+   renames its `Value` column to the parameter name; the DAX below gives the same table. You can delete the
+   generated `Near-critical threshold Value` measure, because `[Near-critical threshold (d)]` in `measures.dax`
+   does the same job (`SELECTEDVALUE`, default 10). Changing the threshold changes `[Near-critical count]` and
+   the amber band of `[Day 1 RAG colour]` live. The stored `is_near_critical` flag stays at the pipeline threshold
+   (10 unless the pipeline is run with `--near-critical`).
+
+```dax
+Near-critical threshold =
+SELECTCOLUMNS ( GENERATESERIES ( 0, 30, 1 ), "Near-critical threshold", [Value] )
+```
+
+3. **Field parameter: hierarchy level.** Go to Modeling > New parameter > Fields, name it `Hierarchy level`, and
+   add the four fields below in order. Put it on the rows of the main matrix with a slicer, so the reader picks
+   the level (Asset, Workstream, Package or Activity) without rebuilding visuals.
+
+```dax
+Hierarchy level = {
+    ( "Asset", NAMEOF ( 'dim_activity'[asset_name] ), 0 ),
+    ( "Workstream", NAMEOF ( 'dim_activity'[workstream_name] ), 1 ),
+    ( "Package", NAMEOF ( 'dim_activity'[package_name] ), 2 ),
+    ( "Activity", NAMEOF ( 'dim_activity'[activity_name] ), 3 )
+}
+```
+
+4. **Field parameter: compare against.** This mirrors the dashboard's *Compare: previous | BL0 | BL1* switch.
+   Create it after the measures exist.
+
+```dax
+Compare against = {
+    ( "Previous update", NAMEOF ( '_Measures'[Slip vs previous period] ), 0 ),
+    ( "BL0", NAMEOF ( '_Measures'[Finish variance vs BL0] ), 1 ),
+    ( "BL1", NAMEOF ( '_Measures'[Finish variance vs BL1] ), 2 )
+}
+```
+
+---
+
+## 5. Measures
+
+**Load them in one step.** Open DAX query view, paste the whole of
+[`powerbi/measures.dax`](https://github.com/schedule-intelligence/destination-opening-programme/blob/main/powerbi/measures.dax)
+and select **Run**. The `EVALUATE` at the end returns one row per data date; check it against section 11. Then
+select **Update model with changes** above `DEFINE` (or the *Update model: Add new measure* CodeLens above each
+measure) to add them all. The measures appear in `_Measures`. Name a display folder after each
+group heading below. The blocks below hold the same code, grouped for reading. They run inside the file's
+`DEFINE`, and `scripts/check_dax_columns.py` confirms that they are identical to it.
+
+Conventions used by every measure:
+
+- **Selected data date.** `[Selected snapshot id]` =
+  `SELECTEDVALUE ( dim_snapshot[snapshot_id], MAX ( dim_snapshot[snapshot_id] ) )`: the update chosen on the
+  single-select data-date slicer, or the latest update when nothing (or more than one) is selected. Each measure
+  pins itself to that one update. A card therefore shows the chosen update, and on a trend axis each point shows
+  its own update.
+- **Programme headline.** Day 1 measures and CPLI are read from `fact_snapshot_summary`, so asset, owner and
+  activity filters never change the Day 1 answer. BEI is computed from the activity rows (completed ÷ due), so it
+  also works per owner or asset; unfiltered, it equals `fact_snapshot_summary[bei]`.
+- **Units.** Floats and durations are in working days of the activity calendar (8 h per day). Variances, slips
+  and gaps are in calendar days, and positive means later. Percentages are returned as ratios: use the format
+  `0.0%`.
+- **Aggregation of variances.** On a single activity the value itself is returned. On an asset, workstream or
+  package the worst (latest) value is returned. A group is therefore never averaged into looking on time.
+
+| Format string | Measures |
+|---|---|
+| `dd-mmm-yyyy` | Data date, Previous data date, Day 1 forecast, Day 1 target, Forecast finish, Milestone forecast finish, Next decision needed by |
+| `+0;-0;0` | Day 1 total float, Float erosion, all variance, slip, movement and gap measures, Float gain, Recommended scenario Day 1 total float |
+| `0.0` | Total float (min), Total float (average), DQ score, DQ score movement, Progress variance (pts) |
+| `0.0%` | Planned % complete, Weighted % complete (actual), Look-back hit rate, Owner DQ |
+| `0.000` | BEI, CPLI |
+| `0` | All counts |
+
+<details>
+<summary><b>1. Context: selected data date, previous update, baseline in force</b></summary>
+
+<!-- DAX-GROUP:1 -->
+
+```dax
+// One update selected on the data-date slicer -> that update; none or several -> the latest in context
+MEASURE '_Measures'[Selected snapshot id] =
+    SELECTEDVALUE ( dim_snapshot[snapshot_id], MAX ( dim_snapshot[snapshot_id] ) )
+
+MEASURE '_Measures'[Previous snapshot id] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE (
+            MAX ( dim_snapshot[snapshot_id] ),
+            REMOVEFILTERS ( dim_snapshot ),
+            dim_snapshot[snapshot_id] < _sid
+        )
+
+MEASURE '_Measures'[Data date] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE ( MAX ( dim_snapshot[data_date] ), dim_snapshot[snapshot_id] = _sid )
+
+MEASURE '_Measures'[Previous data date] =
+    VAR _prev = [Previous snapshot id]
+    RETURN
+        CALCULATE (
+            MAX ( dim_snapshot[data_date] ),
+            REMOVEFILTERS ( dim_snapshot ),
+            dim_snapshot[snapshot_id] = _prev
+        )
+
+MEASURE '_Measures'[Baseline in force] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE ( SELECTEDVALUE ( dim_snapshot[baseline_in_force] ), dim_snapshot[snapshot_id] = _sid )
+
+MEASURE '_Measures'[Source file] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE ( SELECTEDVALUE ( dim_snapshot[source_file] ), dim_snapshot[snapshot_id] = _sid )
+```
+<!-- /DAX-GROUP:1 -->
+
+</details>
+
+<details>
+<summary><b>2. Day 1 headline and float erosion</b></summary>
+
+`[Float erosion]` compares Day 1 total float with the previous update; negative means float was lost. The first
+update has no previous update, so the pipeline's comparison with BL0 is used.
+
+<!-- DAX-GROUP:2 -->
+
+```dax
+MEASURE '_Measures'[Day 1 target] =
+    DATE ( 2027, 10, 14 )
+
+MEASURE '_Measures'[Day 1 forecast] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE ( MAX ( fact_snapshot_summary[day1_forecast] ), dim_snapshot[snapshot_id] = _sid )
+
+MEASURE '_Measures'[Day 1 total float] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE ( SUM ( fact_snapshot_summary[day1_tf_d] ), dim_snapshot[snapshot_id] = _sid )
+
+MEASURE '_Measures'[Day 1 variance vs BL0] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE ( SUM ( fact_snapshot_summary[day1_var_bl0_d] ), dim_snapshot[snapshot_id] = _sid )
+
+MEASURE '_Measures'[Day 1 variance vs BL1] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE ( SUM ( fact_snapshot_summary[day1_var_bl1_d] ), dim_snapshot[snapshot_id] = _sid )
+
+MEASURE '_Measures'[Day 1 movement vs previous period] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE ( SUM ( fact_snapshot_summary[day1_movement_d] ), dim_snapshot[snapshot_id] = _sid )
+
+// Float erosion: change in Day 1 total float since the previous update (negative = float lost).
+// The first update has no previous update, so the pipeline value (vs BL0) is used.
+MEASURE '_Measures'[Float erosion] =
+    VAR _sid = [Selected snapshot id]
+    VAR _prev = [Previous snapshot id]
+    VAR _tf =
+        CALCULATE (
+            SUM ( fact_snapshot_summary[day1_tf_d] ),
+            REMOVEFILTERS ( dim_snapshot ),
+            dim_snapshot[snapshot_id] = _sid
+        )
+    VAR _tfPrev =
+        CALCULATE (
+            SUM ( fact_snapshot_summary[day1_tf_d] ),
+            REMOVEFILTERS ( dim_snapshot ),
+            dim_snapshot[snapshot_id] = _prev
+        )
+    VAR _first =
+        CALCULATE (
+            SUM ( fact_snapshot_summary[float_erosion_d] ),
+            REMOVEFILTERS ( dim_snapshot ),
+            dim_snapshot[snapshot_id] = _sid
+        )
+    RETURN
+        IF ( ISBLANK ( _prev ), _first, _tf - _tfPrev )
+
+// RAG colour for the Day 1 card (conditional formatting > Field value)
+MEASURE '_Measures'[Day 1 RAG colour] =
+    VAR _tf = [Day 1 total float]
+    RETURN
+        SWITCH (
+            TRUE (),
+            ISBLANK ( _tf ), "#64748B",
+            _tf < 0, "#C0392B",
+            _tf <= [Near-critical threshold (d)], "#D68910",
+            "#1E8449"
+        )
+```
+<!-- /DAX-GROUP:2 -->
+
+</details>
+
+<details>
+<summary><b>3. Progress: planned and actual % complete (duration-weighted)</b></summary>
+
+Both are weighted by original duration over normal tasks (`TT_Task`; LOE and milestones excluded), as in
+reconciliation control R11.
+
+<!-- DAX-GROUP:3 -->
+
+```dax
+MEASURE '_Measures'[Planned % complete] =
+    VAR _sid = [Selected snapshot id]
+    VAR _t =
+        CALCULATETABLE (
+            fact_activity_snapshot,
+            dim_snapshot[snapshot_id] = _sid,
+            dim_activity[activity_type] = "TT_Task",
+            fact_activity_snapshot[orig_dur_d] > 0
+        )
+    VAR _num = SUMX ( _t, fact_activity_snapshot[orig_dur_d] * fact_activity_snapshot[planned_pct_bl] )
+    VAR _den = SUMX ( _t, fact_activity_snapshot[orig_dur_d] )
+    RETURN
+        DIVIDE ( _num, _den ) / 100
+
+MEASURE '_Measures'[Weighted % complete (actual)] =
+    VAR _sid = [Selected snapshot id]
+    VAR _t =
+        CALCULATETABLE (
+            fact_activity_snapshot,
+            dim_snapshot[snapshot_id] = _sid,
+            dim_activity[activity_type] = "TT_Task",
+            fact_activity_snapshot[orig_dur_d] > 0
+        )
+    VAR _num = SUMX ( _t, fact_activity_snapshot[orig_dur_d] * fact_activity_snapshot[pct_duration] )
+    VAR _den = SUMX ( _t, fact_activity_snapshot[orig_dur_d] )
+    RETURN
+        DIVIDE ( _num, _den ) / 100
+
+// Percentage points; negative = behind plan
+MEASURE '_Measures'[Progress variance (pts)] =
+    ( [Weighted % complete (actual)] - [Planned % complete] ) * 100
+
+MEASURE '_Measures'[Activities] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE ( COUNTROWS ( fact_activity_snapshot ), dim_snapshot[snapshot_id] = _sid )
+
+MEASURE '_Measures'[Activities complete] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE (
+            COUNTROWS ( fact_activity_snapshot ),
+            dim_snapshot[snapshot_id] = _sid,
+            fact_activity_snapshot[status] = "TK_Complete"
+        )
+
+MEASURE '_Measures'[Activities in progress] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE (
+            COUNTROWS ( fact_activity_snapshot ),
+            dim_snapshot[snapshot_id] = _sid,
+            fact_activity_snapshot[status] = "TK_Active"
+        )
+
+MEASURE '_Measures'[Activities not started] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE (
+            COUNTROWS ( fact_activity_snapshot ),
+            dim_snapshot[snapshot_id] = _sid,
+            fact_activity_snapshot[status] = "TK_NotStart"
+        )
+```
+<!-- /DAX-GROUP:3 -->
+
+</details>
+
+<details>
+<summary><b>4. Finish variance vs BL0 / BL1 / baseline in force, and slip vs previous period</b></summary>
+
+<!-- DAX-GROUP:4 -->
+
+```dax
+MEASURE '_Measures'[Forecast finish] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE ( MAX ( fact_activity_snapshot[finish] ), dim_snapshot[snapshot_id] = _sid )
+
+MEASURE '_Measures'[Finish variance vs BL0] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE ( MAX ( fact_activity_snapshot[var_finish_bl0_d] ), dim_snapshot[snapshot_id] = _sid )
+
+MEASURE '_Measures'[Finish variance vs BL1] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE ( MAX ( fact_activity_snapshot[var_finish_bl1_d] ), dim_snapshot[snapshot_id] = _sid )
+
+MEASURE '_Measures'[Finish variance vs baseline in force] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE ( MAX ( fact_activity_snapshot[var_finish_bl_d] ), dim_snapshot[snapshot_id] = _sid )
+
+MEASURE '_Measures'[Slip vs previous period] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE ( MAX ( fact_activity_snapshot[slip_vs_prev_d] ), dim_snapshot[snapshot_id] = _sid )
+
+MEASURE '_Measures'[Activities slipped vs previous period] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE (
+            COUNTROWS ( fact_activity_snapshot ),
+            dim_snapshot[snapshot_id] = _sid,
+            fact_activity_snapshot[slip_vs_prev_d] > 0
+        ) + 0
+```
+<!-- /DAX-GROUP:4 -->
+
+</details>
+
+<details>
+<summary><b>5. Milestone variance and movement</b></summary>
+
+<!-- DAX-GROUP:5 -->
+
+```dax
+MEASURE '_Measures'[Milestone forecast finish] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE ( MAX ( fact_milestone_trend[forecast_finish] ), dim_snapshot[snapshot_id] = _sid )
+
+MEASURE '_Measures'[Milestone variance vs BL0] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE ( MAX ( fact_milestone_trend[var_bl0_d] ), dim_snapshot[snapshot_id] = _sid )
+
+MEASURE '_Measures'[Milestone variance vs BL1] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE ( MAX ( fact_milestone_trend[var_bl1_d] ), dim_snapshot[snapshot_id] = _sid )
+
+MEASURE '_Measures'[Milestone movement vs previous period] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE ( MAX ( fact_milestone_trend[movement_vs_prev_d] ), dim_snapshot[snapshot_id] = _sid )
+
+MEASURE '_Measures'[Milestones slipped vs previous period] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE (
+            COUNTROWS ( fact_milestone_trend ),
+            dim_snapshot[snapshot_id] = _sid,
+            fact_milestone_trend[movement_vs_prev_d] > 0
+        ) + 0
+
+MEASURE '_Measures'[Milestones later than baseline in force] =
+    VAR _sid = [Selected snapshot id]
+    VAR _bl = [Baseline in force]
+    RETURN
+        COUNTROWS (
+            FILTER (
+                CALCULATETABLE ( fact_milestone_trend, dim_snapshot[snapshot_id] = _sid ),
+                IF (
+                    _bl = "BL1",
+                    fact_milestone_trend[var_bl1_d],
+                    fact_milestone_trend[var_bl0_d]
+                ) > 0
+            )
+        ) + 0
+```
+<!-- /DAX-GROUP:5 -->
+
+</details>
+
+<details>
+<summary><b>6. Float and criticality, with the near-critical what-if threshold</b></summary>
+
+`[Critical count]` includes LOE and equals `fact_snapshot_summary[critical_count]`. `[Critical count (excl. LOE)]`
+equals reconciliation control R12, which counts from the source XER without LOE. Show the first on the
+dashboard and use the second on the reconciliation page.
+
+<!-- DAX-GROUP:6 -->
+
+```dax
+MEASURE '_Measures'[Near-critical threshold (d)] =
+    SELECTEDVALUE ( 'Near-critical threshold'[Near-critical threshold], 10 )
+
+// Matches fact_snapshot_summary[critical_count] (LOE included)
+MEASURE '_Measures'[Critical count] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE (
+            COUNTROWS ( fact_activity_snapshot ),
+            dim_snapshot[snapshot_id] = _sid,
+            fact_activity_snapshot[status] <> "TK_Complete",
+            fact_activity_snapshot[is_critical] = TRUE ()
+        ) + 0
+
+// Matches reconciliation control R12 (LOE excluded, as in the source XER count)
+MEASURE '_Measures'[Critical count (excl. LOE)] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE (
+            COUNTROWS ( fact_activity_snapshot ),
+            dim_snapshot[snapshot_id] = _sid,
+            fact_activity_snapshot[status] <> "TK_Complete",
+            fact_activity_snapshot[is_critical] = TRUE (),
+            dim_activity[activity_type] <> "TT_LOE"
+        ) + 0
+
+// What-if: 0 < TF <= threshold. At the default of 10 it equals fact_snapshot_summary[near_critical_count].
+MEASURE '_Measures'[Near-critical count] =
+    VAR _sid = [Selected snapshot id]
+    VAR _thr = [Near-critical threshold (d)]
+    RETURN
+        CALCULATE (
+            COUNTROWS ( fact_activity_snapshot ),
+            dim_snapshot[snapshot_id] = _sid,
+            fact_activity_snapshot[status] <> "TK_Complete",
+            fact_activity_snapshot[total_float_d] > 0,
+            fact_activity_snapshot[total_float_d] <= _thr
+        ) + 0
+
+MEASURE '_Measures'[Negative float count] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE (
+            COUNTROWS ( fact_activity_snapshot ),
+            dim_snapshot[snapshot_id] = _sid,
+            fact_activity_snapshot[status] <> "TK_Complete",
+            fact_activity_snapshot[total_float_d] < 0
+        ) + 0
+
+MEASURE '_Measures'[Longest path count] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE (
+            COUNTROWS ( fact_activity_snapshot ),
+            dim_snapshot[snapshot_id] = _sid,
+            fact_activity_snapshot[is_longest_path] = TRUE ()
+        ) + 0
+
+MEASURE '_Measures'[Total float (min)] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE (
+            MIN ( fact_activity_snapshot[total_float_d] ),
+            dim_snapshot[snapshot_id] = _sid,
+            fact_activity_snapshot[status] <> "TK_Complete"
+        )
+
+MEASURE '_Measures'[Total float (average)] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE (
+            AVERAGE ( fact_activity_snapshot[total_float_d] ),
+            dim_snapshot[snapshot_id] = _sid,
+            fact_activity_snapshot[status] <> "TK_Complete"
+        )
+
+// Row-level flag for tables and conditional formatting: 2 = critical, 1 = near-critical, 0 = other
+MEASURE '_Measures'[Criticality band] =
+    VAR _sid = [Selected snapshot id]
+    VAR _thr = [Near-critical threshold (d)]
+    VAR _tf =
+        CALCULATE (
+            MIN ( fact_activity_snapshot[total_float_d] ),
+            dim_snapshot[snapshot_id] = _sid,
+            fact_activity_snapshot[status] <> "TK_Complete"
+        )
+    RETURN
+        SWITCH ( TRUE (), ISBLANK ( _tf ), BLANK (), _tf <= 0, 2, _tf <= _thr, 1, 0 )
+```
+<!-- /DAX-GROUP:6 -->
+
+</details>
+
+<details>
+<summary><b>7. Look-back and look-ahead relative to the selected data date</b></summary>
+
+The pipeline writes the look-back and look-ahead flags into each update's rows relative to that update's data
+date. Selecting a data date therefore selects flags relative to it. `[Look-ahead items (recomputed)]` derives the
+same 14-day window from the dates and `[Data date]`, and must equal `[Look-ahead items]`.
+
+<!-- DAX-GROUP:7 -->
+
+```dax
+MEASURE '_Measures'[Look window (days)] =
+    14
+
+MEASURE '_Measures'[Look-ahead items] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE (
+            COUNTROWS ( fact_activity_snapshot ),
+            dim_snapshot[snapshot_id] = _sid,
+            fact_activity_snapshot[lookahead] = TRUE ()
+        ) + 0
+
+MEASURE '_Measures'[Look-ahead items (recomputed)] =
+    VAR _sid = [Selected snapshot id]
+    VAR _dd = [Data date]
+    VAR _end = _dd + [Look window (days)]
+    RETURN
+        COUNTROWS (
+            FILTER (
+                CALCULATETABLE ( fact_activity_snapshot, dim_snapshot[snapshot_id] = _sid ),
+                ( fact_activity_snapshot[status] = "TK_NotStart"
+                    && fact_activity_snapshot[start] >= _dd
+                    && fact_activity_snapshot[start] < _end )
+                    || ( fact_activity_snapshot[status] <> "TK_Complete"
+                        && fact_activity_snapshot[finish] >= _dd
+                        && fact_activity_snapshot[finish] < _end )
+            )
+        ) + 0
+
+MEASURE '_Measures'[Look-ahead critical items] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE (
+            COUNTROWS ( fact_activity_snapshot ),
+            dim_snapshot[snapshot_id] = _sid,
+            fact_activity_snapshot[lookahead] = TRUE (),
+            fact_activity_snapshot[is_critical] = TRUE ()
+        ) + 0
+
+// Visual-level filter for the look-ahead table: keep rows where the value is 1
+MEASURE '_Measures'[Look-ahead item (flag)] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        IF (
+            CALCULATE (
+                COUNTROWS ( fact_activity_snapshot ),
+                dim_snapshot[snapshot_id] = _sid,
+                fact_activity_snapshot[lookahead] = TRUE ()
+            ) > 0,
+            1,
+            0
+        )
+
+MEASURE '_Measures'[Look-back items] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE (
+            COUNTROWS ( fact_activity_snapshot ),
+            dim_snapshot[snapshot_id] = _sid,
+            NOT ISBLANK ( fact_activity_snapshot[lookback_event] )
+        ) + 0
+
+MEASURE '_Measures'[Look-back achieved] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE (
+            COUNTROWS ( fact_activity_snapshot ),
+            dim_snapshot[snapshot_id] = _sid,
+            fact_activity_snapshot[lookback_achieved] = TRUE ()
+        ) + 0
+
+// Strict equality (==) so that blank (not a look-back item) is not counted as missed
+MEASURE '_Measures'[Look-back missed] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE (
+            COUNTROWS ( fact_activity_snapshot ),
+            dim_snapshot[snapshot_id] = _sid,
+            fact_activity_snapshot[lookback_achieved] == FALSE ()
+        ) + 0
+
+MEASURE '_Measures'[Look-back hit rate] =
+    DIVIDE ( [Look-back achieved], [Look-back items] )
+
+MEASURE '_Measures'[Look-back item (flag)] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        IF (
+            CALCULATE (
+                COUNTROWS ( fact_activity_snapshot ),
+                dim_snapshot[snapshot_id] = _sid,
+                NOT ISBLANK ( fact_activity_snapshot[lookback_event] )
+            ) > 0,
+            1,
+            0
+        )
+```
+<!-- /DAX-GROUP:7 -->
+
+</details>
+
+<details>
+<summary><b>8. Schedule quality: DQ score, DCMA pass count, BEI, CPLI, owner DQ</b></summary>
+
+`[DQ score]` is 100 × Σ score ÷ Σ weight over the DCMA and update-discipline checks. The weights total 100
+(DCMA 83, update discipline 17), so the score is normalised by that total. Bands: Good ≥ 85, Fair 70–85,
+Poor < 70. `[BEI]` follows the data dictionary formula, completed ÷ due: completed counts every completed
+non-LOE activity, and due counts the non-LOE activities whose finish in the baseline in force (`bl_finish`) falls
+before the data date. It reproduces `fact_snapshot_summary[bei]` for all six updates. `[CPLI]` is read from the
+pipeline, because the critical path length is measured in working time on the Day 1 calendar.
+
+<!-- DAX-GROUP:8 -->
+
+```dax
+MEASURE '_Measures'[DQ score] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE (
+            DIVIDE ( SUM ( fact_dcma_check[score] ), SUM ( fact_dcma_check[weight] ) ) * 100,
+            dim_snapshot[snapshot_id] = _sid
+        )
+
+MEASURE '_Measures'[DQ rating] =
+    VAR _s = ROUND ( [DQ score], 1 )
+    RETURN
+        SWITCH ( TRUE (), ISBLANK ( _s ), BLANK (), _s >= 85, "Good", _s >= 70, "Fair", "Poor" )
+
+MEASURE '_Measures'[DQ score movement] =
+    VAR _prev = [Previous snapshot id]
+    VAR _now = [DQ score]
+    VAR _before =
+        CALCULATE (
+            DIVIDE ( SUM ( fact_dcma_check[score] ), SUM ( fact_dcma_check[weight] ) ) * 100,
+            REMOVEFILTERS ( dim_snapshot ),
+            dim_snapshot[snapshot_id] = _prev
+        )
+    RETURN
+        IF ( ISBLANK ( _prev ), BLANK (), _now - _before )
+
+MEASURE '_Measures'[DCMA pass count] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE (
+            COUNTROWS ( fact_dcma_check ),
+            dim_snapshot[snapshot_id] = _sid,
+            fact_dcma_check[group] = "DCMA",
+            fact_dcma_check[passed] = TRUE ()
+        ) + 0
+
+// D10 (resources) is not applicable: passed is blank, so it is excluded here
+MEASURE '_Measures'[DCMA applicable checks] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE (
+            COUNTROWS ( fact_dcma_check ),
+            dim_snapshot[snapshot_id] = _sid,
+            fact_dcma_check[group] = "DCMA",
+            NOT ISBLANK ( fact_dcma_check[passed] )
+        ) + 0
+
+MEASURE '_Measures'[Update discipline pass count] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE (
+            COUNTROWS ( fact_dcma_check ),
+            dim_snapshot[snapshot_id] = _sid,
+            fact_dcma_check[group] = "Update discipline",
+            fact_dcma_check[passed] = TRUE ()
+        ) + 0
+
+MEASURE '_Measures'[DCMA offenders] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE ( COUNTROWS ( fact_dcma_offender ), dim_snapshot[snapshot_id] = _sid ) + 0
+
+// BEI = tasks completed / tasks due by the data date in the baseline in force (DCMA D14, LOE excluded).
+// Baseline finishes fall at the end of the working day, so a baseline finish on the data date is not yet due.
+MEASURE '_Measures'[BEI tasks completed] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE (
+            COUNTROWS ( fact_activity_snapshot ),
+            dim_snapshot[snapshot_id] = _sid,
+            dim_activity[activity_type] <> "TT_LOE",
+            fact_activity_snapshot[status] = "TK_Complete"
+        ) + 0
+
+// NOT ISBLANK is required: in DAX a blank date compares as earlier than any date
+MEASURE '_Measures'[BEI tasks due] =
+    VAR _sid = [Selected snapshot id]
+    VAR _dd = [Data date]
+    RETURN
+        CALCULATE (
+            COUNTROWS ( fact_activity_snapshot ),
+            dim_snapshot[snapshot_id] = _sid,
+            dim_activity[activity_type] <> "TT_LOE",
+            NOT ISBLANK ( fact_activity_snapshot[bl_finish] ),
+            fact_activity_snapshot[bl_finish] < _dd
+        ) + 0
+
+MEASURE '_Measures'[BEI] =
+    DIVIDE ( [BEI tasks completed], [BEI tasks due] )
+
+// CPLI = (critical path length + Day 1 total float) / critical path length (DCMA D13). It is read from the
+// pipeline because the critical path length is working time on the Day 1 calendar, which the model does not hold.
+MEASURE '_Measures'[CPLI] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE ( SUM ( fact_snapshot_summary[cpli] ), dim_snapshot[snapshot_id] = _sid )
+
+// Owner DQ = 1 - flagged / activities, per owner (fact_owner_scorecard)
+MEASURE '_Measures'[Owner DQ] =
+    VAR _sid = [Selected snapshot id]
+    VAR _share =
+        CALCULATE (
+            DIVIDE ( SUM ( fact_owner_scorecard[flagged] ), SUM ( fact_owner_scorecard[activities] ) ),
+            dim_snapshot[snapshot_id] = _sid
+        )
+    RETURN
+        IF ( ISBLANK ( _share ), BLANK (), 1 - _share )
+```
+<!-- /DAX-GROUP:8 -->
+
+</details>
+
+<details>
+<summary><b>9. Interfaces and readiness gap</b></summary>
+
+<!-- DAX-GROUP:9 -->
+
+```dax
+MEASURE '_Measures'[Interfaces late] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE (
+            COUNTROWS ( fact_interface ),
+            dim_snapshot[snapshot_id] = _sid,
+            fact_interface[status] = "Late"
+        ) + 0
+
+MEASURE '_Measures'[Interfaces at risk] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE (
+            COUNTROWS ( fact_interface ),
+            dim_snapshot[snapshot_id] = _sid,
+            fact_interface[status] = "At risk"
+        ) + 0
+
+MEASURE '_Measures'[Interface gap (max)] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE (
+            MAX ( fact_interface[gap_days] ),
+            dim_snapshot[snapshot_id] = _sid,
+            fact_interface[status] <> "Complete"
+        )
+
+MEASURE '_Measures'[Readiness gap] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE ( MAX ( fact_readiness[gap_d] ), dim_snapshot[snapshot_id] = _sid )
+
+MEASURE '_Measures'[Readiness stages late] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE (
+            COUNTROWS ( fact_readiness ),
+            dim_snapshot[snapshot_id] = _sid,
+            fact_readiness[gap_d] > 0
+        ) + 0
+```
+<!-- /DAX-GROUP:9 -->
+
+</details>
+
+<details>
+<summary><b>10. Risks, decisions and recovery</b></summary>
+
+<!-- DAX-GROUP:10 -->
+
+```dax
+MEASURE '_Measures'[High risks] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE (
+            COUNTROWS ( fact_risk ),
+            dim_snapshot[snapshot_id] = _sid,
+            fact_risk[rating] = "High"
+        ) + 0
+
+MEASURE '_Measures'[Risk score (max)] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE ( MAX ( fact_risk[score] ), dim_snapshot[snapshot_id] = _sid )
+
+MEASURE '_Measures'[Open decisions] =
+    CALCULATE ( COUNTROWS ( fact_decision ), fact_decision[status] = "Open" ) + 0
+
+MEASURE '_Measures'[Overdue decisions] =
+    CALCULATE (
+        COUNTROWS ( fact_decision ),
+        fact_decision[status] = "Open",
+        fact_decision[overdue] = TRUE ()
+    ) + 0
+
+MEASURE '_Measures'[Next decision needed by] =
+    CALCULATE (
+        MIN ( fact_decision[needed_by] ),
+        fact_decision[status] = "Open",
+        fact_decision[overdue] == FALSE ()
+    )
+
+MEASURE '_Measures'[Recommended scenario] =
+    CALCULATE ( SELECTEDVALUE ( fact_scenario[scenario_id] ), fact_scenario[recommended] = TRUE () )
+
+MEASURE '_Measures'[Recommended scenario Day 1 total float] =
+    CALCULATE ( SUM ( fact_scenario[day1_tf_d] ), fact_scenario[recommended] = TRUE () )
+
+MEASURE '_Measures'[Float gain] =
+    CALCULATE ( SUM ( fact_scenario[float_gain_d] ), fact_scenario[recommended] = TRUE () )
+
+MEASURE '_Measures'[Scenario Day 1 impact] =
+    SUM ( fact_scenario[day1_impact_days] )
+```
+<!-- /DAX-GROUP:10 -->
+
+</details>
+
+<details>
+<summary><b>11. Reconciliation status</b></summary>
+
+<!-- DAX-GROUP:11 -->
+
+```dax
+MEASURE '_Measures'[Controls total] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE ( COUNTROWS ( fact_reconciliation ), dim_snapshot[snapshot_id] = _sid ) + 0
+
+MEASURE '_Measures'[Controls passed] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE (
+            COUNTROWS ( fact_reconciliation ),
+            dim_snapshot[snapshot_id] = _sid,
+            fact_reconciliation[passed] = TRUE ()
+        ) + 0
+
+MEASURE '_Measures'[Reconciliation status] =
+    VAR _n = [Controls total]
+    RETURN
+        IF ( _n > 0 && [Controls passed] = _n, "Reconciled", "Not reconciled" )
+
+MEASURE '_Measures'[Reconciliation colour] =
+    IF ( [Reconciliation status] = "Reconciled", "#1E8449", "#C0392B" )
+```
+<!-- /DAX-GROUP:11 -->
+
+</details>
+
+<details>
+<summary><b>12. Baseline compare on the date axis (USERELATIONSHIP)</b></summary>
+
+<!-- DAX-GROUP:12 -->
+
+```dax
+MEASURE '_Measures'[Finishes (forecast)] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE ( COUNTROWS ( fact_activity_snapshot ), dim_snapshot[snapshot_id] = _sid )
+
+MEASURE '_Measures'[Finishes (BL0)] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE (
+            COUNTROWS ( fact_activity_snapshot ),
+            dim_snapshot[snapshot_id] = _sid,
+            USERELATIONSHIP ( fact_activity_snapshot[bl0_finish], dim_date[date] )
+        )
+
+MEASURE '_Measures'[Finishes (BL1)] =
+    VAR _sid = [Selected snapshot id]
+    RETURN
+        CALCULATE (
+            COUNTROWS ( fact_activity_snapshot ),
+            dim_snapshot[snapshot_id] = _sid,
+            USERELATIONSHIP ( fact_activity_snapshot[bl1_finish], dim_date[date] )
+        )
+
+MEASURE '_Measures'[Milestone finishes (forecast)] =
+    CALCULATE ( [Finishes (forecast)], dim_activity[is_milestone] = TRUE () )
+
+MEASURE '_Measures'[Milestone finishes (BL0)] =
+    CALCULATE ( [Finishes (BL0)], dim_activity[is_milestone] = TRUE () )
+
+MEASURE '_Measures'[Milestone finishes (BL1)] =
+    CALCULATE ( [Finishes (BL1)], dim_activity[is_milestone] = TRUE () )
+```
+<!-- /DAX-GROUP:12 -->
+
+</details>
+
+<details>
+<summary><b>13. Action titles and provenance line</b></summary>
+
+Page titles are measures, so each title states the answer for the selected data date. For example, for
+29-Oct-2026: "Day 1 is forecast for 21-Oct-2027, 7 working days beyond the 14-Oct-2027 target; recovery A+B
+brings Day 1 total float to +8 working days if D-07 and D-08 are approved." The decisions title reads: "2
+decisions are needed: D-07 (Programme Director) by 12-Nov-2026, D-08 (Steering Committee) by 26-Nov-2026; D-09
+(Programme Controls Manager, needed by 15-Oct-2026) is overdue."
+
+<!-- DAX-GROUP:13 -->
+
+```dax
+MEASURE '_Measures'[Provenance line] =
+    "Data date " & FORMAT ( [Data date], "dd-mmm-yyyy" )
+        & " | Baseline " & [Baseline in force]
+        & " | " & [Reconciliation status] & " " & [Controls passed] & "/" & [Controls total]
+        & " | " & [Source file]
+        & " | DQ " & FORMAT ( [DQ score], "0" )
+
+MEASURE '_Measures'[Title - Executive summary] =
+    VAR _tf = [Day 1 total float]
+    VAR _pos =
+        IF (
+            _tf < 0,
+            FORMAT ( -_tf, "0" ) & " working days beyond",
+            FORMAT ( _tf, "0" ) & " working days inside"
+        )
+    VAR _rec = [Recommended scenario]
+    VAR _dec =
+        SUBSTITUTE (
+            CALCULATE ( SELECTEDVALUE ( fact_scenario[decision] ), fact_scenario[recommended] = TRUE () ),
+            ", ",
+            " and "
+        )
+    RETURN
+        "Day 1 is forecast for " & FORMAT ( [Day 1 forecast], "dd-mmm-yyyy" ) & ", " & _pos & " the "
+            & FORMAT ( [Day 1 target], "dd-mmm-yyyy" ) & " target; recovery " & _rec
+            & " brings Day 1 total float to " & FORMAT ( [Recommended scenario Day 1 total float], "+0;-0;0" )
+            & " working days if " & _dec & " are approved."
+
+MEASURE '_Measures'[Title - Milestones] =
+    VAR _m = [Day 1 movement vs previous period]
+    VAR _move =
+        SWITCH (
+            TRUE (),
+            ISBLANK ( _m ), "has no previous update",
+            _m < 0, "moved " & FORMAT ( -_m, "0" ) & " calendar days earlier",
+            _m > 0, "slipped " & FORMAT ( _m, "0" ) & " calendar days",
+            "did not move"
+        )
+    RETURN
+        FORMAT ( [Milestones later than baseline in force], "0" ) & " milestones are later than "
+            & [Baseline in force] & "; the Day 1 forecast " & _move & " since the previous update."
+
+MEASURE '_Measures'[Title - Critical path] =
+    FORMAT ( [Critical count], "0" ) & " activities are critical and " & FORMAT ( [Near-critical count], "0" )
+        & " near-critical (total float of " & [Near-critical threshold (d)] & " working days or less); "
+        & FORMAT ( [Look-ahead critical items], "0" ) & " critical activities start or finish in the next "
+        & [Look window (days)] & " days."
+
+MEASURE '_Measures'[Title - Interfaces and readiness] =
+    FORMAT ( [Interfaces late], "0" ) & " interfaces are late and " & FORMAT ( [Interfaces at risk], "0" )
+        & " at risk; the worst readiness stage is " & FORMAT ( [Readiness gap], "+0;-0;0" )
+        & " calendar days against the date that protects Day 1."
+
+// Names every open decision with its owner and date, so the ask is explicit in the title
+MEASURE '_Measures'[Title - Decisions] =
+    VAR _openTbl = FILTER ( fact_decision, fact_decision[status] = "Open" && fact_decision[overdue] == FALSE () )
+    VAR _lateTbl = FILTER ( fact_decision, fact_decision[status] = "Open" && fact_decision[overdue] = TRUE () )
+    VAR _open =
+        CONCATENATEX (
+            _openTbl,
+            fact_decision[decision_id] & " (" & fact_decision[owner] & ") by "
+                & FORMAT ( fact_decision[needed_by], "dd-mmm-yyyy" ),
+            ", ",
+            fact_decision[needed_by], ASC
+        )
+    VAR _late =
+        CONCATENATEX (
+            _lateTbl,
+            fact_decision[decision_id] & " (" & fact_decision[owner] & ", needed by "
+                & FORMAT ( fact_decision[needed_by], "dd-mmm-yyyy" ) & ")",
+            ", ",
+            fact_decision[needed_by], ASC
+        )
+    VAR _n = COUNTROWS ( _openTbl ) + 0
+    VAR _l = COUNTROWS ( _lateTbl ) + 0
+    RETURN
+        FORMAT ( _n, "0" ) & IF ( _n = 1, " decision is", " decisions are" ) & " needed"
+            & IF ( _n > 0, ": " & _open, "" )
+            & IF ( _l > 0, "; " & _late & IF ( _l = 1, " is", " are" ) & " overdue.", "; none is overdue." )
+
+MEASURE '_Measures'[Title - Schedule quality] =
+    VAR _mv = [DQ score movement]
+    RETURN
+        "DQ score is " & FORMAT ( [DQ score], "0.0" ) & " (" & [DQ rating] & ")"
+            & IF ( ISBLANK ( _mv ), "", ", " & FORMAT ( _mv, "+0.0;-0.0;0.0" ) & " points since the previous update" )
+            & "; " & FORMAT ( [DCMA pass count], "0" ) & " of " & FORMAT ( [DCMA applicable checks], "0" )
+            & " applicable DCMA checks pass."
+
+MEASURE '_Measures'[Title - Reconciliation] =
+    IF (
+        [Reconciliation status] = "Reconciled",
+        "All " & FORMAT ( [Controls total], "0" ) & " controls agree between the source XER, the model and the dashboard for "
+            & FORMAT ( [Data date], "dd-mmm-yyyy" ) & ".",
+        FORMAT ( [Controls total] - [Controls passed], "0" ) & " of " & FORMAT ( [Controls total], "0" )
+            & " controls fail for " & FORMAT ( [Data date], "dd-mmm-yyyy" ) & ": do not publish this update."
+    )
+```
+<!-- /DAX-GROUP:13 -->
+
+</details>
+
+---
+
+## 6. Report pages
+
+The pages mirror the dashboard tabs and use the same names: the seven numbered tabs are pages 1 to 7, the
+About & method tab is page 9, and page 8 is a hidden drill-through page. Use a 16:9
+(1280 × 720) canvas and import `powerbi/dop_theme.json` (View > Themes > Browse for themes). Every page
+follows the same layout:
+
+- **Header band.** A card with the page's action-title measure at 16 pt. Under it, a card with
+  `[Provenance line]` (data date, baseline, reconciled n/n, source file, DQ) at 9 pt in muted text, and the
+  data-date slicer on the right.
+- **One "so what" sentence under every chart.** Write it in a text box, or bind it to a measure where the
+  sentence depends on the data. It states the consequence and names the owner and the ask. A chart with no
+  sentence under it is not finished.
+- **Colour.** Navy and teal carry data. Red, amber and green carry status only: red for negative float, late or
+  failed; amber for 0 < float ≤ threshold or at risk; green for on track or passed. The theme's diverging scale
+  runs green (minimum) to red (maximum), which suits variance (positive = late). Reverse it for float. The theme
+  lists red, amber and green as data colours 6 to 8 only so that they appear in the colour picker for status
+  rules. Keep series charts to five series or fewer, so that a status colour is never assigned to a series. The
+  theme carries the light palette; Power BI themes have no automatic dark mode.
+
+| # | Page (web tab) | Title measure | Visuals | So what (pattern) |
+|---|---|---|---|---|
+| 1 | Executive summary | `[Title - Executive summary]` | Cards: `[Day 1 forecast]` (font colour = `[Day 1 RAG colour]`), `[Day 1 total float]`, `[Float erosion]`, `[Day 1 variance vs BL1]`, `[Day 1 variance vs BL0]`, `[Weighted % complete (actual)]` against `[Planned % complete]`, `[DQ score]`, `[Reconciliation status]`. Matrix: `asset_name` × `workstream_name`, value `[Total float (min)]`, background rules < 0 red, ≤ `[Near-critical threshold (d)]` amber, else green. Table: open decisions (`decision_id`, `ask`, `owner`, `needed_by`, `overdue`). Table: top 3 risks by `score` for the selected date. Line chart: `fact_s_curve` (`planned_bl0`, `planned_bl1`, `forecast`, `actual`) by `date` | "Progress is n pts behind plan; the Dune Arena row holds the negative float; Programme Director to approve D-07 by 12-Nov-2026." |
+| 2 | Milestones & slippage | `[Title - Milestones]` | Combo chart by `dim_snapshot[data_date]` (slicer interaction off): columns `[Float erosion]`, line `[Day 1 total float]`. Line chart: `[Milestone variance vs BL0]` by `data_date`, legend `activity_name` (key milestones). Table: milestones with `[Milestone forecast finish]`, `bl0_finish`, `bl1_finish`, the `Compare against` field parameter, `[Milestone movement vs previous period]`, `total_float_d`, `owner_code`. Column chart by `dim_date[year_month]`: `[Milestone finishes (forecast)]` against `[Milestone finishes (BL1)]` | "Day 1 has slipped in four of six updates; the October recovery returned 7 working days of float, but every arena milestone is still 15 or more calendar days later than BL1." |
+| 3 | Critical path & look-ahead | `[Title - Critical path]` | Cards: `[Critical count]`, `[Near-critical count]` with the threshold slicer, `[Negative float count]`, `[Total float (min)]`, `[Longest path count]`. Table: longest path (`is_longest_path` = True) sorted by `start`: activity, owner, `start`, `finish`, `total_float_d`, `[Slip vs previous period]`. Column chart: activities by `total_float_d` bins of 5 days. Look-back table (visual filter `[Look-back item (flag)]` = 1): `lookback_event`, `prev_finish`, `lookback_achieved`, with a card for `[Look-back hit rate]`. Look-ahead table (`[Look-ahead item (flag)]` = 1): `start`, `finish`, `total_float_d`, owner, `[Criticality band]` icons | "x of y look-back items were delivered; z critical activities start in the next 14 days and need owner confirmation at the weekly controls meeting." |
+| 4 | Interfaces & readiness | `[Title - Interfaces and readiness]` | Cards: `[Interfaces late]`, `[Interfaces at risk]`, `[Interface gap (max)]`, `[Readiness gap]`. Table: `fact_interface` (`interface_id`, `description`, `giver_owner`, `receiver_owner`, `need_by`, `giver_forecast`, `gap_days`, `status` coloured). Matrix: `fact_readiness[asset_code]` × `stage` (sorted by `stage_order`), value MAX `gap_d`, coloured > 0 red. Bar chart: `[Interface gap (max)]` by `giver_owner` | "The giver owner of each late interface confirms a recovery date or the receiver re-plans; the arena's construction-to-ready span is longer than the plan allows." |
+| 5 | Risks, decisions & recovery | `[Title - Decisions]` | Matrix 5 × 5: `impact` (descending) × `probability`, count of `risk_id`, coloured by score band. Table: `fact_risk` (`risk_id`, `title`, `owner_code`, `score`, `trend`, `mitigation_owner`, `schedule_impact_days`, `min_linked_float_d`). Table: `fact_decision` (all, overdue highlighted red). Bar chart: `fact_scenario[day1_tf_d]` by `name`, with the recommended scenario in teal and the rest in slate. Table: `fact_scenario` (`float_gain_d`, `neg_float_count`, `near_critical_count`, `residual_risk`, `decision`, `cost`). Table: `fact_change` | "Recovery A+B gains 15 working days and brings Day 1 total float to +8; the Programme Director approves D-07 by 12-Nov-2026, the Steering Committee approves D-08 by 26-Nov-2026, and the Programme Controls Manager closes the overdue D-09." |
+| 6 | Schedule quality (DCMA) | `[Title - Schedule quality]` | Cards: `[DQ score]` and `[DQ rating]`, `[DCMA pass count]` of `[DCMA applicable checks]`, `[Update discipline pass count]`, `[BEI]` (tooltip `[BEI tasks completed]` / `[BEI tasks due]`), `[CPLI]`. Line chart: `[DQ score]` by `data_date` (slicer interaction off) with constant lines at 85 and 70. Table: `fact_dcma_check` (`check_id`, `check_name`, `threshold`, `value`, `passed` as icon, `score`, `weight`, `playbook`). Matrix: `dim_owner[owner_name]` with `[Owner DQ]`, `incomplete`, `flagged`, `update_issues`, `logic_issues`. Table: `fact_dcma_offender` (`check_id`, `item`, `owner_code`) | "DQ fell to 75.4 (Fair); negative float (D07), high float (D06) and missed tasks (D11) drive the loss; owners with Owner DQ below 70% close their flags before the next cut-off." |
+| 7 | Reconciliation & lineage | `[Title - Reconciliation]` | Cards: `[Controls passed]` / `[Controls total]`, `[Reconciliation status]` (colour `[Reconciliation colour]`). Table: `fact_reconciliation` (`control_id`, `control`, `source_value`, `model_value`, `dashboard_value`, `delta`, `passed`). Matrix (slicer interaction off): `control_id` × `dim_snapshot[label]`, value `[Controls passed]`. Table: `dim_snapshot` (`source_file`, `sha256`, `baseline_in_force`, `baseline_file`, `baseline_sha256`, `cutoff_expected`). Text box: the lineage chain from section 1 | "Every figure in this report traces to the named XER file and hash; an update with any failed control is not published." |
+| 8 | Activity details (drill-through, hidden) | `activity_id` and `activity_name` | See section 7 | |
+| 9 | About & method (definitions) | static | Table: the `definitions` query (`measure`, `definition`, `formula`, `unit`, `owner`), with a search slicer on `measure`. Text box: the transparency note at the top of this guide, the units convention, and links to the [scheduling framework](https://github.com/schedule-intelligence/destination-opening-programme/blob/main/governance/SCHEDULING_FRAMEWORK.md), [reporting standards](https://github.com/schedule-intelligence/destination-opening-programme/blob/main/governance/REPORTING_STANDARDS.md) and [data dictionary](https://github.com/schedule-intelligence/destination-opening-programme/blob/main/DATA_DICTIONARY.md) | |
+
+Use page navigator buttons along the top in the order 1 to 7. Hide pages 8 and 9 from the navigator, and add an
+"i" button that links to page 9.
+
+---
+
+## 7. Drill-through, field parameters and bookmarks
+
+**Activity details (drill-through).** On page 8, add `dim_activity[activity_id]` to *Drill through* and turn
+*Keep all filters* **off**, so only the activity is passed. With it on, the source page's data-date selection
+would also be passed and the history would shrink to one update. Do not sync the data-date slicer to this page.
+
+- Cards (latest update, because no data date is selected): `activity_name`, `asset_name`, `workstream_name`,
+  `package_name`, `owner_code` with `dim_owner[accountable_role]`, `dim_calendar[calendar_name]`, `activity_type`,
+  `[Forecast finish]`, `[Finish variance vs BL1]`, `[Criticality band]`.
+- History table, one row per update: `dim_snapshot[label]`, `data_date`, `status`, `start`, `finish`,
+  `total_float_d`, `var_finish_bl0_d`, `var_finish_bl1_d`, `slip_vs_prev_d`, `constraint_type`, `dq_flags`.
+- Line chart: `total_float_d` by `data_date`. This answers "when did this activity lose its float?"
+- Drivers table: `fact_relationship` rows for the activity (via `succ_id`): `pred_id`, `rel_type`, `lag_d`,
+  `is_driving`, `slack_d`, with `is_driving` = True highlighted. Add the visual-level filter
+  `dim_snapshot[is_latest]` = True so that it lists the current logic only.
+
+Drill-through is offered only on visuals that contain the drill-through field, so every activity table on pages 1
+to 6 includes `dim_activity[activity_id]` (on page 4 it identifies the giver activity of each interface). Those
+visuals then offer *Drill through > Activity details* on right-click. Add a "Details" button that drills through
+on the selected row.
+
+**Field parameters.** Add `Hierarchy level` as a slicer above the main matrix on pages 1 and 3. Add
+`Compare against` as a button slicer on page 2, so the variance column switches between previous update, BL0 and
+BL1. Both are defined in section 4.
+
+**Bookmarks.** Create them in View > Bookmarks. Clear *Data* on navigation bookmarks so that they never reset
+the data-date selection. The two compare bookmarks must keep *Data* ticked (the `Compare against` selection is
+data state), so create them with *Selected visuals* only: the `Compare against` slicer, the two finish-profile
+charts and the caption. The data-date slicer is then not captured. Page 2 holds two copies of the finish-profile
+chart, one plotting `[Milestone finishes (BL0)]` and one `[Milestone finishes (BL1)]`, each against
+`[Milestone finishes (forecast)]`; each bookmark shows one copy and hides the other in the Selection pane.
+
+| Bookmark | State captured | Used for |
+|---|---|---|
+| `Compare - BL0` | Page 2: `Compare against` = BL0; BL0 finish-profile chart visible, BL1 copy hidden; caption "Against the original baseline (BL0)" | Shows how far the programme has moved since the start |
+| `Compare - BL1` | `Compare against` = BL1; BL1 chart visible, BL0 copy hidden; caption "Against the baseline in force (BL1, CR-003, from the 30-Jul-2026 update)" | The governance view: variance against the approved re-baseline |
+| `Decisions spotlight` | Page 1 with the decisions table in focus mode | Opens the steering-committee discussion on the ask |
+| `Reset` | All slicers cleared, data date = "Latest update" (*Data* ticked) | Gets back to the standard view |
+
+Group `Compare - BL0` and `Compare - BL1` into a two-button bookmark navigator on page 2.
+
+---
+
+## 8. Refresh process
+
+The reconciliation gate decides what is published. Power BI only ever refreshes from a CSV set whose run passed
+every control.
+
+1. **Monthly cut-off.** The planner exports the update from P6 as `DOP_UPD_<data date>.xer` into `data/xer/`.
+   Baselines stay as `DOP_BL0.xer` and `DOP_BL1.xer`. In this repository the CPM engine writes these files.
+2. **Run the pipeline.** Run `.venv\Scripts\python.exe -m dop pipeline`. It parses every XER, rebuilds the model,
+   writes `docs/data/dashboard.json`, reconciles source XER = model = dashboard for every update, and writes
+   `output/csv/`, `output/xlsx/` and `output/reports/reconciliation_<date>.md`.
+3. **Gate.** The run exits with code 0 only if every control passes. **Copy `output/csv/` to the published share
+   only on exit code 0.** On a non-zero exit, nothing is copied: the share keeps the last reconciled set, and the
+   Programme Controls Manager investigates the failed controls in the reconciliation report. A scheduled job
+   follows the same rule:
+
+   ```powershell
+   .\.venv\Scripts\python.exe -m dop pipeline
+   if ($LASTEXITCODE -ne 0) { Write-Error "Reconciliation gate failed: CSVs not published"; exit 1 }
+   # robocopy returns 0-7 on success and 8 or more on failure
+   robocopy output\csv \\<file-server>\DOP\powerbi\csv *.csv /MIR /R:2 /W:5
+   if ($LASTEXITCODE -ge 8) { Write-Error "CSV copy to the share failed"; exit 1 }
+   robocopy docs\data \\<file-server>\DOP\powerbi dashboard.json /R:2 /W:5
+   if ($LASTEXITCODE -ge 8) { Write-Error "dashboard.json copy to the share failed"; exit 1 }
+   ```
+
+4. **Refresh.** In Power BI Desktop, Home > Refresh. In the Power BI service, publish the report and install an
+   **on-premises data gateway** (standard mode) on a server that can read the share. Add one gateway data source
+   per path the queries read, each with the exact path of its parameter: a *Folder* source for `CsvFolder`, a
+   *File* source for `DashboardJson` (`\\<file-server>\DOP\powerbi\dashboard.json`), and, with row-level
+   security, a *File* source for `SecurityMapFile` (section 9). Give the gateway service account read access,
+   set the privacy level of all of them to *Organizational*, and map the dataset to them. Schedule the refresh for
+   the morning after the cut-off in the
+   [planning & reporting calendar](https://github.com/schedule-intelligence/destination-opening-programme/blob/main/governance/PLANNING_REPORTING_CALENDAR.md).
+   If the files are published to a SharePoint document library instead, use the SharePoint folder connector for
+   all of them; it needs no gateway.
+5. **Post-refresh check (two minutes).** Page 7 shows "Reconciled 40/40" for the new data date. `[Data date]`
+   matches the file name in `[Provenance line]`. The `EVALUATE` query in `measures.dax` returns the same Day 1
+   values as `fact_snapshot_summary`. Only then circulate the link.
+
+---
+
+## 9. Row-level security
+
+Owners see their own activities; the programme headline stays common to all viewers.
+
+1. Keep a governed mapping file `security_owner_map.csv` with columns `user_upn` and `owner_code`, one row per
+   person per owner organisation. It stays outside this repository and is maintained by the PMO. Keep it in a
+   secured folder, not in `CsvFolder`: the publish step mirrors that folder (`robocopy /MIR`) and would delete it.
+   Create the Text parameter `SecurityMapFile` with its full path and load it as a query named
+   `security_owner_map`. Leave it with no relationships and hide it.
+
+```m
+let
+    Source   = Csv.Document(File.Contents(SecurityMapFile), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+    Typed    = Table.TransformColumnTypes(Promoted, {{"user_upn", type text}, {"owner_code", type text}})
+in
+    Typed
+```
+
+2. Go to Modeling > Manage roles and create the role `Owner` with two table filters. On `dim_owner`:
+
+```dax
+dim_owner[owner_code]
+    IN CALCULATETABLE (
+        VALUES ( security_owner_map[owner_code] ),
+        security_owner_map[user_upn] = USERPRINCIPALNAME ()
+    )
+```
+
+   and on `security_owner_map`, so that a user cannot read other people's mappings:
+
+```dax
+security_owner_map[user_upn] = USERPRINCIPALNAME ()
+```
+
+   Create a second role, `Programme`, with no filters, for the PMO, the Steering Committee and the controls team.
+3. The filter flows `dim_owner` → `dim_activity` → activity facts, interfaces (by giver), readiness and DCMA
+   offenders, and directly to `fact_risk` and `fact_owner_scorecard`. Measures computed from activity rows (for
+   example `[Critical count]`, `[Weighted % complete (actual)]` and `[BEI]`) therefore show the owner's own
+   activities. `fact_snapshot_summary`, `fact_reconciliation`, `fact_dcma_check`, `fact_decision` and
+   `fact_scenario` have no owner, so the Day 1 headline, the DQ score and the reconciliation status stay visible
+   to everyone. That is intended: every owner works to the same programme answer. Create a role with a
+   `FALSE ()` filter on those tables only if a restricted audience must not see programme totals.
+4. Test with Modeling > View as > Other user, then publish and assign members (or security groups) to `Owner`
+   and `Programme` in the service (dataset > Security). Once roles exist, a viewer who belongs to no role sees no
+   data at all, so everyone with view access must be in one of the two roles. Workspace Admins, Members and
+   Contributors are not filtered by row-level security.
+
+---
+
+## 10. Performance notes
+
+- **Small model.** The largest facts have about 1,750 rows (activity × update) and 3,000 rows (relationships),
+  and the 22 CSVs total about 1.1 MB. Import mode is right; DirectQuery would add latency for no benefit.
+- **Types before load.** Typing in Power Query, rather than with calculated columns, keeps the model compact and
+  lets VertiPaq encode the dates. Converting datetimes to dates also cuts cardinality on the three date-axis
+  relationships.
+- **Variables and boolean filters.** The measures use variables and simple boolean `CALCULATE` filters instead
+  of `FILTER ( ALL ( fact ) ... )`. Only the look-ahead recompute and the milestone count iterate rows, and only
+  the rows of one update.
+- **Turn off Auto date/time** (File > Options > Data load). `dim_date` is the date table, and the hidden auto
+  tables would multiply by every date column.
+- **Hide keys and raw columns** (`snapshot_id`, `activity_id` on facts, `sha256`) from report view, and remove
+  unused columns in Power Query if the model grows (for example to a real IMS of 20,000 activities × 24 updates,
+  about 480,000 rows, still fine in import mode).
+- **Visual count.** Keep to eight or fewer visuals per page. Use Performance Analyzer (View > Performance
+  analyzer) after each page is built, and simplify any visual whose DAX query dominates the page.
+
+---
+
+## 11. Validation
+
+Run the `EVALUATE` query at the end of `measures.dax`. Each row must match `fact_snapshot_summary` for that data
+date. Expected values for the latest update:
+
+| Measure | 29-Oct-2026 | Cross-check |
+|---|---|---|
+| Day 1 forecast | 21-Oct-2027 | `fact_snapshot_summary[day1_forecast]`; control R07 |
+| Day 1 total float | −7 working days | `day1_tf_d` |
+| Float erosion | +7 working days (partial recovery after −17 in September) | `float_erosion_d` |
+| Day 1 variance vs BL1 / vs BL0 | +15 / +30 calendar days | `day1_var_bl1_d`, `day1_var_bl0_d` |
+| Critical count / excl. LOE | 41 / 39 | `critical_count` / control R12 |
+| Near-critical count (threshold 10) | 18 | `near_critical_count` |
+| Total float (min) / (average) | −13.0 / 34.1 | `min_float_d`, `avg_float_d` |
+| Weighted % complete (actual) | 38.8% (38.84) | control R11 |
+| Planned % complete | 39.9% | see note |
+| Look-ahead items / recomputed | 16 / 16 | stored flag = date logic |
+| Look-back items / achieved | 10 / 10 | |
+| DQ score / rating / movement | 75.4 / Fair / −4.2 points | `dq_score`, `dq_rating` |
+| DCMA pass count | 8 of 13 applicable | `fact_dcma_check` |
+| BEI (completed ÷ due) / CPLI | 0.949 (56 ÷ 59) / 0.980 | `bei` and D14; `cpli` and D13 |
+| Controls passed | 40 of 40 | `fact_reconciliation` |
+| Open decisions | D-07 by 12-Nov-2026, D-08 by 26-Nov-2026; D-09 overdue | `fact_decision` |
+| Recommended scenario / Float gain | A+B, Day 1 total float +8 working days / +15 working days | `fact_scenario[recommended]`, `float_gain_d` |
+
+Note on planned % complete: the measure weights each task by its current original duration (39.9%). The
+S-curve's `planned_bl1` point at the data date weights by the baseline's own durations (39.88%). The two differ
+by less than 0.1 point, and the S-curve is the series to quote for planned progress over time.
+
+Run the scripted checks: `.venv\Scripts\python.exe scripts\check_dax_columns.py`. The script confirms the
+following:
+
+- every `table[column]` in `measures.dax` and in this guide exists in the CSV headers
+- every `[measure]` reference is defined
+- the DAX shown here is identical to `measures.dax`
+- every relationship key in section 3 is unique on the one side and found from the many side
+- the theme parses with the shared palette
+
+---
+
+## 12. Aligning with the approved P6 schedule
+
+The report reconciles with the approved P6 schedule because Power BI **reads** the schedule and never
+**recalculates** it. Every date, float and flag comes from the XER fields that P6 itself writes. The pipeline
+proves that field by field before the CSVs are published.
+
+**Field by field.**
+
+| Report field | P6 (XER) source | Convention |
+|---|---|---|
+| Data date | `PROJECT.last_recalc_date` | No remaining work is scheduled before it |
+| Forecast finish | `TASK.act_end_date` if complete, else `TASK.early_end_date` | P6 shows finishes at the end of the working day |
+| Total float, free float | `TASK.total_float_hr_cnt`, `free_float_hr_cnt` ÷ 8 | Working days of the activity's own calendar (6-day site, 5-day office or 7-day T&C) |
+| Critical | total float ≤ 0 on incomplete work | P6 default "critical if total float ≤ 0", not the longest path |
+| Longest path | `TASK.driving_path_flag` = Y | A separate flag; constraints can make the two differ |
+| Baseline in force | `PROJECT.sum_base_proj_id` → `DOP_BL0.xer` / `DOP_BL1.xer` | BL0 until the 30-Jul-2026 update, then BL1 (CR-003) |
+| Variances | finish − baseline finish | Calendar days, positive = later |
+| % complete | `target_drtn_hr_cnt`, `remain_drtn_hr_cnt`, `status_code` | Duration-weighted over normal tasks |
+
+**Controls that prove it.** For every update, the gate compares 40 controls across the source XER, the model
+(these CSVs) and the dashboard JSON:
+
+- activity and relationship counts, and counts by status, asset and workstream (R01–R06)
+- Day 1 early and late finish, and every key milestone finish (R07–R09)
+- remaining duration, weighted % complete and critical count (R10–R12)
+- data date, baseline reference and the source file SHA-256 (R13–R15)
+
+R16 re-runs the CPM engine on the parsed XER and confirms that it reproduces the exported early finish, late
+finish, total float and longest-path flag of every activity. The exceptions are activities that a data-integrity
+check has already flagged. The measures here are written to land on the model values (R11 and R12 are reproduced
+exactly; see section 11). A Power BI number therefore equals the CSV, which equals the XER.
+
+**Where a P6 layout and a report can legitimately differ, and how to align them:**
+
+- **Critical definition.** If a P6 layout uses "longest path" as its critical setting, compare it with
+  `[Longest path count]`, not `[Critical count]`.
+- **LOE.** P6 layouts often hide LOE. `[Critical count (excl. LOE)]` is the like-for-like number (control R12).
+- **Baseline.** P6 lets each user choose their own primary baseline. The report uses the project baseline that
+  the update carries (`sum_base_proj_id`). Set the same baseline in the P6 layout before comparing variance
+  columns.
+- **Units and rounding.** P6 stores hours. The report divides by the 8 hours per day of each calendar and shows
+  whole days. A P6 layout set to show durations in weeks, or float in hours, needs the same conversion.
+- **Timing.** The report shows the data date in the file name and hash. A P6 schedule re-scheduled after the
+  export, or with progress entered after the cut-off, will not match until it is exported again and passes the
+  gate.
+
+On a live programme the planner exports the approved update from P6 at the cut-off. The steps are otherwise
+unchanged: only the XER source differs from this repository, where the files are synthetic and produced by the
+custom engine.
