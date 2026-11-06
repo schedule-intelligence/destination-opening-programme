@@ -12,11 +12,11 @@ Resume protocol: read this file, ASSUMPTIONS.md and BLOCKERS.md first; continue 
 | 4 PowerPoint | done: monthly (15 slides) and fortnightly (6 slides); LibreOffice previews blocked (B02) |
 | 5 Power BI docs | done: POWERBI.md, measures.dax (96 measures), theme; static check passes (B03) |
 | 6 Governance pack | done: 5 documents in governance/ |
-| 7 README + publish | in progress |
+| 7 README + publish | done: repo public with metadata; Pages configured but deploy blocked on GitHub side (B05) |
 
 Storyline outcome (Day 1 total float, working days): BL0 +22, S1 +14, S2 +14, S3/BL1 +8, S4 +3, S5 −14, S6 −7.
 Recovery: A +2, B 0, C −4, A+B +8 (recommended), A+B+C +9.
 Tests: 150 passed in about 22 s. `python -m dop run --all` takes about 6 s.
 
-Current sub-step: Phase 7, creating the GitHub repo, pushing, enabling Pages, verifying the live URL.
-Next action: gh repo create schedule-intelligence/destination-opening-programme --public --source . --push
+Current sub-step: complete.
+Next action (only if resuming): check https://schedule-intelligence.github.io/destination-opening-programme/ ; if still 404, run gh workflow run pages.yml -R schedule-intelligence/destination-opening-programme

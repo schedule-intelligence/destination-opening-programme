@@ -4,7 +4,7 @@
 
 - **Live dashboard:** https://schedule-intelligence.github.io/destination-opening-programme/
 - **Repository:** https://github.com/schedule-intelligence/destination-opening-programme
-- Pages status at hand-over: PAGES_STATUS
+- Pages status at hand-over: **not yet live (HTTP 404), see B05.** Pages is configured (Actions workflow deploying `/docs` from `main`). Build and artifact upload succeed, but GitHub's deploy step timed out in `updating_pages` on 3 attempts while the org's `github.io` site was being provisioned. Every push re-deploys; retry with `gh workflow run pages.yml -R schedule-intelligence/destination-opening-programme`. Meanwhile the dashboard runs locally with `python -m http.server -d docs`.
 
 ## What was built
 
@@ -37,7 +37,8 @@ are open, and D-09 is overdue.
 | Dashboard: zero console errors, desktop and 360 px, every data date | Playwright: 144 renders (6 dates × 3 compare modes × 8 tabs), zero console or page errors, no horizontal scroll at 360 px, screenshots in `docs/screenshots/` |
 | PPT packs and Excel open, no placeholders | `tests/test_outputs.py` re-opens both packs and the workbook: titles, footers, Owner columns, native charts, no "Click to add" |
 | No forbidden names | `scripts/check_forbidden.py` (tracked files, PPTX/XLSX XML, commit log) passes; repo description checked |
-| One commit per phase, pushed | 10+ conventional commits on `main` |
+| One commit per phase, pushed | 11 conventional commits on `main`, pushed |
+| Live GitHub Pages link verified | **Not met:** Pages deploy blocked on GitHub's side (B05). The repo link is verified (public, description, website, 8 topics) |
 
 ## Deviations and blockers (see BLOCKERS.md and ASSUMPTIONS.md)
 
@@ -49,6 +50,7 @@ are open, and D-09 is overdue.
   shipped default is the predecessor calendar. It is documented in ASSUMPTIONS A03 and is a one-line change.
 - **Monthly pack is 15 slides,** not 14, because the appendix is split into A (lineage) and B (definitions).
 - **Fortnightly flash** uses the latest monthly data date (the data is monthly).
+- **GitHub Pages** not live at hand-over (B05); everything else is published in the repo.
 - `run_all.sh` is provided but not executed here, because this machine's Git-Bash has no coreutils (B01).
   `run_all.ps1` and `python -m dop run --all` were executed.
 
