@@ -193,10 +193,13 @@ def assess(sch, prev_sch, bl_sch, expected_data_date: dt.date | None, finish_cod
             passed = bool(val)
         sc = check_score(kind, val, thr, w, passed)
         score_sum += sc
+        # an N/A check (D10: no resources in the IMS) has no count: it is shown as "–", never as 0 or 1
+        count = (None if kind == "na" else
+                 len(off[cid]) if cid not in ("D12", "D13", "D14", "U08") else
+                 len(off["D11"]) if cid == "D14" else (0 if passed else 1))
         results.append(dict(check_id=cid, check_name=name, group=group, kind=kind, threshold=thr, weight=w,
                             value=None if val is None else round(float(val), 3), denominator=den,
-                            count=len(off[cid]) if cid not in ("D12", "D13", "D14", "U08", "D10") else
-                            (0 if passed else 1) if cid != "D14" else len(off["D11"]),
+                            count=count,
                             passed=passed, score=round(sc, 2), definition=desc, playbook=anchor,
                             offenders=off[cid]))
     dq = round(100 * score_sum / total_w, 1)

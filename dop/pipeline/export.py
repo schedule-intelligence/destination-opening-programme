@@ -61,9 +61,10 @@ def write_csvs(m: dict, out_dir: pathlib.Path):
             continue
         d = df.copy()
         for c in d.columns:
-            if d[c].dtype == object:
-                d[c] = [x.strftime("%Y-%m-%d %H:%M") if isinstance(x, dt.datetime) else
-                        x.isoformat() if isinstance(x, dt.date) else x for x in d[c]]
+            if d[c].dtype == object:  # keep the object dtype: a plain list would turn ints with gaps into 36.0 / NaN
+                d[c] = pd.Series([x.strftime("%Y-%m-%d %H:%M") if isinstance(x, dt.datetime) else
+                                  x.isoformat() if isinstance(x, dt.date) else x for x in d[c]],
+                                 index=d.index, dtype=object)
         d.to_csv(out_dir / f"{name}.csv", index=False, lineterminator="\n")
 
 

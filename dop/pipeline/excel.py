@@ -60,8 +60,11 @@ def write_workbook(m: dict, sid: int, controls: list[dict], path: pathlib.Path):
     # DCMA
     dc = m["fact_dcma_check"]
     dc = dc[dc.snapshot_id == sid]
-    rows = [[r.check_id, r.check_name, r.group, r.value, r.threshold, r.count, r.denominator,
-             "N/A" if r.passed is None else "PASS" if r.passed else "FAIL", r.weight, r.score, r.definition]
+    def na(v, r):  # an N/A check (D10) and empty values print as "–", never as 0 or 1
+        return "–" if r.kind == "na" or v is None or (isinstance(v, float) and v != v) else v
+    rows = [[r.check_id, r.check_name, r.group, na(r.value, r), na(r.threshold, r), na(r.count, r), na(r.denominator, r),
+             "N/A" if r.kind == "na" or r.passed is None else "PASS" if r.passed else "FAIL", r.weight, r.score,
+             r.definition]
             for r in dc.itertuples()]
     ws, s = _sheet(wb, "DCMA", ["Check", "Name", "Group", "Value", "Threshold", "Count", "Denominator", "Result",
                                 "Weight", "Score", "Definition"], rows, [8, 30, 16, 10, 10, 8, 12, 9, 8, 8, 70], note)

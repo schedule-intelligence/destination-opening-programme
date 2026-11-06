@@ -98,6 +98,8 @@ select,input[type=search]{font:inherit;font-size:13px;color:var(--text);backgrou
 .tab:hover{color:var(--text)}
 .tab[aria-selected="true"]{color:var(--text);border-bottom-color:var(--accent);font-weight:600}
 .tab .n{color:var(--muted);margin-right:4px;font-variant-numeric:tabular-nums}
+@media (max-width:1400px){.tab{font-size:12.5px;padding-left:5px;padding-right:5px}}
+@media (max-width:1320px){.tab{font-size:12px;padding-left:4px;padding-right:4px}.tab .n{margin-right:3px}}
 
 /* Layout */
 main{padding:18px 0 32px}
@@ -226,6 +228,8 @@ table.rag{border-collapse:separate;border-spacing:4px;width:100%;font-size:12px;
 .g-lab>span{overflow:hidden;text-overflow:ellipsis;min-width:0}
 .g-lab>.alink{flex:none}
 .g-lab .alink{margin-right:6px}
+.loe-tag{flex:none;margin-left:6px;font:inherit;font-size:11px;font-weight:600;line-height:1.5;padding:0 7px;border-radius:999px;cursor:pointer;color:var(--amber-ink);background:var(--amber-bg);border:1px dashed var(--amber)}
+.loe-tag:hover,.loe-tag:focus-visible{border-style:solid}
 .g-track{position:relative;height:30px}
 .g-bar{position:absolute;top:9px;height:12px;border-radius:3px;background:var(--s1);overflow:hidden;min-width:3px}
 .g-bar.red{background:var(--red)}.g-bar.amber{background:var(--amber)}.g-bar.cmp{background:var(--s5)}
@@ -457,7 +461,20 @@ footer .wrap{padding-top:14px;padding-bottom:18px}
         var h = headers[i] || {}; return '<td' + (h.cls ? ' class="' + h.cls + '"' : '') + '>' + (c == null ? '–' : c) + '</td>';
       }).join('') + '</tr>';
     }).join('') : '<tr><td colspan="' + headers.length + '" class="empty">' + esc(opt.empty || 'Nothing in the selected scope.') + '</td></tr>';
-    return '<div class="tw' + (opt.free ? ' free' : '') + '"' + (opt.max ? ' style="max-height:' + opt.max + 'px"' : '') + ' tabindex="0" role="region" aria-label="' + esc(opt.label || 'Table') + '"><table class="t"' + (opt.id ? ' id="' + opt.id + '"' : '') + '><thead><tr>' + th + '</tr></thead><tbody>' + body + '</tbody></table></div>';
+    return '<div class="tw' + (opt.free ? ' free' : '') + '"' + (opt.max ? ' style="max-height:' + opt.max + 'px" data-max="' + opt.max + '"' : '') + ' tabindex="0" role="region" aria-label="' + esc(opt.label || 'Table') + '"><table class="t"' + (opt.id ? ' id="' + opt.id + '"' : '') + '><thead><tr>' + th + '</tr></thead><tbody>' + body + '</tbody></table></div>';
+  }
+  // a scrolling table box ends on a whole row, so the first view never shows a row cut in half
+  function snapBoxes(root) {
+    (root || document).querySelectorAll('.tw[data-max]').forEach(function (b) {
+      var max = +b.getAttribute('data-max'), th = b.querySelector('thead'), tb = b.querySelector('tbody');
+      if (!th || !tb || !b.offsetParent) return;
+      b.style.maxHeight = max + 'px';                  // measure from the intended size, not from an earlier snap
+      var cs = getComputedStyle(b), bd = parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth);
+      var edge = cs.boxSizing === 'border-box' ? bd : 0, hbar = Math.max(0, b.offsetHeight - b.clientHeight - bd);
+      var room = max - edge - hbar, fit = th.getBoundingClientRect().height, rows = tb.rows, i = 0;
+      for (; i < rows.length; i++) { var rh = rows[i].getBoundingClientRect().height; if (fit + rh > room) break; fit += rh; }
+      if (i < rows.length) b.style.maxHeight = (Math.floor(fit) + edge + hbar) + 'px';
+    });
   }
   function card(cls, title, sub, body, sowhat) {
     return '<section class="card ' + (cls || '') + '"><h3>' + title + '</h3>' + (sub ? '<p class="sub">' + sub + '</p>' : '') + body + (sowhat ? '<p class="sowhat">' + sowhat + '</p>' : '') + '</section>';
@@ -659,7 +676,7 @@ footer .wrap{padding-top:14px;padding-bottom:18px}
   function renderTab() {
     destroyCharts();
     var p = document.getElementById('p-' + ST.tab);
-    try { R[ST.tab](p); }
+    try { R[ST.tab](p); snapBoxes(p); }
     catch (e) { console.error('Render failed for tab ' + ST.tab + ': ' + (e && e.stack || e)); p.innerHTML = '<p class="err">This section could not be rendered.</p>'; }
     window.__DOP_RENDERED = ST.tab + '|' + ST.dd + '|' + ST.cmp;
   }
@@ -910,7 +927,9 @@ footer .wrap{padding-top:14px;padding-bottom:18px}
         var bar;
         if (a.ms || st === f) bar = '<span class="g-ms ' + tone + '" style="left:' + pc(f).toFixed(3) + '%" title="' + esc(tip) + '"></span>';
         else bar = '<span class="g-bar ' + tone + (a.atype === 'TT_LOE' ? ' loe' : '') + '" style="left:' + pc(st).toFixed(3) + '%;width:' + Math.max(0.3, pc(f + 1) - pc(st)).toFixed(3) + '%" title="' + esc(tip) + '">' + (a.status === 'TK_Active' && isNum(a.pct_duration) ? '<span class="g-done" style="width:' + Math.min(100, a.pct_duration) + '%"></span>' : '') + '</span>';
-        return '<div class="g-row' + (anyDrill() && !inScope(a) ? ' dim' : '') + '"><div class="g-lab">' + actBtn(a.activity_id) + '<span title="' + esc(a.name) + '">' + esc(a.name) + '</span></div><div class="g-track">' + bar + '</div><div class="g-tf">' + tfCell(a.total_float_d) + '</div></div>';
+        // a level-of-effort activity on the driving path is a schedule defect (check U07), not an oversight: tag it
+        var loeTag = a.atype === 'TT_LOE' ? '<button type="button" class="loe-tag" data-goto-check="U07" title="Level of effort on the driving path: a defect detected by check U07. Opens the check on the Schedule quality tab.">LOE · U07</button>' : '';
+        return '<div class="g-row' + (anyDrill() && !inScope(a) ? ' dim' : '') + '"><div class="g-lab">' + actBtn(a.activity_id) + '<span title="' + esc(a.name) + '">' + esc(a.name) + '</span>' + loeTag + '</div><div class="g-track">' + bar + '</div><div class="g-tf">' + tfCell(a.total_float_d) + '</div></div>';
       }).join('');
       var ddFrac = (ddn - start) / span;
       g = '<div class="gw" tabindex="0" role="region" aria-label="Longest path Gantt chart"><div class="gantt" role="img" aria-label="Gantt chart of ' + lp.length + ' longest-path activities from ' + fdn(start) + ' to ' + fdn(end) + '"><div class="g-axis"><div>Activity</div><div class="g-ticks">' + tickHtml + '</div><div style="text-align:right">TF</div></div>' + rows +
@@ -920,7 +939,9 @@ footer .wrap{padding-top:14px;padding-bottom:18px}
     var lpAssets = Array.from(new Set(lp.filter(function (a) { return a.asset !== 'PRG'; }).map(function (a) { return assetName(a.asset); })));
     var lpNeg = lp.filter(function (a) { return a.total_float_d < 0; }).length;
     var lpTitle = 'The longest path to Day 1 runs through ' + (lpAssets.join(' and ') || 'programme integration') + ', with ' + plural(lpNeg, 'activity', 'activities') + ' on negative float.';
-    var lpSo = (sw.critical_path || (lp.length + ' activities on the longest path.')) + (anyDrill() ? ' Activities outside ' + scopeText() + ' are dimmed.' : '');
+    var lpLoe = lp.filter(function (a) { return a.atype === 'TT_LOE'; });
+    var lpSo = (sw.critical_path || (lp.length + ' activities on the longest path.')) + (anyDrill() ? ' Activities outside ' + scopeText() + ' are dimmed.' : '') +
+      (lpLoe.length ? ' ' + lpLoe.map(function (a) { return a.activity_id; }).join(', ') + ' is level of effort on the driving path: tagged LOE · U07, a defect the quality checks detect, to be unlinked by its owner.' : '');
 
     /* near-critical */
     var near = s.acts.filter(function (a) { return inScope(a) && a.status !== 'TK_Complete' && isNum(a.total_float_d) && a.total_float_d <= NC && !a.is_longest_path; }).sort(function (a, b) { return a.total_float_d - b.total_float_d; });
@@ -1090,14 +1111,14 @@ footer .wrap{padding-top:14px;padding-bottom:18px}
 
   /* ================================================================== 6 Schedule quality */
   function fmtVal(c) {
-    if (c.kind === 'na') return 'n/a';
+    if (c.kind === 'na') return '–';
     if (c.kind === 'pass') return c.value === 1 || c.value === true ? 'Yes' : c.value === 0 || c.value === false ? 'No' : nf(c.value);
     if (c.kind === 'pct_max' || c.kind === 'pct_min') return isNum(c.value) ? Number(c.value).toFixed(1) + '%' : '–';
     if (c.kind === 'ratio_min') return nf(c.value, 3);
     return nf(c.value);
   }
   function fmtThr(c) {
-    if (c.kind === 'na') return 'n/a'; if (c.kind === 'pass') return 'Pass';
+    if (c.kind === 'na') return '–'; if (c.kind === 'pass') return 'Pass';
     if (c.kind === 'pct_max') return '≤ ' + c.threshold + '%'; if (c.kind === 'pct_min') return '≥ ' + c.threshold + '%';
     if (c.kind === 'ratio_min') return '≥ ' + c.threshold; if (c.kind === 'count_max') return '≤ ' + c.threshold;
     return nf(c.threshold);
@@ -1115,13 +1136,18 @@ footer .wrap{padding-top:14px;padding-bottom:18px}
     if (!ST.dqCheck || !dc.some(function (c) { return c.check_id === ST.dqCheck; })) { var f = dc.filter(function (c) { return c.passed === false; })[0]; ST.dqCheck = f ? f.check_id : (dc[0] || {}).check_id; }
     var dcma = dc.filter(function (c) { return c.group === 'DCMA'; }), upd = dc.filter(function (c) { return c.group !== 'DCMA'; });
     var passD = dcma.filter(function (c) { return c.passed === true; }).length, applD = dcma.filter(function (c) { return c.passed !== null; }).length;
-    var failAll = dc.filter(function (c) { return c.passed === false; }).sort(function (a, b) { return ((b.weight || 0) - (b.score || 0)) - ((a.weight || 0) - (a.score || 0)); });
+    // failing checks that cost points; weight-0 checks (informational, or counted under another check) are named apart,
+    // the same split as the PowerPoint pack
+    var failAll = dc.filter(function (c) { return c.passed === false && c.weight; }).sort(function (a, b) { return ((b.weight || 0) - (b.score || 0)) - ((a.weight || 0) - (a.score || 0)); });
+    var failInfo = dc.filter(function (c) { return c.passed === false && !c.weight; });
     var rowsOf = function (list) {
       return list.map(function (c) {
         var res = c.passed === true ? pill('green', 'Pass') : c.passed === false ? pill('red', 'Fail') : pill('', 'n/a');
         var n = (c.offenders || []).filter(offInScope).length;
         return { cls: 'clickable' + (c.check_id === ST.dqCheck ? ' sel' : ''), attr: ' data-check="' + esc(c.check_id) + '" tabindex="0" role="button" aria-pressed="' + (c.check_id === ST.dqCheck) + '" title="' + esc(c.definition + (c.playbook ? ' · Playbook: ' + c.playbook : '')) + '"',
-          cells: ['<b>' + esc(c.check_id) + '</b>', esc(c.check_name), fmtVal(c), fmtThr(c), res, nf(c.count) + (anyDrill() ? ' <span class="muted">(' + n + ' in scope)</span>' : ''), nf(c.score, 1) + ' / ' + nf(c.weight)] };
+          cells: ['<b>' + esc(c.check_id) + '</b>', esc(c.check_name), fmtVal(c), fmtThr(c), res,
+            c.kind === 'na' ? '–' : nf(c.count) + (anyDrill() ? ' <span class="muted">(' + n + ' in scope)</span>' : ''),
+            c.kind === 'na' ? '–' : nf(c.score, 1) + ' / ' + nf(c.weight)] };
       });
     };
     var hd = [{ t: 'ID', cls: 'nw' }, { t: 'Check' }, { t: 'Value', cls: 'num' }, { t: 'Threshold', cls: 'nw' }, { t: 'Result' }, { t: 'Count', cls: 'num' }, { t: 'Score', cls: 'nw' }];
@@ -1136,9 +1162,9 @@ footer .wrap{padding-top:14px;padding-bottom:18px}
     var dqSo = 'DQ ' + nf(sm.dq_score) + '/100 (' + (sm.dq_rating || '–') + '); CPLI ' + nf(sm.cpli, 3) + ' and BEI ' + nf(sm.bei, 3) + ' against a 0.95 target' + (idxBad.length ? ', so ' + idxBad.join(' and ') + (idxBad.length > 1 ? ' are' : ' is') + ' below target.' : '.') + (pvs ?' Change since the previous update: ' + sd(Math.round((sm.dq_score - pvs.dq_score) * 10) / 10, 'pts') + '.' : '');
     var os = (s.raw.owner_scorecard || []).slice().sort(function (a, b) { return a.owner_dq - b.owner_dq; });
     var osRows = os.map(function (o) { var tone = o.owner_dq < 70 ? 'red' : o.owner_dq < 85 ? 'amber' : 'green'; return [esc(o.owner_code) + '<span class="aname">' + esc(ownerName(o.owner_code)) + '</span>', nf(o.activities), nf(o.incomplete), nf(o.flagged), pill(tone, nf(o.owner_dq, 1) + '%'), nf(o.update_issues), nf(o.logic_issues)]; });
-    var tiles = [['DQ score', nf(sm.dq_score) + '/100', sm.dq_rating, 'DQ score'], ['DCMA pass count', passD + ' of ' + applD, 'applicable DCMA checks passing', 'DCMA pass count'], ['CPLI', nf(sm.cpli, 3), 'target ≥ 0.95', 'CPLI'], ['BEI', nf(sm.bei, 3), 'target ≥ 0.95', 'BEI'], ['Failed checks', String(failAll.length), 'of ' + dc.length + ' DCMA and update checks', 'DQ score']];
+    var tiles = [['DQ score', nf(sm.dq_score) + '/100', sm.dq_rating, 'DQ score'], ['DCMA pass count', passD + ' of ' + applD, 'applicable DCMA checks passing', 'DCMA pass count'], ['CPLI', nf(sm.cpli, 3), 'target ≥ 0.95', 'CPLI'], ['BEI', nf(sm.bei, 3), 'target ≥ 0.95', 'BEI'], ['Failed checks', String(failAll.length), failInfo.length ? '+ ' + failInfo.length + ' with weight 0 · of ' + dc.length : 'of ' + dc.length + ' DCMA and update checks', 'DQ score']];
     var tilesHtml = '<div class="tiles">' + tiles.map(function (x) { var bad = (x[0] === 'CPLI' || x[0] === 'BEI') && sm[x[0].toLowerCase()] < 0.95; return '<div class="tile"><div class="lab">' + esc(x[0]) + info(x[3]) + '</div><div class="val ' + (bad ? 'tone-red' : '') + '">' + esc(x[1]) + '</div><div class="note">' + esc(x[2]) + '</div></div>'; }).join('') + '</div>';
-    var dqTitle = 'Schedule quality is ' + (sm.dq_rating || '').toLowerCase() + ' at ' + nf(sm.dq_score) + '/100: ' + plural(failAll.length, 'check fails', 'checks fail') + ', led by ' + failAll.slice(0, 3).map(function (c) { return c.check_name.toLowerCase(); }).join(', ') + '.';
+    var dqTitle = 'Schedule quality is ' + (sm.dq_rating || '').toLowerCase() + ' at ' + nf(sm.dq_score) + '/100: ' + plural(failAll.length, 'check fails', 'checks fail') + (failAll.length ? ', led by ' + failAll.slice(0, 3).map(function (c) { return c.check_name.toLowerCase(); }).join(', ') : '') + (failInfo.length ? ' (' + failInfo.map(function (c) { return c.check_id; }).join(', ') + ' also fail' + (failInfo.length === 1 ? 's' : '') + ' with weight 0)' : '') + '.';
     var worstOwner = os[0];
 
     p.innerHTML = '<h2 class="sr">Schedule quality (DCMA)</h2>' + tilesHtml + '<div class="grid">' +
@@ -1375,6 +1401,8 @@ footer .wrap{padding-top:14px;padding-bottom:18px}
       var ic = t.closest('[data-if-g]');
       if (ic) { var g = ic.getAttribute('data-if-g'), rr = ic.getAttribute('data-if-r'); ST.ifCell = ST.ifCell && ST.ifCell.g === g && ST.ifCell.r === rr ? null : { g: g, r: rr, dim: ST.ifDim }; renderTab(); return; }
       if (t.closest('#if-clear')) { ST.ifCell = null; renderTab(); return; }
+      var gc = t.closest('[data-goto-check]');
+      if (gc) { ST.dqCheck = gc.getAttribute('data-goto-check'); selectTab('dq'); var gk = document.querySelector('[data-check="' + ST.dqCheck + '"]'); if (gk) { gk.scrollIntoView({ block: 'center' }); gk.focus(); } return; }
       var ck = t.closest('[data-check]');
       if (ck) { ST.dqCheck = ck.getAttribute('data-check'); renderTab(); var nc = document.querySelector('[data-check="' + ST.dqCheck + '"]'); if (nc) nc.focus(); return; }
     });
@@ -1391,6 +1419,7 @@ footer .wrap{padding-top:14px;padding-bottom:18px}
       }
     });
     if (window.matchMedia) { var mq = matchMedia('(prefers-color-scheme: dark)'); var h = function () { themeBtn(); if (!storedTheme() && D) renderTab(); }; if (mq.addEventListener) mq.addEventListener('change', h); }
+    var rz; window.addEventListener('resize', function () { clearTimeout(rz); rz = setTimeout(function () { if (D) snapBoxes(document.getElementById('p-' + ST.tab)); }, 150); });
     window.addEventListener('beforeprint', function () { if (D) { var cur = document.documentElement.getAttribute('data-theme'); ST.printTheme = cur; document.documentElement.setAttribute('data-theme', 'light'); renderTab(); } });
     window.addEventListener('afterprint', function () { if (D) { if (ST.printTheme) document.documentElement.setAttribute('data-theme', ST.printTheme); else document.documentElement.removeAttribute('data-theme'); renderTab(); } });
   }

@@ -148,6 +148,8 @@ def main() -> int:
     data = json.loads((DOCS / "data" / "dashboard.json").read_text(encoding="utf-8"))
     latest_dd = data["meta"]["latest"]
     lsum = data["snapshots"][latest_dd]["summary"]
+    acols = data["activities"]["cols"]
+    act_type = {r[acols.index("activity_id")]: r[acols.index("activity_type")] for r in data["activities"]["rows"]}
     httpd, url = serve()
     col = Collector()
     checks: list[str] = []
@@ -364,6 +366,53 @@ def main() -> int:
                 page.wait_for_selector("#drawer:not([hidden])")
                 page.click("#dr-close")
             checks.append(f"DQ check D07 offenders: {off.count()} buttons")
+            # an N/A check (D10, no resources in the IMS) shows "–" for value, threshold, count and score, never 0 or 1
+            d10 = page.locator('#t-dcma tr[data-check="D10"] td').all_inner_texts()
+            if len(d10) < 7 or any(d10[i].strip() != "–" for i in (2, 3, 5, 6)):
+                failures.append(f"D10 (N/A) must show '–' for value, threshold, count and score: {d10}")
+            else:
+                checks.append("N/A check D10 shows '–' for value, threshold, count and score")
+            # level of effort on the longest path is tagged as the U07 defect and links to the check
+            activate(page, "cp")
+            tag = page.locator("#p-cp .loe-tag")
+            lp_loe = [a for a in data["snapshots"][latest]["acts"]["rows"]
+                      if dict(zip(data["snapshots"][latest]["acts"]["cols"], a)).get("is_longest_path")
+                      and act_type.get(dict(zip(data["snapshots"][latest]["acts"]["cols"], a))["activity_id"]) == "TT_LOE"]
+            if lp_loe and tag.count() != len(lp_loe):
+                failures.append(f"{len(lp_loe)} LOE activities on the longest path but {tag.count()} 'LOE · U07' tags")
+            elif tag.count():
+                tag.first.click()
+                page.wait_for_function("(window.__DOP_RENDERED || '').startsWith('dq|')", timeout=10000)
+                if page.get_attribute('#p-dq tr[data-check="U07"]', "aria-pressed") != "true":
+                    failures.append("the LOE · U07 tag does not open check U07 on the Schedule quality tab")
+                else:
+                    checks.append(f"LOE on the longest path tagged 'LOE · U07' ({tag.count()}); the tag opens check U07")
+            # scrolling tables end on a whole row (no row cut in half at the first view), on every tab
+            cut = []
+            for tab in TABS:
+                activate(page, tab)
+                page.evaluate("window.scrollTo(0,0)")
+                cut += [f"{tab}: {x}" for x in page.evaluate("""() => { const bad = [];
+                    for (const p of document.querySelectorAll('[role=tabpanel]')) {
+                      if (p.hidden) continue;
+                      for (const b of p.querySelectorAll('.tw[data-max]')) {
+                        if (b.scrollHeight <= b.clientHeight + 1) continue;
+                        const top = b.getBoundingClientRect().top + b.clientTop, bottom = top + b.clientHeight;
+                        for (const r of b.querySelectorAll('tbody tr')) { const q = r.getBoundingClientRect();
+                          if (q.top < bottom - 2 && q.bottom > bottom + 2) bad.push(b.getAttribute('aria-label')); }
+                      } } return bad; }""")]
+            if cut:
+                failures.append(f"scrolling tables cut a row in half: {cut}")
+            else:
+                checks.append("scrolling tables end on a whole row on every tab")
+            # every tab is visible at 1280 px (the tour and most laptop screens), not only at 1440 px
+            page.set_viewport_size({"width": 1280, "height": 720})
+            tl1280 = page.evaluate("(() => { const t = document.getElementById('tablist'); return t.scrollWidth - t.clientWidth; })()")
+            page.set_viewport_size({"width": 1440, "height": 900})
+            if tl1280 > 0:
+                failures.append(f"tab bar overflows by {tl1280}px at 1280 px: the last tab is cut off")
+            else:
+                checks.append("all 8 tabs visible at 1280 px")
             # interfaces matrix filter + workstream view
             activate(page, "if")
             cell = page.locator("#p-if button.rc[data-if-g]").first

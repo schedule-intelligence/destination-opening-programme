@@ -336,7 +336,7 @@ def build_model(root: pathlib.Path, bls: dict, ups: list, run_ts: str, near_crit
                 dim_calendar=pd.DataFrame(dim_calendar), dim_date=pd.DataFrame(dim_date),
                 fact_activity_snapshot=fact_activity, fact_relationship=pd.DataFrame(frel),
                 fact_milestone_trend=pd.DataFrame(fms), fact_interface=pd.DataFrame(fif),
-                fact_dcma_check=pd.DataFrame(fdc), fact_dcma_offender=pd.DataFrame(fdo),
+                fact_dcma_check=_nullable_int(pd.DataFrame(fdc), "count"), fact_dcma_offender=pd.DataFrame(fdo),
                 fact_owner_scorecard=pd.DataFrame(fown), fact_snapshot_summary=pd.DataFrame(summary),
                 fact_risk=pd.DataFrame(frisk), fact_decision=pd.DataFrame(fdec), fact_change=pd.DataFrame(fchg),
                 fact_scenario=pd.DataFrame(fscn), fact_readiness=pd.DataFrame(readiness),
@@ -347,6 +347,13 @@ def _fmt(t):
     from ..calendars import from_time
     x = from_time(t)
     return x.year, x.month, x.day, x.hour
+
+
+def _nullable_int(df: pd.DataFrame, col: str) -> pd.DataFrame:
+    """Whole numbers with gaps (an N/A check has no count): keep Python ints and None so the CSV writes 36 and an
+    empty cell, and the JSON writes null, instead of pandas turning the column into 36.0 / NaN."""
+    df[col] = pd.Series([None if pd.isna(v) else int(v) for v in df[col]], dtype=object, index=df.index)
+    return df
 
 
 def weighted_pct_complete(rows) -> float:

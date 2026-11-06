@@ -66,8 +66,9 @@ def snapshot_narrative(m: dict, sid: int) -> dict:
         for o in opts:
             one = scen[scen.options == o]
             d = one.decision.iloc[0] if not one.empty else None
-            ids = d.split(", ") if isinstance(d, str) and d.strip() else []
-            when_o = pd.to_datetime(open_dec[open_dec.decision_id.isin(ids)].needed_by).max() if ids else pd.NaT
+            dec_ids = d.split(", ") if isinstance(d, str) and d.strip() else []   # not `ids`: that is the snapshot list
+            when_o = (pd.to_datetime(open_dec[open_dec.decision_id.isin(dec_ids)].needed_by).max() if dec_ids
+                      else pd.NaT)
             if not pd.isna(when_o):
                 need[o] = when_o
         if not need:                                  # no open decision behind the options: no date to quote
@@ -116,7 +117,7 @@ def snapshot_narrative(m: dict, sid: int) -> dict:
     worst = max(gap, key=lambda a: gap[a][0]) if gap else None
     so = {
         "day1_trend": f"Day 1 forecast {fd(s.day1_forecast)} ({sd(s.day1_var_bl0_d, 'cd')} vs BL0, {sd(s.day1_var_bl1_d, 'cd')} vs BL1).",
-        "milestones": f"{plural(len(slipped), 'milestone')} slipped this period; "
+        "milestones": f"{plural(len(slipped), 'milestone') if len(slipped) else 'No milestone'} slipped this period; "
                       f"{int((msk.total_float_d < 0).sum())} of {int((msk.status != 'TK_Complete').sum())} open "
                       f"milestones carry negative float.",
         "critical_path": (f"{plural(int(s.longest_path_count), 'activity')} on the longest path; "
