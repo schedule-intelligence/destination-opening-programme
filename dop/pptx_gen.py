@@ -15,6 +15,7 @@ from __future__ import annotations
 import datetime as dt
 import io
 import json
+import math
 import pathlib
 import re
 import zipfile
@@ -65,7 +66,7 @@ ACTION = {
     "D03": "replace lags that model work with explicit activities",
     "D04": "review non finish-to-start relationships",
     "D05": "replace hard constraints with logic or target milestones",
-    "D06": "add the missing successor logic that leaves high float",
+    "D06": "add the missing successor logic that causes the high float",
     "D07": "submit a recovery path for every negative-float activity",
     "D08": "split activities longer than 44 working days",
     "D09": "correct dates that sit on the wrong side of the data date",
@@ -144,8 +145,8 @@ def lc_first(s: str) -> str:
 
 
 def dqs(v) -> str:
-    """DQ score as shown in the narrative (whole points)."""
-    return f"{float(v):.0f}"
+    """DQ score as shown on the dashboard and in the narrative: one decimal, trailing .0 dropped (75.3, 80)."""
+    return f"{float(v):.1f}".removesuffix(".0")
 
 
 def ratio(v, threshold=None) -> str:
@@ -171,6 +172,7 @@ def clean_narr(s: str, ctx: "Ctx | None" = None) -> str:
     s = re.sub(r"\bfloat ([+-]?\d+) d → ([+-]?\d+) d\b", r"float \1 wd → \2 wd", s)
     s = re.sub(r"\(([+-]?\d+) d float\)", r"(\1 wd float)", s)
     s = re.sub(r"\bTF ≤ (\d+) d\b", r"TF ≤ \1 wd", s)
+    s = re.sub(r"(\d) cd\b", r"\1 d", s)               # the pack writes calendar days as d (Appendix B)
     s = re.sub(r"^0 milestones slipped", "No milestone slipped", s)
     if ctx is not None:
         for d in ctx.open_decisions():
@@ -199,7 +201,42 @@ _WB = ("027803330493059205750889085002930369036904550707027804040278044305750575
        "0619039805560389061105560797055605560500038903260389070705561000033310001000075007500708070807070422")
 W_REG = {ch: int(_WR[4 * i:4 * i + 4]) / 1000 for i, ch in enumerate(_GLYPHS)}
 W_BOLD = {ch: int(_WB[4 * i:4 * i + 4]) / 1000 for i, ch in enumerate(_GLYPHS)}
+for _W in (W_REG, W_BOLD):     # non-breaking hyphen and space have the same advance as '-' and ' ' in Segoe UI
+    _W["‑"], _W[" "] = _W["-"], _W[" "]
 SAFETY = 1.06                 # head-room on measured widths
+TITLE_HEADROOM = 0.95         # titles must fit two lines in 95 % of the box: renderers and fallback fonts differ
+
+_MON = "Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec"
+_NB_HYPHEN = [re.compile(rf"\b\d{{1,2}}-(?:{_MON})(?:-\d{{2,4}})?\b"),   # 21-Oct-2027, 21-Oct
+              re.compile(r"\b\d{4}-\d{2}-\d{2}\b"),                      # ISO dates (file names, controls)
+              re.compile(r"\b[A-Z]{3}-[A-Z0-9]{3}-[A-Z0-9]{3,4}\b"),     # activity IDs (DAR-CON-1132)
+              re.compile(r"\b(?:CR|IF|D|R|DOP)-[A-Z0-9]{2,3}\b")]        # register IDs (D-07, R-03, CR-003, IF-11)
+_NB_SPACE = [re.compile(r"(?<=\d) (?=(?:wd|cd|d|pts|days)\b)"),            # 7 wd, +15 d
+             re.compile(r"(?<=\b[A-C]) \+ (?=[A-C]\b)"),                 # A + B (+ C)
+             re.compile(r"(?<=[A-Za-z]) (?=[A-Z]\b(?![\w‑-]))|(?<=\bDay) (?=1\b)")]  # Zone B, Recovery A, Day 1
+
+
+_NB_HYPHEN += [re.compile(r"https?://\S+"),                                # URLs never break at their hyphens
+               re.compile(r"\b[A-Za-z]+(?:-[A-Za-z]+){2,}\b")]           # Finish-On-or-Before, front-of-house
+_NB_SPACE_EXTRA = re.compile(r"(?<=\d) (of|to) (?=[+\-−]?\d)")            # 40 of 40, 0 to 10
+
+
+def nbh(s: str) -> str:
+    """Keep dates, IDs, URLs, compounds, number-unit pairs, ranges and option sets on one line: non-breaking
+    hyphens and spaces."""
+    s = str(s)
+    if "-" in s:
+        for rx in _NB_HYPHEN:
+            s = rx.sub(lambda m: m.group(0).replace("-", "‑"), s)
+    if " of " in s or " to " in s:
+        s = _NB_SPACE_EXTRA.sub(lambda m: " " + m.group(1) + " ", s)
+    if " " in s:
+        s = s.replace(" - ", " – ")          # spaced separator in names: an en dash kept with the word before
+        s = _NB_SPACE[0].sub(" ", s)
+        s = _NB_SPACE[1].sub(" + ", s)
+        s = _NB_SPACE[1].sub(" + ", s)     # second pass for A + B + C (overlapping matches)
+        s = _NB_SPACE[2].sub(" ", s)
+    return s
 
 
 def tw(s: str, bold: bool = False) -> float:
@@ -262,12 +299,22 @@ def _max_em(width_in: float, pt: float) -> float:
 
 def text_lines(text: str, width_in: float, pt: float, bold: bool = False) -> int:
     """Estimated rendered line count of ``text`` in a box of usable width ``width_in`` (inches)."""
-    return len(_wrap_runs([(str(text), bold)], _max_em(width_in, pt)))
+    return len(_wrap_runs([(nbh(text), bold)], _max_em(width_in, pt)))
+
+
+def title_fits(title: str, size: float = 24) -> bool:
+    """True if an action title wraps to at most two lines at ``size`` pt, with renderer head-room."""
+    return text_lines(title, (CW - 2 * PAD_X) * TITLE_HEADROOM, size, True) <= 2
+
+
+def first_fit(*candidates: str) -> str:
+    """The first candidate title that fits two lines at 24 pt (the last one otherwise)."""
+    return next((t for t in candidates if title_fits(t)), candidates[-1])
 
 
 def fit(text: str, width_in: float, pt: float, lines: int = 1, bold: bool = False) -> str:
     """Truncate ``text`` (with an ellipsis) so that it wraps to at most ``lines`` lines."""
-    text = str(text)
+    text = nbh(text)
     mx = _max_em(width_in, pt)
     wrapped = _wrap_runs([(text, bold)], mx)
     if len(wrapped) <= lines:
@@ -286,17 +333,24 @@ def para_height(paras: list[dict], width_in: float, delta: float = 0) -> float:
     h = 0.0
     for p in paras:
         size = max(max(10.0, r["size"] - delta) for r in p["runs"])
-        n = len(_wrap_runs([(r["text"], r["bold"]) for r in p["runs"]], _max_em(width_in, size)))
+        w = width_in - p.get("hang", 0)              # a bulleted paragraph wraps inside its hanging indent
+        n = len(_wrap_runs([(r["text"], r["bold"]) for r in p["runs"]], _max_em(w, size)))
         h += n * size * LINE / 72 + p.get("after", 0) / 72
     return h
 
 
-def R(text, size=12, bold=False, color=TEXT, italic=False) -> dict:
-    return {"text": str(text), "size": size, "bold": bold, "color": color, "italic": italic}
+def R(text, size=12, bold=False, color=TEXT, italic=False, link=None) -> dict:
+    return {"text": nbh(text), "size": size, "bold": bold, "color": color, "italic": italic, "link": link}
 
 
-def P(*runs, align=None, after=0) -> dict:
-    return {"runs": list(runs), "align": align, "after": after}
+def P(*runs, align=None, after=0, hang=0) -> dict:
+    """A paragraph; ``hang`` > 0 makes it a bullet with a hanging indent of ``hang`` inches."""
+    return {"runs": list(runs), "align": align, "after": after, "hang": hang}
+
+
+def BUL(text, size=12, color=TEXT, after=0) -> dict:
+    """A bullet paragraph: a real bullet with a hanging indent, so wrapped lines align with the text."""
+    return P(R(text, size, False, color), after=after, hang=round(size * 1.1 / 72, 3))
 
 
 # ----------------------------------------------------------------------------------------------- data context
@@ -348,6 +402,10 @@ class Ctx:
     def label(self, aid: str) -> str:
         """'DAR · MEP second fix - Zone C' (asset code plus name, for tables without an id column)."""
         return f"{self.A.get(aid, {}).get('asset_code', '')} · {short_name(self.name(aid))}"
+
+    def id_label(self, aid: str) -> str:
+        """'PEW-CON-1040 · HV cabling': the id tells apart activities with the same name and matches the ask text."""
+        return f"{aid} · {short_name(self.name(aid))}"
 
     def owner_of(self, aid: str) -> str:
         return self.A.get(aid, {}).get("owner_code") or "UNASSIGNED"
@@ -467,8 +525,27 @@ class Ctx:
         return sorted(c.items(), key=lambda kv: (-kv[1], kv[0]))[0][0]
 
     def failing_checks(self) -> list[dict]:
-        f = [c for c in self.S["dcma"] if c["passed"] is False]
+        """Checks that fail and cost points; informational checks (weight 0, e.g. U12 long lags) are listed apart."""
+        f = [c for c in self.S["dcma"] if c["passed"] is False and c["weight"]]
         return sorted(f, key=lambda c: (-(c["weight"] - c["score"]), -(c["count"] or 0), c["check_id"]))
+
+    def info_checks(self) -> list[dict]:
+        return [c for c in self.S["dcma"] if c["passed"] is False and not c["weight"]]
+
+    def offenders_of(self, chk: dict, owner: str) -> int:
+        """How many of a check's offending items belong to ``owner`` (a relationship belongs to its successor's
+        owner, as in check_owner)."""
+        n = 0
+        for o in chk.get("offenders") or []:
+            aid = o.split("->")[1].split(":")[0] if "->" in o else o
+            n += self.owner_of(aid) == owner
+        return n
+
+    def who(self, code: str) -> str:
+        """Role and code for an ask, without repeating the code when the role already names it
+        ('MWC Project Director', not 'MWC Project Director (MWC)')."""
+        r = self.role(code)
+        return r if code in r.split() else f"{r} ({code})"
 
 
 def check_result(c: dict) -> str:
@@ -552,6 +629,16 @@ class Deck:
             para.alignment = p.get("align") or PP_ALIGN.LEFT
             if p.get("after"):
                 para.space_after = Pt(p["after"])
+            if p.get("hang"):
+                pPr = para._p.get_or_add_pPr()
+                pPr.set("marL", str(int(Inches(p["hang"]))))
+                pPr.set("indent", str(-int(Inches(p["hang"]))))
+                bf = OxmlElement("a:buFont")
+                bf.set("typeface", "Arial")
+                bc = OxmlElement("a:buChar")
+                bc.set("char", "•")
+                pPr.append(bf)
+                pPr.append(bc)
             for r in p["runs"]:
                 run = para.add_run()
                 run.text = r["text"]
@@ -561,6 +648,8 @@ class Deck:
                 f.bold = r["bold"]
                 f.italic = r["italic"]
                 f.color.rgb = rgb(r["color"])
+                if r.get("link"):                    # the visible URL uses non-breaking hyphens; the link is exact
+                    run.hyperlink.address = r["link"]
 
     def _shrink(self, paras, w, h, label):
         """Smallest font reduction (in 0.5 pt steps, floor 10 pt) that makes ``paras`` fit; truncates if not."""
@@ -601,10 +690,10 @@ class Deck:
         bgf.solid()
         bgf.fore_color.rgb = rgb(SURFACE)
         self.text(s, ML, TAG_Y, CW, TAG_H, [P(R(tag.upper(), 10, True, TEAL))], name="Section tag")
-        size = next((z for z in (24, 22, 20) if text_lines(title, CW - 2 * PAD_X, z, True) <= 2), 20)
-        if text_lines(title, CW - 2 * PAD_X, size, True) > 2:
+        size = next((z for z in (24, 22, 20) if title_fits(title, z)), 20)
+        if not title_fits(title, size):
             self.warnings.append(f"slide {self.n}: title truncated")
-            title = fit(title, CW - 2 * PAD_X, size, 2, True)
+            title = fit(title, (CW - 2 * PAD_X) * TITLE_HEADROOM, size, 2, True)
         self.text(s, ML, TITLE_Y, CW, TITLE_H, [P(R(title, size, True, NAVY))], name="Title",
                   anchor=MSO_ANCHOR.MIDDLE)
         self.rect(s, ML, RULE_Y, 1.2, 0.04, fill=TEAL, name="Title rule")
@@ -616,33 +705,42 @@ class Deck:
                   name="Slide Number", anchor=MSO_ANCHOR.MIDDLE)
         return s
 
+    def _fit(self, text, w, pt, lines=1, bold=False, label="text"):
+        """fit() that records a layout warning when it has to cut text (a note or heading must never lose words
+        silently)."""
+        t = fit(text, w, pt, lines, bold)
+        if t != nbh(text):
+            self.warnings.append(f"slide {self.n}: truncated {label}: {text[:60]!r}")
+        return t
+
     def heading(self, s, x, y, w, text, h=0.3):
-        return self.text(s, x, y, w, h, [P(R(fit(text, w - 2 * PAD_X, 12, 1, True), 12, True, NAVY))],
+        return self.text(s, x, y, w, h, [P(R(self._fit(text, w - 2 * PAD_X, 12, 1, True, "heading"), 12, True, NAVY))],
                          name="Heading", anchor=MSO_ANCHOR.BOTTOM)
 
     def caption(self, s, x, y, w, text, h=0.48):
         return self.text(s, x, y, w, h, [P(R("So what: ", 10.5, True, TEAL), R(text, 10.5, False, TEXT))],
                          name="So what")
 
-    def note(self, s, x, y, w, text, h=0.28):
-        return self.text(s, x, y, w, h, [P(R(fit(text, w - 2 * PAD_X, 10, 1), 10, False, MUTED, True))],
-                         name="Note")
+    def note(self, s, x, y, w, text, h=None, lines=1):
+        h = h if h is not None else 0.28 + (lines - 1) * 10 * LINE / 72
+        return self.text(s, x, y, w, h, [P(R(self._fit(text, w - 2 * PAD_X, 10, lines, label="note"), 10, False,
+                                             MUTED, True))], name="Note")
 
     def ask(self, s, label, text, y=ASK_Y, h=ASK_H, x=ML, w=CW, extra=None, accent=TEAL, tint="teal"):
         self.rect(s, x, y, 0.07, h, fill=accent, name="Ask accent")
         paras = [P(R(f"{label}: ", 12, True, NAVY), R(text, 12, False, TEXT))] if text else \
             [P(R(label, 12, True, NAVY))]
         for e in extra or []:
-            paras.append(P(R("•  " + e, 11.5, False, TEXT)))
+            paras.append(BUL(e, 11.5))
         return self.text(s, x + 0.07, y, w - 0.07, h, paras, name="Ask box", fill=TINT[tint],
                          anchor=MSO_ANCHOR.MIDDLE)
 
     def tile(self, s, x, y, w, h, label, value, sub, color=NAVY):
         self.rect(s, x, y, 0.07, h, fill=color, name="Tile accent")
         iw = w - 0.07 - 2 * PAD_X
-        paras = [P(R(fit(label, iw, 10, 1, True), 10, True, MUTED)),
-                 P(R(fit(value, iw, 20, 1, True), 20, True, color)),
-                 P(R(fit(sub, iw, 10, 1), 10, False, MUTED))]
+        paras = [P(R(self._fit(label, iw, 10, 1, True, "tile label"), 10, True, MUTED)),
+                 P(R(self._fit(value, iw, 20, 1, True, "tile value"), 20, True, color)),
+                 P(R(self._fit(sub, iw, 10, 1, label="tile text"), 10, False, MUTED))]
         return self.text(s, x + 0.07, y, w - 0.07, h, paras, name="KPI tile", fill=SURFACE, line=BORDER,
                          anchor=MSO_ANCHOR.MIDDLE)
 
@@ -654,10 +752,12 @@ class Deck:
 
     # -- table
     def table(self, s, x, y, w, cols, rows, max_h, font=10, hdr=10, max_lines=2, max_rows=12, name="Table",
-              partial_ok=False):
+              partial_ok=False, stretch=False):
         """cols: [(header, width | None for flexible, align, lines)]; rows: [[value | {"text", "fill", "color", "bold"}]].
         Rows that would push the table below ``y + max_h`` are dropped; returns (bottom_y, shown). Dropping rows is
-        a layout warning unless the caller states it (``partial_ok``) and prints a "Showing n of m" note."""
+        a layout warning unless the caller states it (``partial_ok``) and prints a "Showing n of m" note.
+        ``stretch`` spreads spare height over the body rows (at most 0.1 in each) so a short table does not leave an
+        empty band above the ask box."""
         fixed = sum(c[1] for c in cols if c[1])
         flex = [c for c in cols if not c[1]]
         if flex:
@@ -686,6 +786,10 @@ class Deck:
             heights.append(rh)
         if len(body) < len(rows) and not partial_ok:
             self.warnings.append(f"slide {self.n}: table '{name}' shows {len(body)} of {len(rows)} rows without a note")
+        if stretch and body and used < max_h:
+            add = min(0.1, (max_h - used) / len(body))
+            heights = [h + add for h in heights]
+            used += add * len(body)
         gf = s.shapes.add_table(len(body) + 1, len(cols), Inches(x), Inches(y), Inches(w), Inches(used))
         gf.name = name
         tbl_el = gf._element.graphic.graphicData.tbl
@@ -722,7 +826,7 @@ class Deck:
         p = tf.paragraphs[0]
         p.alignment = {"l": PP_ALIGN.LEFT, "c": PP_ALIGN.CENTER, "r": PP_ALIGN.RIGHT}[align]
         run = p.add_run()
-        run.text = str(spec["text"])
+        run.text = nbh(spec["text"])
         f = run.font
         f.name = FONT
         f.size = Pt(size)
@@ -761,9 +865,31 @@ class Deck:
         ca.tick_label_position = XL_TICK_LABEL_POSITION.LOW
         ca.has_major_gridlines = False
 
+    @staticmethod
+    def _no_wrap(el):
+        """Data labels on one line: renderers otherwise wrap a date label at its hyphen."""
+        tx = el.find(qn("c:txPr"))
+        if tx is not None:
+            tx.find(qn("a:bodyPr")).set("wrap", "none")
+
+    def _point_label(self, pt, fmt, position):
+        """A point-level data label with its own position, number format and font (renderers do not all inherit
+        the series-level settings into a point override)."""
+        dl = pt.data_label
+        dl.position = position
+        dl.font.size = Pt(10)
+        dl.font.color.rgb = rgb(TEXT)
+        el = dl._dLbl
+        nf = OxmlElement("c:numFmt")
+        nf.set("formatCode", fmt)
+        nf.set("sourceLinked", "0")
+        el.find(qn("c:idx")).addnext(nf)
+        self._no_wrap(el)
+
     def line_chart(self, s, x, y, w, h, cats, series, fmt="0", vmin=None, vmax=None, major=None,
-                   labels_on=(0,), legend=True, name="Chart"):
-        """series: [(name, values, color, dashed)]"""
+                   labels_on=(0,), legend=True, name="Chart", label_fmt=None, label_pos=None):
+        """series: [(name, values, color, dashed)]; label_fmt: number format of the data labels (default ``fmt``);
+        label_pos: per-point 'above' / 'below' for the first labelled series (default above)."""
         cd = CategoryChartData(number_format=fmt)
         cd.categories = cats
         for nm, vals, _c, _d in series:
@@ -796,13 +922,19 @@ class Deck:
                 se.marker.format.fill.fore_color.rgb = rgb(color)
                 se.marker.format.line.color.rgb = rgb(color)
             if i in labels_on:
+                lf = label_fmt or fmt
                 dl = se.data_labels
-                dl.number_format = fmt
+                dl.number_format = lf
                 dl.number_format_is_linked = False
                 dl.show_value = True
                 dl.position = XL_LABEL_POSITION.ABOVE
                 dl.font.size = Pt(10)
                 dl.font.color.rgb = rgb(TEXT)
+                self._no_wrap(dl._element)
+                if label_pos and i == labels_on[0]:
+                    for k, pos in enumerate(label_pos):
+                        if pos == "below":
+                            self._point_label(se.points[k], lf, XL_LABEL_POSITION.BELOW)
         return ch
 
     def bar_chart(self, s, x, y, w, h, cats, series, fmt="0", horizontal=False, point_colors=None,
@@ -825,6 +957,17 @@ class Deck:
         va = ch.value_axis
         va.tick_labels.number_format = fmt
         va.tick_labels.number_format_is_linked = False
+        # every bar carries its value label, so gridlines add nothing and would strike through the labels; the axis
+        # is rounded to a nice step with head room beyond the longest bar so its label never meets the axis text
+        va.has_major_gridlines = False
+        if vmin is None and vmax is None:
+            vals = [v for _, vs, _ in series for v in vs if v is not None]
+            lo, hi = min(vals + [0]), max(vals + [0])
+            span = (hi - lo) or 1
+            step = next(m * 10 ** e for e in range(-1, 6) for m in (1, 2, 2.5, 5) if m * 10 ** e >= span / 5)
+            vmin = math.floor((lo - 0.18 * span) / step) * step if lo < 0 else 0
+            vmax = math.ceil((hi + 0.18 * span) / step) * step if hi > 0 else 0
+            va.major_unit = step
         if vmin is not None:
             va.minimum_scale = vmin
         if vmax is not None:
@@ -843,6 +986,13 @@ class Deck:
                     pt = se.points[k]
                     pt.format.fill.solid()
                     pt.format.fill.fore_color.rgb = rgb(pc)
+                # a coloured point without its own invertIfNegative is drawn as a positive bar by LibreOffice
+                # (and labelled without its minus sign); state it explicitly on every point
+                for dpt in se._element.findall(qn("c:dPt")):
+                    if dpt.find(qn("c:invertIfNegative")) is None:
+                        inv = OxmlElement("c:invertIfNegative")
+                        inv.set("val", "0")
+                        dpt.find(qn("c:idx")).addnext(inv)
             dl = se.data_labels
             dl.number_format = fmt
             dl.number_format_is_linked = False
@@ -924,8 +1074,9 @@ def kpi_specs(c: Ctx) -> list[tuple]:
     sm, p = c.sm, c.prev_sm
     tf = sm["day1_tf_d"]
     var_t = (_d(sm["day1_forecast"]) - _d(c.target)).days
+    # both tiles quote the previous update the same, short way (a full date does not fit the DQ tile)
     dq_prev = f" · was {dqs(p['dq_score'])} on {fds(p['data_date'])}" if p else ""
-    tf_prev = f"was {sg(p['day1_tf_d'], 'wd')} on {fd(p['data_date'])}" if p else "first update"
+    tf_prev = f"was {sg(p['day1_tf_d'], 'wd')} on {fds(p['data_date'])}" if p else "first update"
     return [
         ("Day 1 forecast", fd(sm["day1_forecast"]), f"target {fd(c.target)} ({sg(var_t, 'd')})",
          RED if var_t > 0 else GREEN),
@@ -954,28 +1105,34 @@ def s_exec_summary(dk: Deck, tag="Executive summary"):
     c = dk.c
     title = (c.narr["headline"].replace("Day 1 Opening is forecast for", "Day 1 forecast")
              .replace(" working days", " wd").replace("approving recovery", "approving"))
+    # shorter wordings keep every number and date of the dashboard headline, in the same order
+    t2 = title.replace(" beyond the ", " past the ")
+    t3 = t2.replace(" returns it to ", " gives ")
+    title = first_fit(title, t2, t3, t3.replace(" wd float)", " wd)"))
     s = dk.slide(tag, title)
     dk.tiles(s, BODY_Y, 0.95, kpi_specs(c))
     y0 = BODY_Y + 0.95 + 0.2
     lw = 6.7
     dk.heading(s, ML, y0, lw, "Key messages")
-    paras = [P(R("•  " + m, 13, False, TEXT), after=6) for m in c.narr["messages"]]
+    lines = decision_lines(c)
+    # the decisions have their own box below: do not repeat them as a key message
+    msgs = [m for m in c.narr["messages"] if not (lines and re.match(r"^\d+ decisions? open", m))]
+    paras = [BUL(m, 13, after=6) for m in msgs]
     dk.text(s, ML, y0 + 0.32, lw, 5.8 - (y0 + 0.32), paras, name="Messages")
     rx = ML + lw + 0.2
     rw = SW - ML - rx
     nc = c.meta["near_critical_days"]
     dk.heading(s, rx, y0, rw, f"RAG by asset (as dashboard): red TF < 0, amber ≤ {nc} wd")
-    rag = c.rag()
+    rag = sorted(c.rag(), key=lambda r: (r["tf"] if r["tf"] is not None else 9999, r["asset"]))   # worst first
     rows = [[SHORT_ASSET.get(r["asset"], r["asset"]), rag_cell(r["status"]), r["why"], r["owner"]] for r in rag]
     avail = 5.8 - (y0 + 0.34)
-    why_w = rw - 1.45 - 0.68 - WOW - 2 * CELL_X
+    why_w = rw - 1.45 - 0.6 - WOW - 2 * CELL_X
     need = (10 * LINE / 72 + 2 * CELL_Y + 0.03) + sum(
         (min(2, text_lines(r["why"], why_w, 10)) * 10 * LINE / 72 + 2 * CELL_Y + 0.02) for r in rag)
     why_lines = 2 if need <= avail else 1          # every asset must keep its row; shorten the reason instead
-    dk.table(s, rx, y0 + 0.34, rw, [("Asset", 1.45, "l", 1), ("RAG", 0.68, "c", 1),
+    dk.table(s, rx, y0 + 0.34, rw, [("Asset", 1.45, "l", 1), ("RAG", 0.6, "c", 1),
                                     ("Lowest total float · activity", None, "l", why_lines), ("Owner", WOW, "c", 1)],
              rows, avail, name="RAG table")
-    lines = decision_lines(c)
     if lines:
         dk.ask(s, "Decisions required", "", y=5.92, h=0.93, extra=lines)
     else:
@@ -983,13 +1140,19 @@ def s_exec_summary(dk: Deck, tag="Executive summary"):
     return s
 
 
+# contents list on the cover: one entry per monthly slide after the cover, in MONTHLY order (checked by the tests)
+AGENDA = ["Executive summary", "Milestone outlook", "Critical path to Day 1", "Two-week look-back",
+          "Two-week look-ahead", "Trend analysis", "Interfaces and readiness gap", "Top risks", "Decision log",
+          "Recovery plan", "Change and baseline governance", "Schedule-quality actions",
+          "Appendix A · lineage and method", "Appendix B · definitions"]
+
+
 def s_cover(dk: Deck):
     c = dk.c
     snap = c.snap
-    title = (f"Destination Opening Programme steering committee pack for the {fd(c.dd)} update: "
-             f"Day 1 is forecast for {fd(c.sm['day1_forecast'])}")
+    title = f"Destination Opening Programme steering committee pack for the {fd(c.dd)} update"   # the lede gives the answer
     s = dk.slide("Monthly steering committee pack · fictional programme", title)
-    dk.text(s, ML, BODY_Y, CW, 0.75, [P(R(c.narr["headline"], 16, False, TEXT))], name="Headline")
+    dk.text(s, ML, BODY_Y, CW, 0.7, [P(R(c.narr["headline"], 16, False, TEXT))], name="Headline")
     sm = c.sm
     bl_change = next((ch for ch in c.changes() if str(ch["baseline_effect"]).startswith(f"{c.bl} created")), None)
     specs = [
@@ -998,11 +1161,11 @@ def s_cover(dk: Deck):
         ("Data date", fd(c.dd), f"update {sm['label']} · cut-off {fd(snap['cutoff_expected'])}", NAVY),
         ("Baseline in force", c.bl, (f"{bl_change['change_id']} approved {fd(bl_change['approval_date'])}"
                                      if bl_change else snap["baseline_file"]), TEAL),
-        ("DQ score", f"{dqs(sm['dq_score'])} / 100", f"{sm['dq_rating']} (Good ≥ 85, Fair 70-85)",
+        ("DQ score", f"{dqs(sm['dq_score'])} / 100", f"{sm['dq_rating']} (Good ≥ 85, Fair ≥ 70)",
          GREEN if sm["dq_score"] >= 85 else AMBER if sm["dq_score"] >= 70 else RED),
     ]
-    dk.tiles(s, BODY_Y + 0.9, 1.0, specs)
-    y = BODY_Y + 0.9 + 1.0 + 0.25
+    dk.tiles(s, BODY_Y + 0.82, 0.9, specs)
+    y = BODY_Y + 0.82 + 0.9 + 0.15
     rec = ("Reconciled ✓" if c.reconciled else "NOT reconciled ✗")
     paras = [
         P(R("Reconciliation statement", 12, True, NAVY), after=4),
@@ -1012,14 +1175,24 @@ def s_cover(dk: Deck):
             f"across source XER, model and dashboard JSON. Every number in this pack is read from that "
             f"reconciled dashboard file.", 12, False, TEXT)),
     ]
-    dk.text(s, ML, y, CW, 1.15, paras, name="Reconciliation statement", fill=TINT["teal"])
-    y += 1.15 + 0.2
+    dk.text(s, ML, y, CW, 0.85, paras, name="Reconciliation statement", fill=TINT["teal"])
+    y += 0.85 + 0.13
+    dk.heading(s, ML, y, CW, "In this pack")
+    per = -(-len(AGENDA) // 4)
+    colw = CW / 4
+    for k in range(4):
+        items = AGENDA[k * per:(k + 1) * per]
+        paras = [P(R(f"{k * per + j + 2}  ", 10.5, True, TEAL), R(t, 10.5, False, TEXT), after=2)
+                 for j, t in enumerate(items)]
+        if paras:
+            dk.text(s, ML + k * colw, y + 0.32, colw - 0.1, 0.97, paras, name="Agenda")
+    y += 0.32 + 0.97 + 0.1
     paras = [
         P(R("Method and transparency", 11, True, NAVY), after=3),
         P(R("Fictional programme and data. Schedules are produced by a custom CPM engine that follows Primavera "
             "P6 conventions and are exported in genuine P6 XER format; no Primavera P6 licence was used. "
             "Floats and durations are in working days (wd); variances are in calendar days (d), positive = later. "
-            f"Dashboard: {SITE}", 10.5, False, MUTED)),
+            "Dashboard: ", 10.5, False, MUTED), R(SITE, 10.5, False, MUTED, link=SITE)),
     ]
     dk.text(s, ML, y, CW, FOOT_LINE_Y - 0.12 - y, paras, name="Method note")
     return s
@@ -1028,13 +1201,13 @@ def s_cover(dk: Deck):
 def s_milestones(dk: Deck):
     c = dk.c
     vk = c.var_key()
-    ms = c.milestones()
+    ms = c.incomplete_ms()                         # one denominator on the slide: open milestones
     late = [m for m in ms if (m[vk] or 0) > 0]
     by_asset = Counter(c.A[m["activity_id"]]["asset_code"] for m in late)
     top_asset, top_n = (sorted(by_asset.items(), key=lambda kv: (-kv[1], kv[0]))[0] if by_asset else (None, 0))
     slipped = [m for m in ms if (m["movement_vs_prev_d"] or 0) > 0]
     prev = f" since {fd(c.prev_dd)}" if c.prev_dd else ""
-    title = f"{len(late)} of {len(ms)} milestones finish later than {c.bl}"
+    title = f"{len(late)} of {len(ms)} open milestones finish later than {c.bl}"
     if top_asset:
         title += f"; {c.meta['assets'][top_asset]} accounts for {top_n} of them"
     title += (f", and none slipped further{prev}." if not slipped else
@@ -1050,7 +1223,7 @@ def s_milestones(dk: Deck):
             ("BL1 finish", WDT, "c", 1), ("Forecast", WDT, "c", 1), ("Finish variance vs BL0 (d)", 0.95, "r", 1),
             ("Finish variance vs BL1 (d)", 0.95, "r", 1), ("Slip vs previous period (d)", 0.95, "r", 1),
             ("Total float (wd)", WNUM, "r", 1)]
-    bottom, shown = dk.table(s, ML, BODY_Y, CW, cols, rows, 5.85 - BODY_Y, max_lines=1, partial_ok=True)
+    bottom, shown = dk.table(s, ML, BODY_Y, CW, cols, rows, 5.85 - BODY_Y, max_lines=1, partial_ok=True, stretch=True)
     dk.note(s, ML, bottom + 0.04, CW, f"Showing {shown} of {len(inc)} open milestones, largest variance vs {c.bl} "
             f"first. Full list: controls workbook, Milestone Variance sheet.")
     neg = sorted([m for m in inc if (m["total_float_d"] or 0) < 0],
@@ -1064,11 +1237,9 @@ def s_milestones(dk: Deck):
             break
     if picks:
         txt = (f"{pl(len(neg), 'open milestone')} carry negative float. " +
-               "; ".join(f"{c.role(m['owner_code'])} ({m['owner_code']}) to confirm a recovery date for "
-                         f"{SHORT_ASSET.get(c.A[m['activity_id']]['asset_code'], '')} "
-                         f"{lc_first(short_name(c.name(m['activity_id'])))} ({m['activity_id']}, TF "
-                         f"{sg(m['total_float_d'], 'wd')})"
-                         for m in picks) + " at the next update.")
+               "; ".join(f"{c.who(m['owner_code'])} to confirm a recovery date for {m['activity_id']} "
+                         f"({lc_first(short_name(c.name(m['activity_id'])))}, TF {sg(m['total_float_d'], 'wd')})"
+                         for m in picks) + ", by the next update.")
         dk.ask(s, "Ask", txt)
     else:
         dk.ask(s, "So what", "No open milestone carries negative float; owners hold their forecast dates.")
@@ -1077,14 +1248,13 @@ def s_milestones(dk: Deck):
 
 def cp_title(c: Ctx) -> str:
     asset = c.driver_asset()
-    drivers = [lc_first(short_name(c.name(a["activity_id"]))) for a in c.lp_tasks()[:3]]
+    # each activity name is one unit: a title must not wrap in the middle of 'MEP second fix – Zone B'
+    drivers = [nbh(lc_first(short_name(c.name(a["activity_id"])))).replace(" ", " ") for a in c.lp_tasks()[:3]]
     tf = c.sm["day1_tf_d"]
-    for k in (3, 2, 1):
-        t = (f"The longest path to Day 1 runs through {c.meta['assets'].get(asset, 'the programme')}: "
-             f"{join_and(drivers[:k])}; Day 1 total float is {sg(tf, 'wd')}.")
-        if text_lines(t, CW - 2 * PAD_X, 20, True) <= 2:
-            return t
-    return t
+    where = c.meta["assets"].get(asset, "the programme")
+    return first_fit(*[f"The longest path to Day 1 runs through {where}: {join_and(drivers[:k])}; Day 1 total float "
+                       f"is {sg(tf, 'wd')}." for k in (3, 2, 1) if drivers[:k]],
+                     f"The longest path to Day 1 runs through {where}; Day 1 total float is {sg(tf, 'wd')}.")
 
 
 def cp_rows(c: Ctx) -> list[list]:
@@ -1104,12 +1274,12 @@ def cp_ask(c: Ctx) -> str:
     if first:
         a = first[0]
         o = c.owner_of(a["activity_id"])
-        parts.append(f"{c.role(o)} ({o}) to hold the {fd(a['finish'])} finish of {short_name(c.name(a['activity_id']))}"
+        parts.append(f"{c.who(o)} to hold the {fd(a['finish'])} finish of {short_name(c.name(a['activity_id']))}"
                      f" ({a['activity_id']}); a day lost there is a day lost at Day 1")
     if loe:
         o = c.owner_of(loe[0]["activity_id"])
-        parts.append(f"{c.role(o)} ({o}) to unlink the level-of-effort {loe[0]['activity_id']} from the driving "
-                     f"path (check U07)")
+        parts.append(f"{c.who(o)} to unlink the level-of-effort {loe[0]['activity_id']} from the driving path "
+                     f"(LOE · U07: level of effort must not drive Day 1)")
     return "; ".join(parts) + "." if parts else "The longest path is stable; no owner action this period."
 
 
@@ -1131,13 +1301,33 @@ def s_critical_path(dk: Deck):
             ("Finish", WDT, "c", 1), ("Total float (wd)", WNUM, "r", 1), ("Slip vs previous period (d)", 0.95, "r", 1),
             (f"Finish variance vs {c.bl} (d)", 0.95, "r", 1), ("Status", 1.0, "c", 1)]
     rows = cp_rows(c)
-    bottom, shown = dk.table(s, ML, y, CW, cols, rows, 5.85 - y, max_lines=1, partial_ok=True)
-    rest = len(rows) - shown
-    dk.note(s, ML, bottom + 0.04, CW, f"Longest-path activities in sequence (level of effort excluded)"
-            + (f"; {rest} further activities to Day 1 on the dashboard, Critical path & look-back/ahead tab."
-               if rest > 0 else "."))
+    bottom, shown = dk.table(s, ML, y, CW, cols, rows, 5.70 - y, max_lines=1, partial_ok=True)
+    dk.note(s, ML, bottom + 0.04, CW, cp_note(c, len(rows) - shown, any(r[7]["text"] == "–" for r in rows[:shown])),
+            lines=2)
     dk.ask(s, "Ask", cp_ask(c))
     return s
+
+
+def lp_loe(c: Ctx) -> list[str]:
+    """Level-of-effort activities flagged on the longest path: a defect (check U07), shown apart from the path."""
+    return [a["activity_id"] for a in c.longest_path(include_loe=True)
+            if c.A[a["activity_id"]]["activity_type"] == "TT_LOE"]
+
+
+def cp_note(c: Ctx, rest: int, dash: bool) -> str:
+    """Reconciles the table with the 'Longest path' tile: the LOE on the driving path is tagged LOE · U07 and left
+    out; floats are per activity calendar; '–' means the activity is not in the baseline in force."""
+    loe = lp_loe(c)
+    t = "Longest path in sequence."
+    if loe:
+        t += (f" {join_and(loe)} {'is' if len(loe) == 1 else 'are'} level of effort on the driving path, tagged "
+              f"LOE · U07 (a defect the quality checks detect), and left out of this table.")
+    if rest > 0:
+        t += f" {rest} further activities to Day 1 are on the dashboard (Critical path tab)."
+    t += " Floats are in working days of each activity's own calendar and reflect all its successors."
+    if dash:
+        t += f" '–' variance = not in {c.bl}."
+    return t
 
 
 def lb_rows(c: Ctx, compact=False) -> list[list]:
@@ -1146,7 +1336,7 @@ def lb_rows(c: Ctx, compact=False) -> list[list]:
         ok = bool(r["lookback_achieved"])
         ach = {"text": "Yes" if ok else "No", "fill": TINT["green" if ok else "red"], "bold": not ok}
         if compact:
-            rows.append([c.label(r["activity_id"]), c.owner_of(r["activity_id"]),
+            rows.append([c.id_label(r["activity_id"]), c.owner_of(r["activity_id"]),
                          r["lookback_event"].capitalize(), fd(r["planned"]), ach])
         else:
             rows.append([r["activity_id"], c.name(r["activity_id"]), c.owner_of(r["activity_id"]),
@@ -1177,7 +1367,7 @@ def s_lookback(dk: Deck):
             ("Planned (previous update)", 1.2, "c", 1), ("Actual", WDT, "c", 1), ("Achieved", 0.85, "c", 1),
             ("Total float (wd)", WNUM, "r", 1)]
     rows = lb_rows(c)
-    bottom, shown = dk.table(s, ML, BODY_Y, CW, cols, rows, 5.85 - BODY_Y, max_lines=1, partial_ok=True)
+    bottom, shown = dk.table(s, ML, BODY_Y, CW, cols, rows, 5.85 - BODY_Y, max_lines=1, partial_ok=True, stretch=True)
     dk.note(s, ML, bottom + 0.04, CW, f"Look-back item: activity the {fd(c.prev_dd)} update forecast to start or "
             f"finish in the 14 days before {fd(c.dd)}; '–' total float = complete." +
             (f" Showing {shown} of {len(rows)}." if shown < len(rows) else ""))
@@ -1187,8 +1377,8 @@ def s_lookback(dk: Deck):
         dk.ask(s, "Ask", f"{join_and(owners)} to re-forecast the {pl(len(miss), 'missed item')} with a recovery "
                          f"date and cause before the next update; misses on the longest path are escalated.")
     else:
-        dk.ask(s, "So what", c.narr["so_what"]["lookback"] + " Management attention belongs on the look-ahead and "
-               "the longest path, not on short-term delivery.")
+        dk.ask(s, "So what", c.narr["so_what"]["lookback"] + " Attention belongs on the look-ahead and the longest "
+               "path, not on short-term delivery.")
     return s
 
 
@@ -1203,7 +1393,7 @@ def la_rows(c: Ctx, compact=False) -> list[list]:
             flag.pop("fill")
         date = a["start"] if ev == "Start" else a["finish"]
         if compact:
-            rows.append([c.label(a["activity_id"]), c.owner_of(a["activity_id"]), "Both" if ev == "Start & finish"
+            rows.append([c.id_label(a["activity_id"]), c.owner_of(a["activity_id"]), "Both" if ev == "Start & finish"
                          else ev, fd(date), tf_cell(a["total_float_d"])])
         else:
             rows.append([a["activity_id"], c.name(a["activity_id"]), c.owner_of(a["activity_id"]), ev, fd(a["start"]),
@@ -1229,9 +1419,13 @@ def la_ask(c: Ctx) -> str:
     parts = []
     for a in crit:
         ev = "finish" if a["lookahead_finish"] and not a["lookahead_start"] else "start"
-        parts.append(f"{c.owner_of(a['activity_id'])} to confirm the {a['activity_id']} {ev} on "
+        parts.append(f"{c.who(c.owner_of(a['activity_id']))} to confirm the {a['activity_id']} {ev} on "
                      f"{fd(a['finish'] if ev == 'finish' else a['start'])}")
-    return join_and(parts) + "; each carries zero or negative float, so any slip moves its asset's milestones."
+    tfs = [a["total_float_d"] or 0 for a in crit]
+    fl = ("zero float" if all(t == 0 for t in tfs) else "negative float" if all(t < 0 for t in tfs)
+          else "zero or negative float")
+    return join_and(parts) + f"; {'it carries' if len(crit) == 1 else 'each carries'} {fl}, so any slip moves " \
+                             f"its asset's milestones."
 
 
 def s_lookahead(dk: Deck):
@@ -1241,7 +1435,7 @@ def s_lookahead(dk: Deck):
             ("Start", WDT, "c", 1), ("Finish", WDT, "c", 1), ("Total float (wd)", WNUM, "r", 1),
             ("Critical / longest path", 1.05, "c", 1)]
     rows = la_rows(c)
-    bottom, shown = dk.table(s, ML, BODY_Y, CW, cols, rows, 5.85 - BODY_Y, max_lines=1, partial_ok=True)
+    bottom, shown = dk.table(s, ML, BODY_Y, CW, cols, rows, 5.85 - BODY_Y, max_lines=1, partial_ok=True, stretch=True)
     dk.note(s, ML, bottom + 0.04, CW, f"Look-ahead item: forecast to start or finish from {fd(c.dd)} to "
             f"{fd(_d(c.dd) + dt.timedelta(days=13))}; critical items first."
             + (f" Showing {shown} of {len(rows)}; full list in the controls workbook, Look-ahead sheet."
@@ -1261,17 +1455,22 @@ def s_trends(dk: Deck):
     slipped = sum(1 for r in tr if (r["day1_movement_d"] or 0) > 0)
     low = min(tr, key=lambda r: (r["day1_tf_d"], r["data_date"]))
     last = tr[-1]
-    title = f"Day 1 slipped in {slipped} of {pl(n, 'update')} and float bottomed at {sg(low['day1_tf_d'], 'wd')} on " \
-            f"{fd(low['data_date'])}"
-    if last["day1_movement_d"] < 0 and n > 1:
-        title += f"; the {fd(c.dd)} update recovered {abs(last['day1_movement_d'])} days"
-    elif last["day1_movement_d"] > 0 and n > 1:
-        title += f"; the {fd(c.dd)} update lost a further {last['day1_movement_d']} days"
+    head = f"Day 1 slipped in {slipped} of {pl(n, 'update')}"
+    floor = f"{sg(low['day1_tf_d'], 'wd')} on {fd(low['data_date'])}"
+    mv = last["day1_movement_d"] if n > 1 else 0
+    move_long = (f"; the {fd(c.dd)} update recovered {abs(mv)} days" if mv < 0 else
+                 f"; the {fd(c.dd)} update lost a further {mv} days" if mv > 0 else "")
+    move_short = (f", then recovered {abs(mv)} days by {fd(c.dd)}" if mv < 0 else
+                  f", then lost {mv} more days by {fd(c.dd)}" if mv > 0 else "")
+    dq_long = dq_short = ""
     if c.prev_sm:
         dqd = last["dq_score"] - c.prev_sm["dq_score"]
-        title += (f", but schedule quality fell to {dqs(last['dq_score'])} ({last['dq_rating']})" if dqd < 0 else
-                  f", and schedule quality rose to {dqs(last['dq_score'])} ({last['dq_rating']})")
-    title += "."
+        verb = "fell to" if dqd < 0 else "rose to" if dqd > 0 else "held at"
+        dq_long = f"{', but' if dqd < 0 else ', and'} schedule quality {verb} {dqs(last['dq_score'])} ({last['dq_rating']})"
+        dq_short = f"; DQ {verb} {dqs(last['dq_score'])} ({last['dq_rating']})"
+    title = first_fit(f"{head} and float bottomed at {floor}{move_long}{dq_long}.",
+                      f"{head}; float bottomed at {floor}{move_short}{dq_short}.",
+                      f"{head}; float hit {floor}{move_short}{dq_short}.")
     s = dk.slide("Trend analysis", title)
     cats = [fds(r["data_date"]) for r in tr]
     cw = (CW - GAP * 2) / 2
@@ -1284,9 +1483,11 @@ def s_trends(dk: Deck):
     vals = [excel_serial(r["day1_forecast"]) for r in tr]
     tgt = excel_serial(c.target)
     lo, hi = min(vals + [tgt]) - 7, max(vals + [tgt]) + 7
+    # a label drawn above a point just under the target line would sit on the line: put it below instead
     dk.line_chart(s, x, y + hd_h, cw, ch_h, cats, [("Day 1 forecast", vals, NAVY, False),
                                                    ("Target", [tgt] * n, RED, True)],
-                  fmt="dd-mmm-yy", vmin=lo, vmax=hi, major=7, legend=False, name="Chart Day 1 forecast")
+                  fmt="dd-mmm-yy", vmin=lo, vmax=hi, major=7, legend=False, name="Chart Day 1 forecast",
+                  label_fmt='dd"‑"mmm', label_pos=["below" if 0 <= tgt - v <= 9 else "above" for v in vals])
     dk.caption(s, x, y + hd_h + ch_h, cw, c.narr["so_what"]["day1_trend"] + f" Target {fd(c.target)}.")
     # 2 slippage trend
     x, y = cells[1]
@@ -1297,15 +1498,16 @@ def s_trends(dk: Deck):
     big = max(tr, key=lambda r: (r["day1_movement_d"], r["data_date"]))
     cr = next((ch for ch in c.changes() if ch["raised_data_date"] == big["data_date"] and ch["day1_impact_days"]), None)
     cap = f"Largest slip {sg(big['day1_movement_d'], 'd')} on {fd(big['data_date'])}"
-    cap += f" ({cr['change_id']}: {lc_first(cr['title'])})." if cr else "."
+    cap += f" ({cr['change_id']}, {lc_first(cr['title'])})." if cr else "."
     cap += " First bar is measured against BL0."
     dk.caption(s, x, y + hd_h + ch_h, cw, cap)
     # 3 float erosion
     x, y = cells[2]
     dk.heading(s, x, y, cw, "Day 1 total float by update (working days)")
     tf = [r["day1_tf_d"] for r in tr]
+    nc = c.meta["near_critical_days"]                 # the deck's RAG rule: red < 0, amber 0 to nc wd
     dk.bar_chart(s, x, y + hd_h, cw, ch_h, cats, [("Day 1 total float (wd)", tf, NAVY)],
-                 point_colors=[RED if v < 0 else AMBER if v < 5 else NAVY for v in tf], name="Chart float")
+                 point_colors=[RED if v < 0 else AMBER if v <= nc else NAVY for v in tf], name="Chart float")
     first_neg = next((r for r in tr if r["day1_tf_d"] < 0), None)
     cap = (f"Float turned negative on {fd(first_neg['data_date'])} and stands at {sg(last['day1_tf_d'], 'wd')}; "
            if first_neg else f"Float stands at {sg(last['day1_tf_d'], 'wd')}; ")
@@ -1317,11 +1519,12 @@ def s_trends(dk: Deck):
     dq = [r["dq_score"] for r in tr]
     dk.line_chart(s, x, y + hd_h, cw, ch_h, cats, [("DQ score", dq, TEAL, False), ("Good (85)", [85] * n, GREEN, True),
                                                    ("Fair (70)", [70] * n, AMBER, True)],
-                  fmt="0", vmin=50, vmax=100, major=10, legend=False, name="Chart DQ")
+                  fmt="0", vmin=60 if min(dq) >= 65 else 50, vmax=100, major=10, legend=False, name="Chart DQ",
+                  label_fmt="0.0", label_pos=["below" if any(0 <= t - v <= 7 for t in (85, 70)) else "above" for v in dq])
     sm = c.sm
     dk.caption(s, x, y + hd_h + ch_h, cw, f"DQ {dqs(sm['dq_score'])}/100 ({sm['dq_rating']}); CPLI "
-               f"{ratio(sm['cpli'], 0.95)}, BEI {ratio(sm['bei'], 0.95)} (targets ≥ 0.95). Weak checks are on the "
-               f"schedule-quality slide.")
+               f"{ratio(sm['cpli'], 0.95)}, BEI {ratio(sm['bei'], 0.95)} (targets ≥ 0.95). Failing checks and owner "
+               f"actions: slide {MONTHLY.index(s_quality) + 1}.")
     return s
 
 
@@ -1350,19 +1553,24 @@ def s_interfaces(dk: Deck):
     late = sorted([i for i in itf if i["status"] == "Late"], key=lambda i: (-i["gap_days"], i["interface_id"]))
     worst = max(rr, key=lambda r: (r["gap"], r["asset"])) if rr else None
     if worst and worst["gap"] > 0:
-        title = (f"{c.meta['assets'][worst['asset']]} is the readiness constraint: Day 1 ready {fd(worst['d1'])} is "
-                 f"{worst['gap']} days past its need-by date, and {len(late)} of {len(itf)} interfaces are late.")
+        # readiness is measured against the latest finish that still protects Day 1 (late finish), not against an
+        # interface need-by date (the receiver's baseline start): say which, so the two tables cannot contradict
+        lead = f"{c.meta['assets'][worst['asset']]} is the readiness constraint: Day 1 ready {fd(worst['d1'])} is"
+        tail = f"{len(late)} of {len(itf)} interfaces are late."
+        title = first_fit(f"{lead} {worst['gap']} days past the latest date that protects Day 1; {tail}",
+                          f"{lead} {worst['gap']} days later than Day 1 allows; {tail}")
     else:
         title = (f"Every asset reaches Day 1 ready before its need-by date; {len(late)} of {len(itf)} interfaces are "
                  f"late against the receiver's need date.")
     s = dk.slide("Interfaces and readiness gap", title)
     lw = 5.9
-    dk.heading(s, ML, BODY_Y - 0.05, lw, "Construction complete to Day 1 ready (calendar days)")
+    dk.heading(s, ML, BODY_Y - 0.05, lw, "Construction complete to Day 1 ready: days needed vs available")
     cats = [SHORT_ASSET.get(r["asset"], r["asset"]) for r in rr]
     ch_h = 1.9
     dk.bar_chart(s, ML, BODY_Y + 0.25, lw, ch_h, cats,
                  [("Needed (forecast)", [r["need"] for r in rr], NAVY),
-                  ("Available (to need-by)", [r["avail"] for r in rr], TEAL)],
+                  ("Available (to latest finish)", [r["avail"] for r in rr], TEAL)],
+                 point_colors=[RED if r["need"] > r["avail"] else NAVY for r in rr],
                  horizontal=True, legend=True, name="Chart readiness")
     if worst:
         others = [r["avail"] - r["need"] for r in rr if r["asset"] != worst["asset"]]
@@ -1375,10 +1583,10 @@ def s_interfaces(dk: Deck):
     rows = [[r["asset"], fd(r["cc"]), fd(r["d1"]), fd(r["need_by"]),
              tint_cell(sg(r["gap"]), "red" if r["gap"] > 0 else "green"), r["owner"]] for r in rr]
     b1, _ = dk.table(s, ML, yc + 0.5, lw, [("Asset", None, "l", 1), ("Construction complete", WDT, "c", 1),
-                                           ("Day 1 ready", WDT, "c", 1), ("Need-by", WDT, "c", 1),
+                                           ("Day 1 ready", WDT, "c", 1), ("Latest finish", WDT, "c", 1),
                                            ("Readiness gap (d)", 0.85, "r", 1), ("Owner", WOW, "c", 1)],
                      rows, 5.85 - (yc + 0.5), max_lines=1, name="Readiness table")
-    dk.note(s, ML, b1 + 0.04, lw, "Gap = Day 1 ready − need-by. Owner = stage with the largest gap.")
+    dk.note(s, ML, b1 + 0.04, lw, "Gap = Day 1 ready − latest finish. Owner = owner of the worst stage.")
     rx = ML + lw + 0.3
     rw = SW - ML - rx
     dk.heading(s, rx, BODY_Y - 0.05, rw, f"Late interfaces ({len(late)} of {len(itf)}), worst first")
@@ -1398,7 +1606,7 @@ def s_interfaces(dk: Deck):
         if len(picks) == 2:
             break
     if picks:
-        dk.ask(s, "Ask", "; ".join(f"{c.role(i['giver_owner'])} ({i['giver_owner']}) to recover {i['interface_id']} "
+        dk.ask(s, "Ask", "; ".join(f"{c.who(i['giver_owner'])} to recover {i['interface_id']} "
                                    f"{short_if(i['description'])} ({sg(i['gap_days'], 'd')})" for i in picks) + ".")
     else:
         dk.ask(s, "So what", c.narr["so_what"]["readiness"])
@@ -1412,9 +1620,11 @@ def s_risks(dk: Deck):
     top = max(risks, key=lambda r: (r["schedule_impact_days"], r["score"])) if risks else None
     n_high = sum(1 for r in risks if r["rating"] == "High")
     if top:
-        title = (f"{len(on_neg)} of {len(risks)} risks sit on negative-float work and {n_high} are rated High; "
-                 f"{lc_first(top['title'])} ({top['risk_id']}) carries the largest exposure at "
-                 f"{top['schedule_impact_days']} days.")
+        rid, days, what = top["risk_id"], top["schedule_impact_days"], lc_first(top["title"])
+        lead = f"{len(on_neg)} of {len(risks)} risks sit on negative-float work and {n_high} are rated High"
+        title = first_fit(f"{lead}; {what} ({rid}) carries the largest exposure at {days} days.",
+                          f"{lead}; {rid}, {what}, is the largest exposure at {days} days.",
+                          f"{lead}; {rid} carries the largest exposure at {days} days.")
     else:
         title = "No risks are open in the register for this update."
     s = dk.slide("Top risks", title)
@@ -1435,10 +1645,12 @@ def s_risks(dk: Deck):
     if top:
         second = next((r for r in risks if r["risk_id"] != top["risk_id"] and r["min_linked_float_d"] is not None
                        and r["min_linked_float_d"] < 0), None)
-        txt = f"{top['mitigation_owner']} to report progress on '{lc_first(top['mitigation'])}' ({top['risk_id']})"
+        def mit(r):  # a mitigation in brackets, its own semicolons as commas, so the ask has one ';' per request
+            return lc_first(r["mitigation"]).replace("; ", ", ")
+        txt = f"{top['mitigation_owner']} to report on the {top['risk_id']} mitigation ({mit(top)})"
         if second:
-            txt += f"; {second['mitigation_owner']} to confirm '{lc_first(second['mitigation'])}' ({second['risk_id']})"
-        dk.ask(s, "Ask", txt + " at the next steering committee.")
+            txt += f"; {second['mitigation_owner']} to confirm the {second['risk_id']} mitigation ({mit(second)})"
+        dk.ask(s, "Ask", txt + " at the next Steering Committee.")
     return s
 
 
@@ -1453,11 +1665,11 @@ def decisions_title(c: Ctx) -> str:
         t += ": " + " and ".join(
             (f"{d['decision_id']} is needed by {fd(d['needed_by'])}" if i == 0 else
              f"{d['decision_id']} by {fd(d['needed_by'])}") for i, d in enumerate(due))
-    if od:
-        ids = join_and([d["decision_id"] for d in od])
-        t += (", and " if due else ": ") + f"{ids} {'is' if len(od) == 1 else 'are'} overdue since " \
-            f"{fd(min(d['needed_by'] for d in od))} and escalated"
-    return t + "."
+    if not od:
+        return t + "."
+    ids = join_and([d["decision_id"] for d in od])
+    tail = f"{ids} {'has' if len(od) == 1 else 'have'} been overdue since {fd(min(d['needed_by'] for d in od))}"
+    return first_fit(t + (", and " if due else ": ") + tail + ".", t + ("; " if due else ": ") + tail + ".")
 
 
 def decision_status_cell(d) -> dict:
@@ -1531,16 +1743,17 @@ def s_recovery(dk: Deck):
     dk.heading(s, ML, BODY_Y - 0.05, lw, "Day 1 total float by scenario (wd)")
     cats = [r["scenario_id"].replace("BASE", "Base").replace("+", " + ") for r in sc]
     tf = [r["day1_tf_d"] for r in sc]
-    dk.bar_chart(s, ML, BODY_Y + 0.25, lw, 2.75, cats, [("Day 1 total float (wd)", tf, SLATE)],
+    dk.bar_chart(s, ML, BODY_Y + 0.25, lw, 3.25, cats, [("Day 1 total float (wd)", tf, SLATE)],
                  point_colors=[TEAL if r["recommended"] else RED if r["day1_tf_d"] < 0 else SLATE for r in sc],
                  name="Chart scenarios")
     c_only = next((r for r in singles if r["scenario_id"] == "C"), None)
-    cap = f"Recommended {rec['scenario_id'].replace('+', ' + ')} (teal) restores {sg(rec['float_gain_d'], 'wd')}"
+    cap = (f"Recommended {rec['scenario_id'].replace('+', ' + ')} (teal) gains {sg(rec['float_gain_d'], 'wd')} and "
+           f"leaves {sg(rec['day1_tf_d'], 'wd')}")
     if c_only:
         cap += f"; C alone gains {sg(c_only['float_gain_d'], 'wd')} and leaves Day 1 at {sg(c_only['day1_tf_d'], 'wd')}."
     else:
         cap += "."
-    dk.caption(s, ML, BODY_Y + 3.0, lw, cap, h=0.6)
+    dk.caption(s, ML, BODY_Y + 3.5, lw, cap, h=0.75)
     rx = ML + lw + 0.3
     rw = SW - ML - rx
     rows = []
@@ -1556,8 +1769,8 @@ def s_recovery(dk: Deck):
     yb = bottom + 0.15
     paras = [P(R("Recommendation: ", 12, True, NAVY),
                R(f"approve {rec['options'].replace(',', ' + ')} ({rec['decision']}). It is the smallest option set "
-                 f"that restores at least {sg(margin, 'wd')} of Day 1 float (design decision A16); residual risk "
-                 f"{rec['residual_risk']}.", 12, False, TEXT), after=4),
+                 f"that leaves at least {sg(margin, 'wd')} of Day 1 float, the programme's minimum margin; residual "
+                 f"risk {rec['residual_risk']}.", 12, False, TEXT), after=4),
              P(R("Enabling cost: ", 11, True, NAVY), R(rec["cost"] + ".", 11, False, TEXT)),
              P(R("Method: ", 11, True, NAVY), R("each option is a set of duration, logic and calendar changes "
                                                 "rescheduled by the CPM engine on the latest XER.", 11, False, TEXT))]
@@ -1579,15 +1792,19 @@ def s_governance(dk: Deck):
     nobl = [x for x in ch if x["day1_impact_days"] and "No re-baseline" in str(x["baseline_effect"])]
     pending = [x for x in ch if x["status"] == "Pending"]
     this = [x for x in ch if x["raised_data_date"] == c.dd]
-    title = f"{c.bl} remains the baseline in force"
+    long_, short = f"{c.bl} remains the baseline in force", f"{c.bl} stays in force"
     if bl_cr:
-        title += f" (approved {fd(bl_cr['approval_date'])} under {bl_cr['change_id']})"
+        long_ += f" (approved {fd(bl_cr['approval_date'])} under {bl_cr['change_id']})"
+        short += f" ({bl_cr['change_id']} approved {fd(bl_cr['approval_date'])})"
     if nobl:
         x = max(nobl, key=lambda x: x["day1_impact_days"])
-        title += f"; {x['change_id']} added {x['day1_impact_days']} days to Day 1 without a re-baseline"
+        long_ += f"; {x['change_id']} added {x['day1_impact_days']} days to Day 1 without a re-baseline"
+        short += f"; {x['change_id']} added {x['day1_impact_days']} days to Day 1 with no re-baseline"
     if pending:
-        title += f", and {join_and([p['change_id'] for p in pending])} {'is' if len(pending) == 1 else 'are'} pending"
-    s = dk.slide("Change and baseline governance", title + ".")
+        ids, verb = join_and([p['change_id'] for p in pending]), "is" if len(pending) == 1 else "are"
+        long_ += f", and {ids} {verb} pending"
+        short += f"; {ids} {verb} pending"
+    s = dk.slide("Change and baseline governance", first_fit(long_ + ".", short + "."))
     day1 = next((m for m in c.milestones() if m["activity_id"] == c.meta["day1_id"]), None)
     specs = [
         ("BL0 (original baseline)", fd(day1["bl0_finish"]) if day1 else "–",
@@ -1611,13 +1828,14 @@ def s_governance(dk: Deck):
                      fd(x["approval_date"]) if x["approval_date"] else "–", tint_cell(x["status"], st),
                      x["baseline_effect"], sg(x["day1_impact_days"]) if x["day1_impact_days"] else "–",
                      x["approver"]])
-    cols = [("Change", 0.78, "l", 1), ("Title", None, "l", 2), ("Type", 1.15, "l", 2),
+    cols = [("Change", 0.78, "l", 1), ("Title", None, "l", 3), ("Type", 1.0, "l", 2),
             ("Reported in update", WDT, "c", 1), ("Approved", WDT, "c", 1), ("Status", 0.85, "c", 1),
-            ("Baseline effect", 2.2, "l", 2), ("Day 1 impact (d)", 0.9, "r", 1), ("Owner", 1.65, "l", 2)]
-    bottom, shown = dk.table(s, ML, y, CW, cols, rows, 5.85 - y, partial_ok=True)
+            ("Baseline effect", 2.1, "l", 2), ("Day 1 impact (d)", 0.85, "r", 1), ("Owner", 1.55, "l", 2)]
+    bottom, shown = dk.table(s, ML, y, CW, cols, rows, 5.70 - y, partial_ok=True)
     dk.note(s, ML, bottom + 0.04, CW, "Newest first. Owner = approver. Day 1 impact in calendar days at the update "
-            "that first reported the change." + (f" Showing {shown} of {len(rows)}; full log: output/csv/fact_change.csv."
-                                                 if shown < len(rows) else ""))
+            "that first reported the change; impacts are not additive, as later progress and recovery also move Day 1."
+            + (f" Showing {shown} of {len(rows)}; full log: output/csv/fact_change.csv." if shown < len(rows) else ""),
+            lines=2)
     txt = f"variance stays reported against {c.bl}"
     if pending:
         txt += "; " + "; ".join(f"{p['change_id']} is {p['baseline_effect'][0].lower() + p['baseline_effect'][1:]}"
@@ -1649,15 +1867,18 @@ def dq_title(c: Ctx) -> str:
     fc = [lc_first(short_check(f["check_name"])) for f in c.failing_checks()[:3]]
     low = [o["owner_code"] for o in sorted(c.S["owner_scorecard"], key=lambda o: (o["owner_dq"], o["owner_code"]))[:3]]
     if p:
-        verb = "fell" if sm["dq_score"] < p["dq_score"] else "rose" if sm["dq_score"] > p["dq_score"] else "held"
-        t = f"Schedule quality {verb} to {dqs(sm['dq_score'])}/100 ({sm['dq_rating']}) from {dqs(p['dq_score'])}"
+        verb = "fell to" if sm["dq_score"] < p["dq_score"] else "rose to" if sm["dq_score"] > p["dq_score"] \
+            else "held at"
+        move = f" {verb} {dqs(sm['dq_score'])}/100 ({sm['dq_rating']})" + \
+            ("" if verb == "held at" else f" from {dqs(p['dq_score'])}")
     else:
-        t = f"Schedule quality is {dqs(sm['dq_score'])}/100 ({sm['dq_rating']})"
-    if fc:
-        t += f"; {join_and(fc)} lose most points"
-    if low:
-        t += f"; {join_and(low)} have the lowest Owner DQ"
-    return t + "."
+        move = f" is {dqs(sm['dq_score'])}/100 ({sm['dq_rating']})"
+    checks = [f"; {join_and(fc[:k])} lose most points" for k in (3, 2) if fc] or [""]
+    owners = f"; {join_and(low)} have the lowest Owner DQ" if low else ""
+    owners_short = f"; {join_and(low)} score lowest" if low else ""
+    return first_fit(*[f"Schedule quality{move}{ck}{owners}." for ck in checks],
+                     *[f"DQ{move}{ck}{owners_short}." for ck in checks],
+                     f"DQ{move}{owners_short}.")
 
 
 def s_quality(dk: Deck):
@@ -1668,9 +1889,12 @@ def s_quality(dk: Deck):
     cols = [("Owner", 0.7, "c", 1), ("Activities", 0.85, "r", 1), ("Flagged", 0.8, "r", 1),
             ("Owner DQ", 0.85, "r", 1), ("Update issues", 0.85, "r", 1), ("Logic issues", 0.85, "r", 1),
             ("Main check", 1.05, "c", 1)]
-    tbl_b = 5.25
+    tbl_b = 4.95
     b1, _ = dk.table(s, ML, BODY_Y + 0.29, lw, cols, scorecard_rows(c), tbl_b - (BODY_Y + 0.29), max_lines=1,
-                     name="Owner scorecard")
+                     name="Owner scorecard", stretch=True)
+    # the two DQ measures are different: say so, and what the issue columns count
+    n1 = dk.note(s, ML, b1 + 0.03, lw, "Owner DQ = share of the owner's activities with no flag (programme DQ = "
+                 "weighted check score). Logic: D01, D05, U07; update: U01, U03–U05, U09.", lines=2)
     rx = ML + lw + 0.3
     rw = SW - ML - rx
     fails = c.failing_checks()
@@ -1678,17 +1902,22 @@ def s_quality(dk: Deck):
     cols = [("Check", 0.6, "l", 1), ("Name", None, "l", 1), ("Result vs threshold", 1.45, "c", 1),
             ("Points lost", 0.7, "r", 1), ("Items", 0.6, "r", 1), ("Owner", WOW, "c", 1)]
     b2, _ = dk.table(s, rx, BODY_Y + 0.29, rw, cols, checks_rows(c), tbl_b - (BODY_Y + 0.29), max_lines=1,
-                     name="Failing checks")
-    y = max(b1, b2) + 0.15
+                     name="Failing checks", stretch=True)
+    info = c.info_checks()
+    n2 = dk.note(s, rx, b2 + 0.03, rw, ("Weight 0 (no points): " + "; ".join(
+        f"{f['check_id']} {lc_first(short_check(f['check_name']))} ({pl(f['count'] or 0, 'item')})" for f in info) + ". "
+        if info else "") + "Owner = owner of most offending items.", lines=2)
+    y = max(n1.top + n1.height, n2.top + n2.height) / 914400 + 0.1
     lines = []
     for f in fails[:4]:
         o = c.check_owner(f)
-        lines.append(f"{o} ({c.role(o)}): {ACTION.get(f['check_id'], 'review the check')} — "
-                     f"{f['check_id']} {lc_first(short_check(f['check_name']))}, {pl(f['count'] or 0, 'item')}")
+        lines.append(f"{c.who(o)}: {ACTION.get(f['check_id'], 'review the check')} — {f['check_id']} "
+                     f"{lc_first(short_check(f['check_name']))}: {c.offenders_of(f, o)} of "
+                     f"{pl(f['count'] or 0, 'item')}")
     bottom = FOOT_LINE_Y - 0.1
     if lines:
         paras = [P(R("Actions for schedule owners before the next update", 12, True, NAVY))] + \
-            [P(R("•  " + e, 11.5, False, TEXT)) for e in lines]
+            [BUL(e, 11.5) for e in lines]
         h = min(bottom - y, para_height(paras, CW - 0.07 - 2 * PAD_X) + 2 * PAD_Y + 0.12)
         dk.ask(s, "Actions for schedule owners before the next update", "", y=bottom - h, h=h, extra=lines)
     else:
@@ -1714,8 +1943,10 @@ def recon_rows(c: Ctx) -> list[list]:
         sv, dv = str(r["source_value"]), str(r["dashboard_value"])
         if k == "R15":
             sv, dv = sv[:12] + "…", dv[:12] + "…"
+        elif re.fullmatch(r"\d{4}-\d{2}-\d{2}", sv) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", dv):
+            sv, dv = fd(sv), fd(dv)                     # dates in the house format, like the rest of the pack
         # R12 excludes level-of-effort activities, so it differs from the 'Critical' tile, which counts them
-        ctl = "Critical activities (excl. LOE)" if k == "R12" else r["control"]
+        ctl = {"R12": "Critical activities (excl. LOE)", "R16": "Re-schedule = P6 dates"}.get(k, r["control"])
         rows.append([k, ctl, sv, dv, tint_cell("Pass" if r["passed"] else "Fail",
                                                         "green" if r["passed"] else "red", not r["passed"]), "PMO"])
     return rows
@@ -1736,37 +1967,49 @@ def s_appendix_lineage(dk: Deck):
     gap, bh = 0.1, 1.22
     bw = (CW - gap * (len(steps) - 1)) / max(1, len(steps))
     y = BODY_Y + 0.3
+    short_step = {"CPM re-schedule + quality": "Re-schedule + quality"}   # keeps every step heading on one line
     for i, st in enumerate(steps):
         dk.text(s, ML + i * (bw + gap), y, bw, bh,
-                [P(R(f"{i + 1}  {st['step']}", 10.5, True, NAVY)),
+                [P(R(f"{i + 1}  {short_step.get(st['step'], st['step'])}", 10.5, True, NAVY)),
                  P(R(st["detail"].replace("->", "→"), 10, False, MUTED))],
                 name="Lineage step", fill=TINT["navy"] if i % 2 == 0 else BG)
     y += bh + 0.12
     lw = 7.2
-    dk.heading(s, ML, y, lw, f"Key reconciliation controls ({sm['controls_passed']} of {sm['controls_total']} pass)")
+    allp = sm["controls_passed"] == sm["controls_total"]
+    dk.heading(s, ML, y, lw, f"Key reconciliation controls ({'all ' if allp else ''}{sm['controls_passed']}"
+                             f"{'' if allp else ' of ' + str(sm['controls_total'])} controls pass)")
     rows = recon_rows(c)
-    bottom, shown = dk.table(s, ML, y + 0.32, lw, RECON_COLS, rows, 6.1 - (y + 0.32), max_lines=1, partial_ok=True)
+    bottom, shown = dk.table(s, ML, y + 0.32, lw, RECON_COLS, rows, 6.55 - (y + 0.32), max_lines=1, partial_ok=True)
     if shown < len(rows):
         dk.note(s, ML, bottom + 0.02, lw, f"{shown} of {len(rows)} key controls shown; all controls in the controls "
                 f"workbook, Reconciliation sheet.")
     rx = ML + lw + 0.3
     rw = SW - ML - rx
-    owners = " · ".join(f"{k} {v['name']}" for k, v in c.owners.items() if k != "UNASSIGNED")
+    own = [(k, v["name"]) for k, v in c.owners.items() if k != "UNASSIGNED"]
+    owner_runs = [R("Owner codes: ", 10, True, NAVY)]
+    for i, (k, nm) in enumerate(own):                # bold code, then its organisation: 'MEP MEP & Systems ...' reads
+        owner_runs += [R(k, 10, True, TEXT), R(" " + nm + (" · " if i < len(own) - 1 else "."), 10, False, TEXT)]
     docs = ", ".join(d["title"] for d in c.D.get("governance_docs", []))
     paras = [P(R("Method", 11, True, NAVY), after=2),
              P(R("Fictional programme and data. Schedules are produced by a custom CPM engine that follows Primavera P6 "
                  "conventions (retained logic, TF = LF − EF) and are exported in genuine P6 XER format; no Primavera "
                  "P6 licence was used.", 10, False, TEXT), after=4),
-             P(R("Owner codes: ", 10, True, NAVY), R(owners + ".", 10, False, TEXT), after=4),
-             P(R("Governance: ", 10, True, NAVY), R(f"{docs}. {REPO}", 10, False, TEXT))]
-    dk.text(s, rx, y + 0.04, rw, FOOT_LINE_Y - 0.12 - (y + 0.04), paras, name="Method note", fill=BG)
+             P(*owner_runs, after=4),
+             P(R("Governance: ", 10, True, NAVY), R(f"{docs}, all in the ", 10, False, TEXT),
+               R("GitHub repository", 10, False, TEXT, link=REPO), R(".", 10, False, TEXT))]
+    h = min(FOOT_LINE_Y - 0.12 - (y + 0.04), para_height(paras, rw - 2 * PAD_X) + 2 * PAD_Y + 0.12)
+    dk.text(s, rx, y + 0.04, rw, h, paras, name="Method note", fill=BG)
     return s
 
 
 def s_appendix_definitions(dk: Deck):
     c = dk.c
-    title = ("Every measure in this pack has one definition, shared with the dashboard and the Power BI model; "
-             "floats are in working days and variances in calendar days.")
+    title = first_fit("Every measure in this pack has one definition, shared with the dashboard and the Power BI model; "
+                      "floats are in working days and variances in calendar days.",
+                      "One definition per measure, shared with the dashboard and the Power BI model; floats are in "
+                      "working days, variances in calendar days.",
+                      "One definition per measure, shared with the dashboard and Power BI; floats in working days, "
+                      "variances in calendar days.")
     s = dk.slide("Appendix B · definitions", title)
     defs = {d["measure"]: d for d in c.D["definitions"]}
     unit = {"working days": "wd", "calendar days": "d", "points": "points", "%": "%"}
@@ -1774,9 +2017,9 @@ def s_appendix_definitions(dk: Deck):
              clean_narr(defs[m]["formula"]), defs[m]["owner"]] for m in APPENDIX_MEASURES if m in defs]
     nc = c.meta["near_critical_days"]
     rows.insert(2, ["RAG by asset", f"Minimum total float of the asset's incomplete activities: Red below 0 wd, Amber "
-                    f"0 to {nc} wd, Green above (same rule as the dashboard).", "min(total_float_d), incomplete",
-                    "Programme Controls Manager"])
-    bottom, shown = dk.table(s, ML, BODY_Y, CW, [("Measure", 2.4, "l", 1), ("Definition", None, "l", 2),
+                    f"0 to {nc} wd, Green above (same rule as the dashboard).",
+                    "minimum total float (wd) of incomplete activities", "Programme Controls Manager"])
+    bottom, shown = dk.table(s, ML, BODY_Y, CW, [("Measure", 2.2, "l", 1), ("Definition", None, "l", 2),
                                                   ("Formula", 2.6, "l", 2), ("Owner", 2.2, "l", 1)],
                              rows, 5.85 - BODY_Y, partial_ok=True)
     dk.note(s, ML, bottom + 0.04, CW, f"{shown} of {len(defs)} measures shown; all are defined in DATA_DICTIONARY.md "
@@ -1817,9 +2060,9 @@ def s_f_milestones(dk: Deck):
         rows.append([m["activity_id"], c.name(m["activity_id"]), m["owner_code"], fd(pf), fd(m["forecast_finish"]),
                      slip_cell(m["movement_vs_prev_d"]), var_cell(m[vk]), tf_cell(m["total_float_d"])])
     cols = [("Milestone", WID, "l", 1), ("Name", None, "l", 1), ("Owner", WOW, "c", 1),
-            ("Previous forecast", 1.05, "c", 1), ("Forecast", WDT, "c", 1), ("Slip vs previous period (d)", 1.0, "r", 1),
-            (f"Finish variance vs {c.bl} (d)", 1.0, "r", 1), ("Total float (wd)", WNUM, "r", 1)]
-    bottom, shown = dk.table(s, ML, BODY_Y, CW, cols, rows, 5.85 - BODY_Y, max_lines=1, partial_ok=True)
+            ("Previous forecast", 1.05, "c", 1), ("Forecast", WDT, "c", 1), ("Slip vs previous period (d)", 1.2, "r", 1),
+            (f"Finish variance vs {c.bl} (d)", 1.2, "r", 1), ("Total float (wd)", 0.95, "r", 1)]
+    bottom, shown = dk.table(s, ML, BODY_Y, CW, cols, rows, 5.85 - BODY_Y, max_lines=1, partial_ok=True, stretch=True)
     dk.note(s, ML, bottom + 0.04, CW, f"Milestones whose forecast moved since {prev}, largest movement first."
             + (f" Showing {shown} of {len(rows)}." if shown < len(rows) else ""))
     dk.ask(s, "So what", c.narr["so_what"]["milestones"] + " " + c.narr["so_what"]["day1_trend"])
@@ -1837,14 +2080,14 @@ def s_f_lookbackahead(dk: Deck):
     s = dk.slide("Fortnightly flash · look-back and look-ahead", title)
     hw = (CW - 0.3) / 2
     dk.heading(s, ML, BODY_Y - 0.05, hw, f"Look-back: last 14 days ({ok} of {len(lb)} achieved)")
-    cols = [("Activity", None, "l", 1), ("Owner", WOW, "c", 1), ("Event", 0.62, "c", 1),
+    cols = [("Activity", None, "l", 2), ("Owner", WOW, "c", 1), ("Event", 0.62, "c", 1),
             ("Planned", WDT, "c", 1), ("Achieved", 0.82, "c", 1)]
     b1, s1 = dk.table(s, ML, BODY_Y + 0.29, hw, cols, lb_rows(c, compact=True), 5.6 - (BODY_Y + 0.29), max_lines=1,
                       partial_ok=True)
     rx = ML + hw + 0.3
     dk.heading(s, rx, BODY_Y - 0.05, hw, f"Look-ahead: next 14 days ({len(crit)} critical)")
-    cols = [("Activity", None, "l", 1), ("Owner", WOW, "c", 1), ("Event", 0.62, "c", 1),
-            ("Date", WDT, "c", 1), ("Total float (wd)", 0.82, "r", 1)]
+    cols = [("Activity", None, "l", 2), ("Owner", WOW, "c", 1), ("Event", 0.62, "c", 1),
+            ("Date", WDT, "c", 1), ("Total float (wd)", 0.95, "r", 1)]
     b2, s2 = dk.table(s, rx, BODY_Y + 0.29, hw, cols, la_rows(c, compact=True), 5.6 - (BODY_Y + 0.29), max_lines=1,
                       partial_ok=True)
     if s1 < len(lb):
@@ -1859,24 +2102,28 @@ def s_f_lookbackahead(dk: Deck):
 def s_f_critical(dk: Deck):
     c = dk.c
     s = dk.slide("Fortnightly flash · critical path status", cp_title(c))
-    lw = 4.3
+    lw = 4.0
     tr = c.trend
     dk.heading(s, ML, BODY_Y - 0.05, lw, "Day 1 total float by update (wd)")
     tf = [r["day1_tf_d"] for r in tr]
     dk.bar_chart(s, ML, BODY_Y + 0.25, lw, 3.0, [fds(r["data_date"]) for r in tr],
                  [("Day 1 total float (wd)", tf, NAVY)],
-                 point_colors=[RED if v < 0 else AMBER if v < 5 else NAVY for v in tf], name="Chart float")
+                 point_colors=[RED if v < 0 else AMBER if v <= c.meta["near_critical_days"] else NAVY for v in tf],
+                 name="Chart float")
     dk.caption(s, ML, BODY_Y + 3.25, lw, c.narr["so_what"]["critical_path"], h=0.62)
     rx = ML + lw + 0.3
     rw = SW - ML - rx
     dk.heading(s, rx, BODY_Y - 0.05, rw, "Longest path in sequence (level of effort excluded)")
     rows = [[r[0], r[1], r[2], r[4], r[5], r[6]] for r in cp_rows(c)]
-    cols = [("Activity", WID, "l", 1), ("Name", None, "l", 1), ("Owner", WOW, "c", 1), ("Finish", WDT, "c", 1),
+    cols = [("Activity", WID, "l", 1), ("Name", None, "l", 2), ("Owner", WOW, "c", 1), ("Finish", WDT, "c", 1),
             ("Total float (wd)", WNUM, "r", 1), ("Slip vs previous period (d)", 0.95, "r", 1)]
-    bottom, shown = dk.table(s, rx, BODY_Y + 0.29, rw, cols, rows, 5.85 - (BODY_Y + 0.29), max_lines=1,
+    bottom, shown = dk.table(s, rx, BODY_Y + 0.29, rw, cols, rows, 5.70 - (BODY_Y + 0.29), max_lines=1,
                              partial_ok=True)
     if shown < len(rows):
-        dk.note(s, rx, bottom + 0.04, rw, f"Showing {shown} of {len(rows)} longest-path activities, in sequence.")
+        loe = lp_loe(c)
+        dk.note(s, rx, bottom + 0.04, rw, f"Showing {shown} of {len(rows)} longest-path activities, in sequence"
+                + (f"; {len(rows) + len(loe)} with the level-of-effort {join_and(loe)}, tagged LOE · U07 (a defect)."
+                   if loe else "."), lines=2)
     dk.ask(s, "Ask", cp_ask(c))
     return s
 
@@ -1889,7 +2136,7 @@ def s_f_decisions(dk: Deck):
     rows = [[d["decision_id"], d["ask"], d["owner"], fd(d["needed_by"]), decision_status_cell(d), sg(d["days_to_need"]),
              d["linked_activity"]] for d in op]
     cols = [("ID", 0.6, "l", 1), ("Decision required", None, "l", 2), ("Owner", 2.1, "l", 2), ("Needed by", WDT, "c", 1),
-            ("Status", 0.9, "c", 1), ("Days to need", 0.85, "r", 1), ("Linked activity", WID, "l", 1)]
+            ("Status", 0.9, "c", 1), ("Days to need", 1.0, "r", 1), ("Linked activity", WID + 0.1, "c", 1)]
     if rows:
         b1, _ = dk.table(s, ML, BODY_Y + 0.29, CW, cols, rows, 2.0, max_lines=1)
     else:
@@ -1900,8 +2147,8 @@ def s_f_decisions(dk: Deck):
     dk.heading(s, ML, y, CW, f"Escalations: High risks ({len(risks)})")
     rows = [[r["risk_id"], r["title"], r["owner_code"], str(r["score"]), str(r["schedule_impact_days"]),
              tf_cell(r["min_linked_float_d"]), r["mitigation"]] for r in risks]
-    cols = [("Risk", 0.6, "l", 1), ("Title", 4.1, "l", 1), ("Owner", WOW, "c", 1), ("Risk score", 0.7, "r", 1),
-            ("Schedule impact (d)", 0.85, "r", 1), ("Lowest linked TF (wd)", 0.9, "r", 1), ("Mitigation", None, "l", 1)]
+    cols = [("Risk", 0.6, "l", 1), ("Title", 3.7, "l", 2), ("Owner", WOW, "c", 1), ("Risk score", 0.7, "r", 1),
+            ("Schedule impact (d)", 0.85, "r", 1), ("Lowest linked TF (wd)", 0.9, "r", 1), ("Mitigation", None, "l", 2)]
     dk.table(s, ML, y + 0.34, CW, cols, rows, 6.12 - (y + 0.34), max_lines=1, name="High risks")
     if op:
         parts = [f"{d['owner']} to close overdue {d['decision_id']} now" if d["overdue"] else
@@ -1915,7 +2162,7 @@ def s_f_decisions(dk: Deck):
 def s_f_quality(dk: Deck):
     c = dk.c
     sm, p = c.sm, c.prev_sm
-    dqd = f", {sg(sm['dq_score'] - p['dq_score'], 'pts')} vs the last update" if p else ""
+    dqd = f", {sm['dq_score'] - p['dq_score']:+.1f} pts vs the last update" if p else ""
     title = (f"Schedule quality is {dqs(sm['dq_score'])}/100 ({sm['dq_rating']}){dqd}; "
              + (f"all {sm['controls_total']} reconciliation controls pass, so the numbers are safe to use."
                 if c.reconciled else "reconciliation controls FAIL and the numbers must not be used."))
@@ -1935,10 +2182,11 @@ def s_f_quality(dk: Deck):
     cols = [("Check", 0.6, "l", 1), ("Name", None, "l", 1), ("Result vs threshold", 1.45, "c", 1),
             ("Points lost", 0.7, "r", 1), ("Owner", WOW, "c", 1)]
     rows = [[r[0], r[1], r[2], r[3], r[5]] for r in checks_rows(c)]
+    # weight-0 checks (no points) are listed on the monthly schedule-quality slide; the flash keeps every failing row
     dk.table(s, ML, y + 0.34, lw, cols, rows, 6.12 - (y + 0.34), max_lines=1, name="Failing checks")
     rx = ML + lw + 0.3
     rw = SW - ML - rx
-    dk.heading(s, rx, y, rw, "Key reconciliation controls (source XER = model = dashboard)")
+    dk.heading(s, rx, y, rw, "Key reconciliation controls: source XER vs dashboard JSON")
     rec = recon_rows(c)
     b2, shown = dk.table(s, rx, y + 0.34, rw, RECON_COLS, rec, 5.84 - (y + 0.34), max_lines=1, partial_ok=True)
     if shown < len(rec):

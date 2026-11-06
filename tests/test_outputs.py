@@ -27,18 +27,24 @@ def packs(tmp_path_factory):
     return {p: (path, Presentation(str(path))) for p, path in paths.items()}
 
 
+def _norm(t):
+    """Slides keep dates, IDs and number-unit pairs on one line with non-breaking hyphens and spaces; compare the
+    visible text with the plain characters."""
+    return t.replace("‑", "-").replace(" ", " ")
+
+
 def _texts(slide):
     for sh in slide.shapes:
         if sh.has_text_frame:
-            yield sh.text_frame.text
+            yield _norm(sh.text_frame.text)
         if sh.has_table:
             for row in sh.table.rows:
                 for cell in row.cells:
-                    yield cell.text
+                    yield _norm(cell.text)
 
 
 def _title(slide):
-    return next((sh.text_frame.text for sh in slide.shapes if sh.name == "Title" and sh.has_text_frame), "")
+    return _norm(next((sh.text_frame.text for sh in slide.shapes if sh.name == "Title" and sh.has_text_frame), ""))
 
 
 def test_file_names(packs):
@@ -92,6 +98,32 @@ def test_native_charts(packs):
     types = {sh.chart.chart_type for sh in charts}
     assert types & {XL_CHART_TYPE.LINE, XL_CHART_TYPE.LINE_MARKERS}, "no native line chart"
     assert types & {XL_CHART_TYPE.COLUMN_CLUSTERED, XL_CHART_TYPE.BAR_CLUSTERED}, "no native bar chart"
+
+
+@pytest.mark.parametrize("pack", ["monthly", "fortnightly"])
+def test_coloured_bars_keep_their_sign(packs, pack):
+    """A coloured data point without its own invertIfNegative is drawn as a positive bar by LibreOffice; every
+    coloured point must state invertIfNegative = 0 so -14 wd is drawn below the axis in every renderer."""
+    C = "{http://schemas.openxmlformats.org/drawingml/2006/chart}"
+    n = 0
+    for s in packs[pack][1].slides:
+        for sh in s.shapes:
+            if sh.has_chart:
+                for dpt in sh.chart._chartSpace.iter(C + "dPt"):
+                    inv = dpt.find(C + "invertIfNegative")
+                    assert inv is not None and inv.get("val") == "0", f"{sh.name}: coloured point without invertIfNegative=0"
+                    n += 1
+    assert n > 0
+
+
+def test_cover_agenda_matches_slides(packs):
+    prs = packs["monthly"][1]
+    assert len(g.AGENDA) == len(prs.slides) - 1
+    tags = [_norm(next(sh.text_frame.text for sh in s.shapes if sh.name == "Section tag")) for s in prs.slides]
+    agenda = " ".join(_norm(sh.text_frame.text) for sh in prs.slides[0].shapes if sh.name == "Agenda")
+    for k, item in enumerate(g.AGENDA, 2):
+        assert f"{k}  {item}" in agenda, item
+        assert tags[k - 1].split()[0] == item.upper().split()[0], (k, item, tags[k - 1])
 
 
 @pytest.mark.parametrize("pack", ["monthly", "fortnightly"])
@@ -155,7 +187,7 @@ def _table(slide, name):
 
 
 def _rows(tbl):
-    return [[c.text for c in r.cells] for r in list(tbl.rows)[1:]]
+    return [[_norm(c.text) for c in r.cells] for r in list(tbl.rows)[1:]]
 
 
 @pytest.mark.parametrize("pack", ["monthly", "fortnightly"])
@@ -178,18 +210,23 @@ def test_rag_by_asset_matches_dashboard_rule(packs, pack):
     acts = [dict(zip(cols, r)) for r in S["acts"]["rows"]]
     rows = _rows(_table(packs[pack][1].slides[1 if pack == "monthly" else 0], "RAG table"))
     assert len(rows) == len(DASH["meta"]["assets"]), "every asset needs a RAG row"
-    for code, row in zip(DASH["meta"]["assets"], rows):
+    code_of = {g.SHORT_ASSET.get(c, c): c for c in DASH["meta"]["assets"]}
+    tfs = []
+    for row in rows:
+        code = code_of[row[0]]
         tf = min(a["total_float_d"] for a in acts if asset[a["activity_id"]] == code
                  and a["status"] != "TK_Complete" and a["total_float_d"] is not None)
         assert row[1] == ("Red" if tf < 0 else "Amber" if tf <= nc else "Green"), (code, row)
         assert row[2].startswith(g.sg(tf, "wd")), (code, row)
+        tfs.append(tf)
+    assert tfs == sorted(tfs), "RAG rows are listed worst first"
 
 
 def test_kpis_and_decisions_match_dashboard(packs):
     sm = DASH["snapshots"][LATEST]["summary"]
-    tiles = " ".join(sh.text_frame.text for sh in packs["monthly"][1].slides[1].shapes if sh.name == "KPI tile")
+    tiles = " ".join(_norm(sh.text_frame.text) for sh in packs["monthly"][1].slides[1].shapes if sh.name == "KPI tile")
     for v in (g.fd(sm["day1_forecast"]), g.sg(sm["day1_tf_d"], "wd"), g.sg(sm["day1_var_bl1_d"], "d"),
-              f"{sm['dq_score']:.0f} / 100", f"{sm['controls_passed']} / {sm['controls_total']}"):
+              f"{g.dqs(sm['dq_score'])} / 100", f"{sm['controls_passed']} / {sm['controls_total']}"):
         assert v in tiles, v
     open_ = [d for d in DASH["decisions"] if d["raised_data_date"] <= LATEST and not
              (d["closed_on"] and d["closed_on"] <= LATEST)]
@@ -207,7 +244,7 @@ def test_full_tables_where_no_note(packs):
     m = packs["monthly"][1]
     assert len(_rows(_table(m.slides[7], "Readiness table"))) == \
         len({r["asset_code"] for r in S["readiness"] if r["stage"] == "Construction complete"})
-    fails = sum(1 for c in S["dcma"] if c["passed"] is False)
+    fails = sum(1 for c in S["dcma"] if c["passed"] is False and c["weight"])   # informational checks listed apart
     assert len(_rows(_table(m.slides[12], "Failing checks"))) == fails
     assert len(_rows(_table(packs["fortnightly"][1].slides[5], "Failing checks"))) == fails
 

@@ -24,8 +24,9 @@ in [DESIGN.md](DESIGN.md) and the planning decisions behind it are in [DESIGN_DE
 
 **Day 1 Opening is forecast for 21-Oct-2027, 7 working days beyond the 14-Oct-2027 target.** The longest path runs
 through the Dune Arena: MEP second fix, then fire-strategy smoke-extract works, front-of-house fit-out and the
-occupancy certificate. Approving recovery options **A (zone-based completion) and B (phased handover with early
-operator access) by 26-Nov-2026** returns the forecast to 06-Oct-2027 with **+8 days of float**. Every number on the
+occupancy certificate. Approving recovery option **A (zone-based completion) by 12-Nov-2026 and B (phased handover
+with early operator access) by 26-Nov-2026** returns the forecast to 06-Oct-2027 with **+8 working days of float**.
+Every number on the
 dashboard, in the packs and in the CSVs reconciles to the source XER: 40 controls per data date, and the pipeline
 fails if any control breaks.
 
@@ -40,6 +41,28 @@ fails if any control breaks.
 | ![Reconciliation](docs/screenshots/tab7_recon.png) | ![Dark](docs/screenshots/exec_dark.png) |
 
 Mobile (360 px): [exec_mobile.png](docs/screenshots/exec_mobile.png) · other tabs: [milestones](docs/screenshots/tab2_milestones.png), [risks & recovery](docs/screenshots/tab5_risks.png), [about & method](docs/screenshots/tab8_about.png)
+
+## Executive packs
+
+Generated from the same reconciled JSON as the dashboard (`python -m dop run --all`). Download the
+[monthly steering-committee pack](docs/downloads/DOP_monthly_pack_2026-10-29.pptx) (15 slides) or the
+[fortnightly flash](docs/downloads/DOP_fortnightly_flash_2026-10-29.pptx) (6 slides).
+
+| Cover | Executive summary |
+|---|---|
+| ![Cover](docs/screenshots/pptx_monthly_01.png) | ![Executive summary](docs/screenshots/pptx_monthly_02.png) |
+| The answer in one sentence, data date, baseline in force, DQ score, the reconciliation statement and the contents. | Day 1 against the target, BL1 and last period, RAG by asset, and the three decisions required with owners and dates. |
+| **Trend analysis** | **Interfaces and readiness gap** |
+| ![Trend analysis](docs/screenshots/pptx_monthly_07.png) | ![Readiness](docs/screenshots/pptx_monthly_08.png) |
+| Day 1 forecast, slip per period, float eroding into negative territory, and the DQ score across six updates. | Construction complete to Day 1 ready for each asset, and the late handovers between owners, worst first. |
+| **Recovery plan** | **Schedule-quality actions** |
+| ![Recovery plan](docs/screenshots/pptx_monthly_11.png) | ![Schedule quality](docs/screenshots/pptx_monthly_13.png) |
+| Every option rescheduled by the CPM engine; A + B is the smallest set that keeps the +5 wd margin. | Owner scorecard, failing DCMA and update-discipline checks, and the action each owner takes before the next update. |
+| **Fortnightly flash** | |
+| ![Fortnightly flash](docs/screenshots/pptx_flash_01.png) | |
+| The same headline, tiles and decisions for the in-between cycle, in six slides. | |
+
+Slide previews are rendered from the generated `.pptx` files with LibreOffice (`scripts/render_pptx_previews.py`).
 
 ## Two-minute tour
 
@@ -136,6 +159,10 @@ python -m dop run --all && python -m pytest -q      # or ./run_all.sh
 
 Individual steps: `python -m dop generate`, `python -m dop pipeline [--near-critical 10]`,
 `python -m dop pptx --data-date 2026-10-29 --pack monthly|fortnightly`.
+
+Verification tools: `python scripts/verify_dashboard.py` (headless Chromium over every data date, compare mode and
+tab), `python scripts/render_pptx_previews.py` (renders both packs with LibreOffice for visual review and refreshes
+the slide previews) and `python scripts/check_confidentiality.py`.
 
 ## Outputs
 

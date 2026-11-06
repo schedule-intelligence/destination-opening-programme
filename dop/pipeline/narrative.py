@@ -60,15 +60,29 @@ def snapshot_narrative(m: dict, sid: int) -> dict:
     else:
         head = f"Day 1 Opening is forecast for {fd(s.day1_forecast)} with {tf:.0f} working days of float to the {target} target"
     if rec is not None and tf < 0:
-        need = pd.to_datetime(open_dec[open_dec.decision_id.isin(rec.decision.split(", "))].needed_by).max()
-        head += (f"; approving recovery {rec.options.replace(',', ' + ')} by {fd(need)} returns it to "
-                 f"{fd(rec.day1_forecast)} ({sd(rec.day1_tf_d)} float)")
+        # each option has its own decision and need-by date: say both, never only the later one
+        opts = [o.strip() for o in rec.options.split(",")]
+        need = {}
+        for o in opts:
+            one = scen[scen.options == o]
+            d = one.decision.iloc[0] if not one.empty else None
+            ids = d.split(", ") if isinstance(d, str) and d.strip() else []
+            when_o = pd.to_datetime(open_dec[open_dec.decision_id.isin(ids)].needed_by).max() if ids else pd.NaT
+            if not pd.isna(when_o):
+                need[o] = when_o
+        if not need:                                  # no open decision behind the options: no date to quote
+            when = " + ".join(opts)
+        elif len(set(need.values())) == 1:
+            when = f"{' + '.join(opts)} by {fd(next(iter(need.values())))}"
+        else:
+            when = " and ".join(f"{o} by {fd(need[o])}" if o in need else o for o in opts)
+        head += f"; approving recovery {when} returns it to {fd(rec.day1_forecast)} ({sd(rec.day1_tf_d)} float)"
     elif prev is not None and s.day1_movement_d:
         head += f"; it {moved(s.day1_movement_d)} this period"
     head += "."
     msgs = []
     if driver_asset:
-        msgs.append(f"The longest path runs through {ASSETS[driver_asset]}: " + ", ".join(drivers) + ".")
+        msgs.append(f"The longest path runs through {ASSETS[driver_asset]}: " + " → ".join(drivers) + ".")
     if prev is not None:
         msgs.append(f"Day 1 {moved(s.day1_movement_d)} since {fd(prev.data_date)}; float {sd(prev.day1_tf_d)} → "
                     f"{sd(tf)}; {plural(int(s.negative_float_count), 'activity')} carry negative float.")
@@ -79,7 +93,7 @@ def snapshot_narrative(m: dict, sid: int) -> dict:
                     f"{late.gap_days.max():.0f} calendar days ({late.sort_values('gap_days').iloc[-1].description}).")
     dq_prev = prev.dq_score if prev is not None else None
     msgs.append(f"Schedule quality {s.dq_score:.1f}/100 ({s.dq_rating})" +
-                (f", {sd(s.dq_score - dq_prev, 'pts')} vs last period." if dq_prev is not None else "."))
+                (f", {s.dq_score - dq_prev:+.1f} pts vs last period." if dq_prev is not None else "."))
     if sid == ids[-1] and not open_dec.empty:
         msgs.append(f"{plural(len(open_dec), 'decision')} open; " +
                     "; ".join(f"{r.decision_id} {r.owner} " + (f"overdue since {fd(r.needed_by)}" if r.overdue else f"by {fd(r.needed_by)}") for r in open_dec.itertuples()) + ".")
@@ -103,9 +117,10 @@ def snapshot_narrative(m: dict, sid: int) -> dict:
     so = {
         "day1_trend": f"Day 1 forecast {fd(s.day1_forecast)} ({sd(s.day1_var_bl0_d, 'cd')} vs BL0, {sd(s.day1_var_bl1_d, 'cd')} vs BL1).",
         "milestones": f"{plural(len(slipped), 'milestone')} slipped this period; "
-                      f"{int((msk.total_float_d < 0).sum())} carry negative float.",
+                      f"{int((msk.total_float_d < 0).sum())} of {int((msk.status != 'TK_Complete').sum())} open "
+                      f"milestones carry negative float.",
         "critical_path": (f"{plural(int(s.longest_path_count), 'activity')} on the longest path; "
-                          f"{int(s.near_critical_count)} near-critical (TF <= {m['near_critical_days']} wd)."),
+                          f"{int(s.near_critical_count)} near-critical (0 < TF ≤ {m['near_critical_days']} wd)."),
         "lookback": f"{lb_done} of {len(lb)} items planned for the last two weeks were achieved.",
         "lookahead": f"{len(la)} activities start or finish in the next 14 days; {len(la_crit)} are critical or on the longest path.",
         "readiness": (f"{ASSETS[worst]} is the readiness constraint: Day 1 ready {fd(gap[worst][1])} vs need-by "
