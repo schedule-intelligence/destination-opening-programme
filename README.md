@@ -5,6 +5,11 @@ a Power BI model and executive PowerPoint packs, with schedule-quality and recon
 
 **Live dashboard:** https://schedule-intelligence.github.io/destination-opening-programme/
 
+![48-second walkthrough of the dashboard](docs/screenshots/tour.gif)
+
+*48-second walkthrough: the executive summary, float eroding across four updates, then the critical path, readiness,
+recovery, schedule quality and reconciliation tabs ([MP4 version](docs/screenshots/tour.mp4)).*
+
 > Fictional programme, fictional data. Schedules are produced by a custom CPM engine that follows Primavera P6
 > conventions and are exported in genuine P6 XER format. No P6 licence was used (see [Transparency](#transparency)).
 
@@ -164,7 +169,8 @@ Individual steps: `python -m dop generate`, `python -m dop pipeline [--near-crit
 Verification tools: `python scripts/verify_dashboard.py` (headless Chromium over every data date, compare mode and
 tab), `python scripts/render_pptx_previews.py` (renders both packs with LibreOffice for visual review and refreshes
 the slide previews), `python scripts/check_pbip.py` (validates the Power BI project offline against the published
-schemas and the model) and `python scripts/check_confidentiality.py`.
+schemas and the model), `python scripts/record_tour.py` (re-records the walkthrough GIF and MP4) and
+`python scripts/check_confidentiality.py`.
 
 ## Outputs
 
