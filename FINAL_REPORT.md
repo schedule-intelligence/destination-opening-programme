@@ -37,7 +37,7 @@ are open, and D-09 is overdue.
 | Dashboard: zero console errors, desktop and 360 px, every data date | Playwright: 144 renders (6 dates × 3 compare modes × 8 tabs), zero console or page errors, no horizontal scroll at 360 px, screenshots in `docs/screenshots/` |
 | PPT packs and Excel open, no placeholders | `tests/test_outputs.py` re-opens both packs and the workbook: titles, footers, Owner columns, native charts, no "Click to add" |
 | No forbidden names | `scripts/check_forbidden.py` (tracked files, PPTX/XLSX XML, commit log) passes; repo description checked |
-| One commit per phase, pushed | 12 conventional commits on `main`, pushed |
+| One commit per phase, pushed | 13 conventional commits on `main`, pushed |
 | Live GitHub Pages link verified | Live URL returns 200; `data/dashboard.json` loads; headless check shows zero console errors. Repo is public with description, website and 8 topics |
 
 ## Deviations and blockers (see BLOCKERS.md and ASSUMPTIONS.md)
@@ -50,7 +50,7 @@ are open, and D-09 is overdue.
   shipped default is the predecessor calendar. It is documented in ASSUMPTIONS A03 and is a one-line change.
 - **Monthly pack is 15 slides,** not 14, because the appendix is split into A (lineage) and B (definitions).
 - **Fortnightly flash** uses the latest monthly data date (the data is monthly).
-- **GitHub Pages** needed 4 deploy attempts. The legacy build timed out twice on GitHub's side, so Pages now deploys through `.github/workflows/pages.yml` (B05).
+- **GitHub Pages** needed 4 deploy attempts. Two legacy builds and the first run of the new Actions workflow (`.github/workflows/pages.yml`) timed out on GitHub's side in `updating_pages`. The 4th attempt, triggered by a push, deployed (B05).
 - `run_all.sh` is provided but not executed here, because this machine's Git-Bash has no coreutils (B01).
   `run_all.ps1` and `python -m dop run --all` were executed.
 
