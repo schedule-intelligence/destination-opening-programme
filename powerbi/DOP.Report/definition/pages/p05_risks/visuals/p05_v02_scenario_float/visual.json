@@ -3,11 +3,11 @@
   "name": "p05_v02_scenario_float",
   "position": {
     "x": 16,
-    "y": 260,
-    "z": 6000,
-    "height": 214,
+    "y": 280,
+    "z": 5000,
+    "height": 204,
     "width": 416,
-    "tabOrder": 6000
+    "tabOrder": 5000
   },
   "visual": {
     "visualType": "clusteredBarChart",

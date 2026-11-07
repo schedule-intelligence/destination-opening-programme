@@ -5516,12 +5516,13 @@
               "        COUNTROWS ( fact_activity_snapshot ),",
               "        dim_snapshot[snapshot_id] = _sid,",
               "        fact_activity_snapshot[status] <> \"TK_Complete\",",
+              "        dim_activity[activity_type] <> \"TT_LOE\",",
               "        fact_activity_snapshot[is_critical] = TRUE ()",
               "    ) + 0"
             ],
             "formatString": "0",
             "displayFolder": "06 Float and criticality",
-            "description": "Matches fact_snapshot_summary[critical_count] (LOE included)",
+            "description": "Matches fact_snapshot_summary[critical_count] and control R12 (LOE excluded, as the pipeline counts it)",
             "lineageTag": "75e478c3-e872-5c41-8494-e7146f93d013"
           },
           {
@@ -5552,6 +5553,7 @@
               "        COUNTROWS ( fact_activity_snapshot ),",
               "        dim_snapshot[snapshot_id] = _sid,",
               "        fact_activity_snapshot[status] <> \"TK_Complete\",",
+              "        dim_activity[activity_type] <> \"TT_LOE\",",
               "        fact_activity_snapshot[total_float_d] > 0,",
               "        fact_activity_snapshot[total_float_d] <= _thr",
               "    ) + 0"
@@ -5570,6 +5572,7 @@
               "        COUNTROWS ( fact_activity_snapshot ),",
               "        dim_snapshot[snapshot_id] = _sid,",
               "        fact_activity_snapshot[status] <> \"TK_Complete\",",
+              "        dim_activity[activity_type] <> \"TT_LOE\",",
               "        fact_activity_snapshot[total_float_d] < 0",
               "    ) + 0"
             ],
@@ -5600,7 +5603,8 @@
               "    CALCULATE (",
               "        MIN ( fact_activity_snapshot[total_float_d] ),",
               "        dim_snapshot[snapshot_id] = _sid,",
-              "        fact_activity_snapshot[status] <> \"TK_Complete\"",
+              "        fact_activity_snapshot[status] <> \"TK_Complete\",",
+              "        dim_activity[activity_type] <> \"TT_LOE\"",
               "    )"
             ],
             "formatString": "0.0",
@@ -5615,7 +5619,8 @@
               "    CALCULATE (",
               "        AVERAGE ( fact_activity_snapshot[total_float_d] ),",
               "        dim_snapshot[snapshot_id] = _sid,",
-              "        fact_activity_snapshot[status] <> \"TK_Complete\"",
+              "        fact_activity_snapshot[status] <> \"TK_Complete\",",
+              "        dim_activity[activity_type] <> \"TT_LOE\"",
               "    )"
             ],
             "formatString": "0.0",

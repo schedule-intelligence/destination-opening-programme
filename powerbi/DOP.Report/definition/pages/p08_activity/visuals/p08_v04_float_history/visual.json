@@ -4,10 +4,10 @@
   "position": {
     "x": 16,
     "y": 506,
-    "z": 7000,
+    "z": 6000,
     "height": 198,
     "width": 616,
-    "tabOrder": 7000
+    "tabOrder": 6000
   },
   "visual": {
     "visualType": "lineChart",
@@ -37,17 +37,22 @@
           "projections": [
             {
               "field": {
-                "Measure": {
+                "Aggregation": {
                   "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "fact_activity_snapshot"
+                        }
+                      },
+                      "Property": "total_float_d"
                     }
                   },
-                  "Property": "Total float (min)"
+                  "Function": 3
                 }
               },
-              "queryRef": "_Measures.Total float (min)",
-              "nativeQueryRef": "Total float (min)",
+              "queryRef": "Min(fact_activity_snapshot.total_float_d)",
+              "nativeQueryRef": "Min of total_float_d",
               "displayName": "Total float (working days)"
             }
           ]

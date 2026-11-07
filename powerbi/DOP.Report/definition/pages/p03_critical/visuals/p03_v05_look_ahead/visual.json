@@ -3,11 +3,11 @@
   "name": "p03_v05_look_ahead",
   "position": {
     "x": 648,
-    "y": 495,
-    "z": 10000,
-    "height": 209,
+    "y": 500,
+    "z": 9000,
+    "height": 204,
     "width": 616,
-    "tabOrder": 10000
+    "tabOrder": 9000
   },
   "visual": {
     "visualType": "tableEx",
@@ -155,7 +155,7 @@
             "autoSizeColumnWidth": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
                 }
               }
             },
@@ -193,6 +193,106 @@
                 }
               }
             }
+          }
+        }
+      ],
+      "columnWidth": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "100D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_activity.activity_id"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "165D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_activity.activity_name"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "50D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_activity.owner_code"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "78D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fact_activity_snapshot.start"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "78D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fact_activity_snapshot.finish"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "55D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fact_activity_snapshot.total_float_d"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "55D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Measures.Criticality band"
           }
         }
       ]

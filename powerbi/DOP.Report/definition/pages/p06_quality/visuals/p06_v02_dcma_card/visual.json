@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
   "name": "p06_v02_dcma_card",
   "position": {
-    "x": 332,
+    "x": 312,
     "y": 144,
-    "z": 7000,
-    "height": 100,
-    "width": 300,
-    "tabOrder": 7000
+    "z": 6000,
+    "height": 120,
+    "width": 280,
+    "tabOrder": 6000
   },
   "visual": {
     "visualType": "cardVisual",
@@ -79,7 +79,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "16D"
+                  "Value": "18D"
                 }
               }
             }
@@ -109,7 +109,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "9D"
+                  "Value": "10D"
                 }
               }
             }

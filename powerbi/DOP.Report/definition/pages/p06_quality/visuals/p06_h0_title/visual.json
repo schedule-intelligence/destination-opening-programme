@@ -3,17 +3,17 @@
   "name": "p06_h0_title",
   "position": {
     "x": 16,
-    "y": 72,
-    "z": 5000,
-    "height": 56,
+    "y": 80,
+    "z": 4000,
+    "height": 48,
     "width": 1248,
-    "tabOrder": 5000
+    "tabOrder": 4000
   },
   "visual": {
-    "visualType": "cardVisual",
+    "visualType": "card",
     "query": {
       "queryState": {
-        "Data": {
+        "Values": {
           "projections": [
             {
               "field": {
@@ -34,53 +34,20 @@
       }
     },
     "objects": {
-      "outline": [
+      "labels": [
         {
           "properties": {
-            "show": {
-              "expr": {
-                "Literal": {
-                  "Value": "false"
-                }
-              }
-            }
-          },
-          "selector": {
-            "id": "default"
-          }
-        }
-      ],
-      "value": [
-        {
-          "properties": {
-            "textWrap": {
-              "expr": {
-                "Literal": {
-                  "Value": "true"
-                }
-              }
-            },
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "12D"
-                }
-              }
-            },
-            "horizontalAlignment": {
-              "expr": {
-                "Literal": {
-                  "Value": "'left'"
+                  "Value": "11D"
                 }
               }
             }
-          },
-          "selector": {
-            "id": "default"
           }
         }
       ],
-      "label": [
+      "categoryLabels": [
         {
           "properties": {
             "show": {
@@ -90,13 +57,10 @@
                 }
               }
             }
-          },
-          "selector": {
-            "id": "default"
           }
         }
       ],
-      "accentBar": [
+      "wordWrap": [
         {
           "properties": {
             "show": {
@@ -105,28 +69,7 @@
                   "Value": "true"
                 }
               }
-            },
-            "color": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Literal": {
-                      "Value": "'#2B7A78'"
-                    }
-                  }
-                }
-              }
-            },
-            "width": {
-              "expr": {
-                "Literal": {
-                  "Value": "3D"
-                }
-              }
             }
-          },
-          "selector": {
-            "id": "default"
           }
         }
       ]

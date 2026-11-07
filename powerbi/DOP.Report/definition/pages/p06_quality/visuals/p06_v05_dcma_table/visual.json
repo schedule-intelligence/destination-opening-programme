@@ -3,11 +3,11 @@
   "name": "p06_v05_dcma_table",
   "position": {
     "x": 16,
-    "y": 260,
-    "z": 10000,
-    "height": 214,
+    "y": 280,
+    "z": 9000,
+    "height": 204,
     "width": 816,
-    "tabOrder": 10000
+    "tabOrder": 9000
   },
   "visual": {
     "visualType": "tableEx",

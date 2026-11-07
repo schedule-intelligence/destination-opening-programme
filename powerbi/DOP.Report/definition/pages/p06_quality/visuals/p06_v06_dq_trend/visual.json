@@ -3,11 +3,11 @@
   "name": "p06_v06_dq_trend",
   "position": {
     "x": 848,
-    "y": 260,
-    "z": 11000,
-    "height": 214,
+    "y": 280,
+    "z": 10000,
+    "height": 204,
     "width": 416,
-    "tabOrder": 11000
+    "tabOrder": 10000
   },
   "visual": {
     "visualType": "lineChart",

@@ -40,7 +40,7 @@ def test_generated_project_passes_all_checks_without_warnings(generated):
     problems, warnings, stats = check_pbip.run_checks(out, ROOT)
     assert not problems, "\n".join(problems[:25])
     assert not warnings, "\n".join(warnings[:25])
-    assert stats["validated"] == summary["files"] - 2           # all but model.bim and the theme copy
+    assert stats["validated"] == summary["files"] - 3           # all but model.bim, the theme copy and the background
     assert summary["csv_tables"] == 22 and summary["tables"] == 24
 
 
@@ -89,7 +89,8 @@ def test_checker_reports_a_broken_field_reference(generated, tmp_path):
     shutil.copytree(generated[0], out)
     visual = next((out / PAGES / "p01_exec" / "visuals").glob("*_day1_float/visual.json"))
     doc = _json(visual)
-    doc["visual"]["query"]["queryState"]["Data"]["projections"][0]["field"]["Measure"]["Property"] = "No such measure"
+    role = next(iter(doc["visual"]["query"]["queryState"].values()))
+    role["projections"][0]["field"]["Measure"]["Property"] = "No such measure"
     visual.write_text(json.dumps(doc, indent=2) + "\n", encoding="utf-8", newline="\n")
     problems, _, _ = check_pbip.run_checks(out, ROOT)
     assert any("No such measure" in p and "not in model.bim" in p for p in problems)
@@ -125,7 +126,9 @@ def test_report_pages_and_header_strip(generated):
         assert (meta["width"], meta["height"], meta["displayOption"]) == (1280, 720, "FitToPage")
         names = {p.name for p in (out / PAGES / page / "visuals").iterdir()}
         prefix = page[:3]
-        assert {f"{prefix}_h1_programme", f"{prefix}_h3_datadate", f"{prefix}_h0_title"} <= names
+        assert {f"{prefix}_h1_programme", f"{prefix}_h0_title"} <= names
+        image = meta["objects"]["background"][0]["properties"]["image"]["image"]
+        assert image["url"]["expr"]["ResourcePackageItem"]["ItemName"] == "dop_background.svg"
         if meta.get("type") == "Drillthrough":
             assert meta["pageBinding"]["acceptsFilterContext"] == "None"
             continue

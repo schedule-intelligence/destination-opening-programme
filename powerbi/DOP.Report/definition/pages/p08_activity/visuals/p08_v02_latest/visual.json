@@ -4,16 +4,16 @@
   "position": {
     "x": 864,
     "y": 144,
-    "z": 5000,
+    "z": 4000,
     "height": 126,
     "width": 400,
-    "tabOrder": 5000
+    "tabOrder": 4000
   },
   "visual": {
-    "visualType": "cardVisual",
+    "visualType": "multiRowCard",
     "query": {
       "queryState": {
-        "Data": {
+        "Values": {
           "projections": [
             {
               "field": {
@@ -29,6 +29,26 @@
               "queryRef": "_Measures.Forecast finish",
               "nativeQueryRef": "Forecast finish",
               "displayName": "Forecast finish"
+            },
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "fact_activity_snapshot"
+                        }
+                      },
+                      "Property": "total_float_d"
+                    }
+                  },
+                  "Function": 3
+                }
+              },
+              "queryRef": "Min(fact_activity_snapshot.total_float_d)",
+              "nativeQueryRef": "Min of total_float_d",
+              "displayName": "Total float (d)"
             },
             {
               "field": {
@@ -53,21 +73,6 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Total float (min)"
-                }
-              },
-              "queryRef": "_Measures.Total float (min)",
-              "nativeQueryRef": "Total float (min)",
-              "displayName": "Total float (d)"
-            },
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
                   "Property": "Criticality band"
                 }
               },
@@ -80,26 +85,23 @@
       }
     },
     "objects": {
-      "outline": [
+      "dataLabels": [
         {
           "properties": {
-            "show": {
+            "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "false"
+                  "Value": "12D"
                 }
               }
             }
-          },
-          "selector": {
-            "id": "default"
           }
         }
       ],
-      "value": [
+      "categoryLabels": [
         {
           "properties": {
-            "textWrap": {
+            "show": {
               "expr": {
                 "Literal": {
                   "Value": "true"
@@ -109,57 +111,24 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "14D"
+                  "Value": "8D"
                 }
               }
             }
-          },
-          "selector": {
-            "id": "default"
           }
         }
       ],
-      "label": [
+      "card": [
         {
           "properties": {
-            "show": {
+            "barShow": {
               "expr": {
                 "Literal": {
                   "Value": "true"
                 }
               }
             },
-            "textWrap": {
-              "expr": {
-                "Literal": {
-                  "Value": "true"
-                }
-              }
-            },
-            "fontSize": {
-              "expr": {
-                "Literal": {
-                  "Value": "9D"
-                }
-              }
-            }
-          },
-          "selector": {
-            "id": "default"
-          }
-        }
-      ],
-      "accentBar": [
-        {
-          "properties": {
-            "show": {
-              "expr": {
-                "Literal": {
-                  "Value": "true"
-                }
-              }
-            },
-            "color": {
+            "barColor": {
               "solid": {
                 "color": {
                   "expr": {
@@ -170,16 +139,13 @@
                 }
               }
             },
-            "width": {
+            "barWeight": {
               "expr": {
                 "Literal": {
                   "Value": "3D"
                 }
               }
             }
-          },
-          "selector": {
-            "id": "default"
           }
         }
       ]
@@ -198,7 +164,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Latest update'"
+                  "Value": "'Latest update: forecast finish and float'"
                 }
               }
             },
@@ -218,7 +184,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Latest update'"
+                  "Value": "'Latest update: forecast finish and float'"
                 }
               }
             }
@@ -226,5 +192,63 @@
         }
       ]
     }
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "361321bcff94545180c9",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "dim_snapshot"
+              }
+            },
+            "Property": "is_latest"
+          }
+        },
+        "type": "Categorical",
+        "filter": {
+          "Version": 2,
+          "From": [
+            {
+              "Name": "d",
+              "Entity": "dim_snapshot",
+              "Type": 0
+            }
+          ],
+          "Where": [
+            {
+              "Condition": {
+                "In": {
+                  "Expressions": [
+                    {
+                      "Column": {
+                        "Expression": {
+                          "SourceRef": {
+                            "Source": "d"
+                          }
+                        },
+                        "Property": "is_latest"
+                      }
+                    }
+                  ],
+                  "Values": [
+                    [
+                      {
+                        "Literal": {
+                          "Value": "true"
+                        }
+                      }
+                    ]
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "howCreated": "User"
+      }
+    ]
   }
 }

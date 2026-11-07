@@ -4,10 +4,10 @@
   "position": {
     "x": 904,
     "y": 144,
-    "z": 14000,
+    "z": 13000,
     "height": 272,
     "width": 360,
-    "tabOrder": 14000
+    "tabOrder": 13000
   },
   "visual": {
     "visualType": "lineChart",
@@ -171,6 +171,20 @@
               "expr": {
                 "Literal": {
                   "Value": "9D"
+                }
+              }
+            },
+            "showAxisTitle": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "titleText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'% complete'"
                 }
               }
             }

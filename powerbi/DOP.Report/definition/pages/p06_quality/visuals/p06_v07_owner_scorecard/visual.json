@@ -3,11 +3,11 @@
   "name": "p06_v07_owner_scorecard",
   "position": {
     "x": 16,
-    "y": 490,
-    "z": 12000,
-    "height": 214,
+    "y": 500,
+    "z": 11000,
+    "height": 204,
     "width": 520,
-    "tabOrder": 12000
+    "tabOrder": 11000
   },
   "visual": {
     "visualType": "tableEx",

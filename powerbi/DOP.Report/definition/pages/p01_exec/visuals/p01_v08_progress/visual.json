@@ -4,16 +4,16 @@
   "position": {
     "x": 212,
     "y": 576,
-    "z": 12000,
+    "z": 11000,
     "height": 128,
     "width": 180,
-    "tabOrder": 12000
+    "tabOrder": 11000
   },
   "visual": {
-    "visualType": "cardVisual",
+    "visualType": "multiRowCard",
     "query": {
       "queryState": {
-        "Data": {
+        "Values": {
           "projections": [
             {
               "field": {
@@ -50,26 +50,23 @@
       }
     },
     "objects": {
-      "outline": [
+      "dataLabels": [
         {
           "properties": {
-            "show": {
+            "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "false"
+                  "Value": "13D"
                 }
               }
             }
-          },
-          "selector": {
-            "id": "default"
           }
         }
       ],
-      "value": [
+      "categoryLabels": [
         {
           "properties": {
-            "textWrap": {
+            "show": {
               "expr": {
                 "Literal": {
                   "Value": "true"
@@ -79,57 +76,24 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "16D"
+                  "Value": "8D"
                 }
               }
             }
-          },
-          "selector": {
-            "id": "default"
           }
         }
       ],
-      "label": [
+      "card": [
         {
           "properties": {
-            "show": {
+            "barShow": {
               "expr": {
                 "Literal": {
                   "Value": "true"
                 }
               }
             },
-            "textWrap": {
-              "expr": {
-                "Literal": {
-                  "Value": "true"
-                }
-              }
-            },
-            "fontSize": {
-              "expr": {
-                "Literal": {
-                  "Value": "9D"
-                }
-              }
-            }
-          },
-          "selector": {
-            "id": "default"
-          }
-        }
-      ],
-      "accentBar": [
-        {
-          "properties": {
-            "show": {
-              "expr": {
-                "Literal": {
-                  "Value": "true"
-                }
-              }
-            },
-            "color": {
+            "barColor": {
               "solid": {
                 "color": {
                   "expr": {
@@ -140,16 +104,13 @@
                 }
               }
             },
-            "width": {
+            "barWeight": {
               "expr": {
                 "Literal": {
                   "Value": "3D"
                 }
               }
             }
-          },
-          "selector": {
-            "id": "default"
           }
         }
       ]
@@ -168,7 +129,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Progress: actual vs planned'"
+                  "Value": "'% complete'"
                 }
               }
             },
@@ -188,7 +149,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Progress: actual vs planned'"
+                  "Value": "'% complete'"
                 }
               }
             }

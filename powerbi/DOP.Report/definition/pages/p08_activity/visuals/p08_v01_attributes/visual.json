@@ -4,16 +4,16 @@
   "position": {
     "x": 16,
     "y": 144,
-    "z": 4000,
+    "z": 3000,
     "height": 126,
     "width": 832,
-    "tabOrder": 4000
+    "tabOrder": 3000
   },
   "visual": {
-    "visualType": "cardVisual",
+    "visualType": "multiRowCard",
     "query": {
       "queryState": {
-        "Data": {
+        "Values": {
           "projections": [
             {
               "field": {
@@ -160,32 +160,9 @@
       }
     },
     "objects": {
-      "outline": [
+      "dataLabels": [
         {
           "properties": {
-            "show": {
-              "expr": {
-                "Literal": {
-                  "Value": "false"
-                }
-              }
-            }
-          },
-          "selector": {
-            "id": "default"
-          }
-        }
-      ],
-      "value": [
-        {
-          "properties": {
-            "textWrap": {
-              "expr": {
-                "Literal": {
-                  "Value": "true"
-                }
-              }
-            },
             "fontSize": {
               "expr": {
                 "Literal": {
@@ -193,23 +170,13 @@
                 }
               }
             }
-          },
-          "selector": {
-            "id": "default"
           }
         }
       ],
-      "label": [
+      "categoryLabels": [
         {
           "properties": {
             "show": {
-              "expr": {
-                "Literal": {
-                  "Value": "true"
-                }
-              }
-            },
-            "textWrap": {
               "expr": {
                 "Literal": {
                   "Value": "true"
@@ -219,27 +186,24 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "9D"
+                  "Value": "8D"
                 }
               }
             }
-          },
-          "selector": {
-            "id": "default"
           }
         }
       ],
-      "accentBar": [
+      "card": [
         {
           "properties": {
-            "show": {
+            "barShow": {
               "expr": {
                 "Literal": {
                   "Value": "true"
                 }
               }
             },
-            "color": {
+            "barColor": {
               "solid": {
                 "color": {
                   "expr": {
@@ -250,16 +214,13 @@
                 }
               }
             },
-            "width": {
+            "barWeight": {
               "expr": {
                 "Literal": {
                   "Value": "3D"
                 }
               }
             }
-          },
-          "selector": {
-            "id": "default"
           }
         }
       ]

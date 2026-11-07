@@ -4,16 +4,16 @@
   "position": {
     "x": 212,
     "y": 144,
-    "z": 6000,
+    "z": 5000,
     "height": 128,
     "width": 180,
-    "tabOrder": 6000
+    "tabOrder": 5000
   },
   "visual": {
-    "visualType": "cardVisual",
+    "visualType": "card",
     "query": {
       "queryState": {
-        "Data": {
+        "Values": {
           "projections": [
             {
               "field": {
@@ -34,46 +34,20 @@
       }
     },
     "objects": {
-      "outline": [
+      "labels": [
         {
           "properties": {
-            "show": {
-              "expr": {
-                "Literal": {
-                  "Value": "false"
-                }
-              }
-            }
-          },
-          "selector": {
-            "id": "default"
-          }
-        }
-      ],
-      "value": [
-        {
-          "properties": {
-            "textWrap": {
-              "expr": {
-                "Literal": {
-                  "Value": "true"
-                }
-              }
-            },
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "18D"
+                  "Value": "20D"
                 }
               }
             }
-          },
-          "selector": {
-            "id": "default"
           }
         }
       ],
-      "label": [
+      "categoryLabels": [
         {
           "properties": {
             "show": {
@@ -83,43 +57,19 @@
                 }
               }
             }
-          },
-          "selector": {
-            "id": "default"
           }
         }
       ],
-      "accentBar": [
+      "wordWrap": [
         {
           "properties": {
             "show": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
-                }
-              }
-            },
-            "color": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Literal": {
-                      "Value": "'#1F3A5F'"
-                    }
-                  }
-                }
-              }
-            },
-            "width": {
-              "expr": {
-                "Literal": {
-                  "Value": "3D"
+                  "Value": "false"
                 }
               }
             }
-          },
-          "selector": {
-            "id": "default"
           }
         }
       ]
@@ -138,7 +88,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Day 1 total float (working days)'"
+                  "Value": "'Day 1 total float (wd)'"
                 }
               }
             },
@@ -158,7 +108,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Day 1 total float (working days)'"
+                  "Value": "'Day 1 total float (wd)'"
                 }
               }
             }

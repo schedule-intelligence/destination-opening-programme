@@ -4,10 +4,10 @@
   "position": {
     "x": 848,
     "y": 432,
-    "z": 8000,
+    "z": 7000,
     "height": 272,
     "width": 416,
-    "tabOrder": 8000
+    "tabOrder": 7000
   },
   "visual": {
     "visualType": "clusteredColumnChart",
@@ -121,6 +121,20 @@
               "expr": {
                 "Literal": {
                   "Value": "9D"
+                }
+              }
+            },
+            "showAxisTitle": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "titleText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Milestone finishes'"
                 }
               }
             }

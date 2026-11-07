@@ -290,7 +290,7 @@ DEFINE
     MEASURE '_Measures'[Near-critical threshold (d)] =
         SELECTEDVALUE ( 'Near-critical threshold'[Near-critical threshold], 10 )
 
-    // Matches fact_snapshot_summary[critical_count] (LOE included)
+    // Matches fact_snapshot_summary[critical_count] and control R12 (LOE excluded, as the pipeline counts it)
     MEASURE '_Measures'[Critical count] =
         VAR _sid = [Selected snapshot id]
         RETURN
@@ -298,6 +298,7 @@ DEFINE
                 COUNTROWS ( fact_activity_snapshot ),
                 dim_snapshot[snapshot_id] = _sid,
                 fact_activity_snapshot[status] <> "TK_Complete",
+                dim_activity[activity_type] <> "TT_LOE",
                 fact_activity_snapshot[is_critical] = TRUE ()
             ) + 0
 
@@ -322,6 +323,7 @@ DEFINE
                 COUNTROWS ( fact_activity_snapshot ),
                 dim_snapshot[snapshot_id] = _sid,
                 fact_activity_snapshot[status] <> "TK_Complete",
+                dim_activity[activity_type] <> "TT_LOE",
                 fact_activity_snapshot[total_float_d] > 0,
                 fact_activity_snapshot[total_float_d] <= _thr
             ) + 0
@@ -333,6 +335,7 @@ DEFINE
                 COUNTROWS ( fact_activity_snapshot ),
                 dim_snapshot[snapshot_id] = _sid,
                 fact_activity_snapshot[status] <> "TK_Complete",
+                dim_activity[activity_type] <> "TT_LOE",
                 fact_activity_snapshot[total_float_d] < 0
             ) + 0
 
@@ -351,7 +354,8 @@ DEFINE
             CALCULATE (
                 MIN ( fact_activity_snapshot[total_float_d] ),
                 dim_snapshot[snapshot_id] = _sid,
-                fact_activity_snapshot[status] <> "TK_Complete"
+                fact_activity_snapshot[status] <> "TK_Complete",
+                dim_activity[activity_type] <> "TT_LOE"
             )
 
     MEASURE '_Measures'[Total float (average)] =
@@ -360,7 +364,8 @@ DEFINE
             CALCULATE (
                 AVERAGE ( fact_activity_snapshot[total_float_d] ),
                 dim_snapshot[snapshot_id] = _sid,
-                fact_activity_snapshot[status] <> "TK_Complete"
+                fact_activity_snapshot[status] <> "TK_Complete",
+                dim_activity[activity_type] <> "TT_LOE"
             )
 
     // Row-level flag for tables and conditional formatting: 2 = critical, 1 = near-critical, 0 = other

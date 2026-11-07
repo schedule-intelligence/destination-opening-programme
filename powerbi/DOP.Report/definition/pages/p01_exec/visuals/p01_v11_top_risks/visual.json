@@ -4,10 +4,10 @@
   "position": {
     "x": 408,
     "y": 432,
-    "z": 15000,
+    "z": 14000,
     "height": 272,
     "width": 420,
-    "tabOrder": 15000
+    "tabOrder": 14000
   },
   "visual": {
     "visualType": "tableEx",
@@ -29,21 +29,6 @@
               "queryRef": "fact_risk.risk_id",
               "nativeQueryRef": "risk_id",
               "displayName": "Risk"
-            },
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "fact_risk"
-                    }
-                  },
-                  "Property": "title"
-                }
-              },
-              "queryRef": "fact_risk.title",
-              "nativeQueryRef": "title",
-              "displayName": "Title"
             },
             {
               "field": {
@@ -83,12 +68,12 @@
                       "Entity": "fact_risk"
                     }
                   },
-                  "Property": "trend"
+                  "Property": "schedule_impact_days"
                 }
               },
-              "queryRef": "fact_risk.trend",
-              "nativeQueryRef": "trend",
-              "displayName": "Trend"
+              "queryRef": "fact_risk.schedule_impact_days",
+              "nativeQueryRef": "schedule_impact_days",
+              "displayName": "Impact (d)"
             },
             {
               "field": {
@@ -98,12 +83,12 @@
                       "Entity": "fact_risk"
                     }
                   },
-                  "Property": "schedule_impact_days"
+                  "Property": "title"
                 }
               },
-              "queryRef": "fact_risk.schedule_impact_days",
-              "nativeQueryRef": "schedule_impact_days",
-              "displayName": "Impact (days)"
+              "queryRef": "fact_risk.title",
+              "nativeQueryRef": "title",
+              "displayName": "Title"
             }
           ]
         }

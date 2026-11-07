@@ -4,10 +4,10 @@
   "position": {
     "x": 16,
     "y": 144,
-    "z": 6000,
-    "height": 110,
+    "z": 5000,
+    "height": 120,
     "width": 1248,
-    "tabOrder": 6000
+    "tabOrder": 5000
   },
   "visual": {
     "visualType": "cardVisual",
@@ -43,7 +43,7 @@
               },
               "queryRef": "_Measures.Near-critical count",
               "nativeQueryRef": "Near-critical count",
-              "displayName": "Near-critical (threshold slicer)"
+              "displayName": "Near-critical"
             },
             {
               "field": {
@@ -139,7 +139,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "16D"
+                  "Value": "18D"
                 }
               }
             }
@@ -169,7 +169,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "9D"
+                  "Value": "10D"
                 }
               }
             }

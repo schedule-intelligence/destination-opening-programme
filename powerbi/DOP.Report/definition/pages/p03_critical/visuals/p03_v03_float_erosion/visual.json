@@ -3,11 +3,11 @@
   "name": "p03_v03_float_erosion",
   "position": {
     "x": 772,
-    "y": 270,
-    "z": 8000,
-    "height": 209,
+    "y": 280,
+    "z": 7000,
+    "height": 204,
     "width": 492,
-    "tabOrder": 8000
+    "tabOrder": 7000
   },
   "visual": {
     "visualType": "lineChart",
@@ -119,6 +119,20 @@
               "expr": {
                 "Literal": {
                   "Value": "9D"
+                }
+              }
+            },
+            "showAxisTitle": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "titleText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Working days'"
                 }
               }
             }

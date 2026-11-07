@@ -3,11 +3,11 @@
   "name": "p04_v03_late_interfaces",
   "position": {
     "x": 16,
-    "y": 498,
-    "z": 7000,
-    "height": 206,
+    "y": 500,
+    "z": 6000,
+    "height": 204,
     "width": 420,
-    "tabOrder": 7000
+    "tabOrder": 6000
   },
   "visual": {
     "visualType": "pivotTable",

@@ -3,11 +3,11 @@
   "name": "p03_v04_look_back",
   "position": {
     "x": 16,
-    "y": 495,
-    "z": 9000,
-    "height": 209,
+    "y": 500,
+    "z": 8000,
+    "height": 204,
     "width": 616,
-    "tabOrder": 9000
+    "tabOrder": 8000
   },
   "visual": {
     "visualType": "tableEx",
@@ -140,7 +140,7 @@
             "autoSizeColumnWidth": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
                 }
               }
             },
@@ -178,6 +178,92 @@
                 }
               }
             }
+          }
+        }
+      ],
+      "columnWidth": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "100D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_activity.activity_id"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "200D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_activity.activity_name"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "50D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_activity.owner_code"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "50D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fact_activity_snapshot.lookback_event"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "95D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fact_activity_snapshot.prev_finish"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "70D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fact_activity_snapshot.lookback_achieved"
           }
         }
       ]
@@ -228,7 +314,7 @@
   "filterConfig": {
     "filters": [
       {
-        "name": "cbd08e91ad595fe5acd6",
+        "name": "be0c14fd5b3e52b6a457",
         "field": {
           "Column": {
             "Expression": {
@@ -236,7 +322,7 @@
                 "Entity": "fact_activity_snapshot"
               }
             },
-            "Property": "lookback_achieved"
+            "Property": "lookback_event"
           }
         },
         "type": "Categorical",
@@ -261,7 +347,7 @@
                             "Source": "f"
                           }
                         },
-                        "Property": "lookback_achieved"
+                        "Property": "lookback_event"
                       }
                     }
                   ],
@@ -269,14 +355,14 @@
                     [
                       {
                         "Literal": {
-                          "Value": "true"
+                          "Value": "'start'"
                         }
                       }
                     ],
                     [
                       {
                         "Literal": {
-                          "Value": "false"
+                          "Value": "'finish'"
                         }
                       }
                     ]

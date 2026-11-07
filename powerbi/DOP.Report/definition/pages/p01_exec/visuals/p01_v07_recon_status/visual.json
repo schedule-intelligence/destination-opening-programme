@@ -4,16 +4,16 @@
   "position": {
     "x": 16,
     "y": 576,
-    "z": 11000,
+    "z": 10000,
     "height": 128,
     "width": 180,
-    "tabOrder": 11000
+    "tabOrder": 10000
   },
   "visual": {
-    "visualType": "cardVisual",
+    "visualType": "card",
     "query": {
       "queryState": {
-        "Data": {
+        "Values": {
           "projections": [
             {
               "field": {
@@ -34,47 +34,17 @@
       }
     },
     "objects": {
-      "outline": [
+      "labels": [
         {
           "properties": {
-            "show": {
-              "expr": {
-                "Literal": {
-                  "Value": "false"
-                }
-              }
-            }
-          },
-          "selector": {
-            "id": "default"
-          }
-        }
-      ],
-      "value": [
-        {
-          "properties": {
-            "textWrap": {
-              "expr": {
-                "Literal": {
-                  "Value": "true"
-                }
-              }
-            },
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "18D"
+                  "Value": "20D"
                 }
               }
-            }
-          },
-          "selector": {
-            "id": "default"
-          }
-        },
-        {
-          "properties": {
-            "fontColor": {
+            },
+            "color": {
               "solid": {
                 "color": {
                   "expr": {
@@ -90,20 +60,10 @@
                 }
               }
             }
-          },
-          "selector": {
-            "data": [
-              {
-                "dataViewWildcard": {
-                  "matchingOption": 0
-                }
-              }
-            ],
-            "metadata": "_Measures.Reconciliation status"
           }
         }
       ],
-      "label": [
+      "categoryLabels": [
         {
           "properties": {
             "show": {
@@ -113,43 +73,19 @@
                 }
               }
             }
-          },
-          "selector": {
-            "id": "default"
           }
         }
       ],
-      "accentBar": [
+      "wordWrap": [
         {
           "properties": {
             "show": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
-                }
-              }
-            },
-            "color": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Literal": {
-                      "Value": "'#1F3A5F'"
-                    }
-                  }
-                }
-              }
-            },
-            "width": {
-              "expr": {
-                "Literal": {
-                  "Value": "3D"
+                  "Value": "false"
                 }
               }
             }
-          },
-          "selector": {
-            "id": "default"
           }
         }
       ]
@@ -168,7 +104,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Reconciliation status'"
+                  "Value": "'Reconciliation'"
                 }
               }
             },
@@ -188,7 +124,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Reconciliation status'"
+                  "Value": "'Reconciliation'"
                 }
               }
             }

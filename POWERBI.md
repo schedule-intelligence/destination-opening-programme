@@ -2,8 +2,8 @@
 
 This guide rebuilds the DOP schedule-intelligence dashboard in Power BI Desktop from the reconciled star schema
 in `output/csv/`. When you follow it, the report reproduces the published numbers for every data date. For the
-latest update (29-Oct-2026) those are: Day 1 forecast 21-Oct-2027, Day 1 total float −7 working days, 41 critical
-activities, DQ score 75.4 and 40 of 40 reconciliation controls passing. Allow about two hours for the build. The model
+latest update (29-Oct-2026) those are: Day 1 forecast 21-Oct-2027, Day 1 total float −7 working days, 39 critical
+activities, DQ score 75.3 and 40 of 40 reconciliation controls passing. Allow about two hours for the build. The model
 uses 22 CSV tables, 96 measures, one theme and nine report pages.
 
 > **Transparency.** All data in this repository is fictional. The author does not have Primavera P6. The schedules
@@ -645,9 +645,12 @@ MEASURE '_Measures'[Milestones later than baseline in force] =
 <details>
 <summary><b>6. Float and criticality, with the near-critical what-if threshold</b></summary>
 
-`[Critical count]` includes LOE and equals `fact_snapshot_summary[critical_count]`. `[Critical count (excl. LOE)]`
-equals reconciliation control R12, which counts from the source XER without LOE. Show the first on the
-dashboard and use the second on the reconciliation page.
+The counts and float statistics leave out level-of-effort (LOE) activities, as the pipeline does:
+`[Critical count]` equals `fact_snapshot_summary[critical_count]` and reconciliation control R12, which counts
+from the source XER without LOE; `[Near-critical count]` and `[Negative float count]` equal their summary
+columns; `[Total float (min)]` and `[Total float (average)]` equal `min_float_d` and `avg_float_d`.
+`[Critical count (excl. LOE)]` returns the same value as `[Critical count]` and names the rule on the
+reconciliation page.
 
 <!-- DAX-GROUP:6 -->
 
@@ -655,7 +658,7 @@ dashboard and use the second on the reconciliation page.
 MEASURE '_Measures'[Near-critical threshold (d)] =
     SELECTEDVALUE ( 'Near-critical threshold'[Near-critical threshold], 10 )
 
-// Matches fact_snapshot_summary[critical_count] (LOE included)
+// Matches fact_snapshot_summary[critical_count] and control R12 (LOE excluded, as the pipeline counts it)
 MEASURE '_Measures'[Critical count] =
     VAR _sid = [Selected snapshot id]
     RETURN
@@ -663,6 +666,7 @@ MEASURE '_Measures'[Critical count] =
             COUNTROWS ( fact_activity_snapshot ),
             dim_snapshot[snapshot_id] = _sid,
             fact_activity_snapshot[status] <> "TK_Complete",
+            dim_activity[activity_type] <> "TT_LOE",
             fact_activity_snapshot[is_critical] = TRUE ()
         ) + 0
 
@@ -687,6 +691,7 @@ MEASURE '_Measures'[Near-critical count] =
             COUNTROWS ( fact_activity_snapshot ),
             dim_snapshot[snapshot_id] = _sid,
             fact_activity_snapshot[status] <> "TK_Complete",
+            dim_activity[activity_type] <> "TT_LOE",
             fact_activity_snapshot[total_float_d] > 0,
             fact_activity_snapshot[total_float_d] <= _thr
         ) + 0
@@ -698,6 +703,7 @@ MEASURE '_Measures'[Negative float count] =
             COUNTROWS ( fact_activity_snapshot ),
             dim_snapshot[snapshot_id] = _sid,
             fact_activity_snapshot[status] <> "TK_Complete",
+            dim_activity[activity_type] <> "TT_LOE",
             fact_activity_snapshot[total_float_d] < 0
         ) + 0
 
@@ -716,7 +722,8 @@ MEASURE '_Measures'[Total float (min)] =
         CALCULATE (
             MIN ( fact_activity_snapshot[total_float_d] ),
             dim_snapshot[snapshot_id] = _sid,
-            fact_activity_snapshot[status] <> "TK_Complete"
+            fact_activity_snapshot[status] <> "TK_Complete",
+            dim_activity[activity_type] <> "TT_LOE"
         )
 
 MEASURE '_Measures'[Total float (average)] =
@@ -725,7 +732,8 @@ MEASURE '_Measures'[Total float (average)] =
         CALCULATE (
             AVERAGE ( fact_activity_snapshot[total_float_d] ),
             dim_snapshot[snapshot_id] = _sid,
-            fact_activity_snapshot[status] <> "TK_Complete"
+            fact_activity_snapshot[status] <> "TK_Complete",
+            dim_activity[activity_type] <> "TT_LOE"
         )
 
 // Row-level flag for tables and conditional formatting: 2 = critical, 1 = near-critical, 0 = other
@@ -1475,16 +1483,16 @@ date. Expected values for the latest update:
 | Day 1 total float | −7 working days | `day1_tf_d` |
 | Float erosion | +7 working days (partial recovery after −17 in September) | `float_erosion_d` |
 | Day 1 variance vs BL1 / vs BL0 | +15 / +30 calendar days | `day1_var_bl1_d`, `day1_var_bl0_d` |
-| Critical count / excl. LOE | 41 / 39 | `critical_count` / control R12 |
-| Near-critical count (threshold 10) | 18 | `near_critical_count` |
-| Total float (min) / (average) | −13.0 / 34.1 | `min_float_d`, `avg_float_d` |
-| Weighted % complete (actual) | 38.8% (38.84) | control R11 |
+| Critical count / excl. LOE | 39 / 39 | `critical_count` / control R12 |
+| Near-critical count (threshold 10) / negative float count | 17 / 36 | `near_critical_count`, `negative_float_count` |
+| Total float (min) / (average) | −13.0 / 35.1 | `min_float_d`, `avg_float_d` |
+| Weighted % complete (actual) | 38.6% (38.58) | control R11 |
 | Planned % complete | 39.9% | see note |
-| Look-ahead items / recomputed | 16 / 16 | stored flag = date logic |
+| Look-ahead items / recomputed | 17 / 17 | stored flag = date logic |
 | Look-back items / achieved | 10 / 10 | |
-| DQ score / rating / movement | 75.4 / Fair / −4.2 points | `dq_score`, `dq_rating` |
+| DQ score / rating / movement | 75.3 / Fair / −4.7 points | `dq_score`, `dq_rating` |
 | DCMA pass count | 8 of 13 applicable | `fact_dcma_check` |
-| BEI (completed ÷ due) / CPLI | 0.949 (56 ÷ 59) / 0.980 | `bei` and D14; `cpli` and D13 |
+| BEI (completed ÷ due) / CPLI | 0.932 (55 ÷ 59) / 0.980 | `bei` and D14; `cpli` and D13 |
 | Controls passed | 40 of 40 | `fact_reconciliation` |
 | Open decisions | D-07 by 12-Nov-2026, D-08 by 26-Nov-2026; D-09 overdue | `fact_decision` |
 | Recommended scenario / Float gain | A+B, Day 1 total float +8 working days / +15 working days | `fact_scenario[recommended]`, `float_gain_d` |

@@ -3,11 +3,11 @@
   "name": "p05_v05_decision_log",
   "position": {
     "x": 648,
-    "y": 490,
-    "z": 9000,
-    "height": 214,
+    "y": 500,
+    "z": 8000,
+    "height": 204,
     "width": 616,
-    "tabOrder": 9000
+    "tabOrder": 8000
   },
   "visual": {
     "visualType": "tableEx",

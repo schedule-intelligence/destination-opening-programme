@@ -17,8 +17,9 @@ Checks
      partition's Table.TransformColumnTypes; the types agree with each other and with POWERBI.md section 2.
   6. Every measure in powerbi/measures.dax is in _Measures with the same expression, and the format strings
      listed in POWERBI.md section 5 are applied.
-  7. powerbi/dop_theme.json is copied unchanged to StaticResources/RegisteredResources and registered in
-     report.json (resourcePackages and themeCollection.customTheme).
+  7. powerbi/dop_theme.json validates against Microsoft's report theme schema (vendored in scripts/theme_schema),
+     is copied unchanged to StaticResources/RegisteredResources and registered in report.json (resourcePackages and
+     themeCollection.customTheme); every page background image is a registered image resource.
   8. pages.json pageOrder matches the page folders; page and visual names follow the PBIR naming rules and
      match their folders; drill-through bindings and visual interactions point at existing objects.
   9. Every visual sits inside its page, no two visuals overlap, and content visuals are at least 180 x 90 px.
@@ -39,6 +40,7 @@ from referencing.jsonschema import DRAFT7
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SCHEMA_DIR = pathlib.Path(__file__).resolve().parent / "pbir_schemas"
+THEME_SCHEMA_DIR = pathlib.Path(__file__).resolve().parent / "theme_schema"
 SCHEMA_BASE = "https://developer.microsoft.com/json-schemas/"
 PROJECT = "DOP"
 MEASURE_TABLE = "_Measures"
@@ -237,6 +239,26 @@ def selectors(node):
     elif isinstance(node, list):
         for value in node:
             yield from selectors(value)
+
+
+def theme_problems(theme_path: pathlib.Path) -> list[str]:
+    """The theme against Microsoft's report theme schema (vendored in scripts/theme_schema, newest version). The
+    schema types every visual's formatting objects except the "*" (all visuals) block, so that block is also checked
+    as if it were a line chart's, which has the same container objects (background, border, dropShadow, title)."""
+    files = sorted(THEME_SCHEMA_DIR.glob("reportThemeSchema-*.json"),
+                   key=lambda p: tuple(int(n) for n in re.findall(r"\d+", p.stem)))
+    if not files:
+        return [f"{THEME_SCHEMA_DIR.name}: no reportThemeSchema-*.json to check the theme against"]
+    validator = Draft7Validator(json.loads(files[-1].read_text(encoding="utf-8")))
+    theme = json.loads(theme_path.read_text(encoding="utf-8"))
+    docs = [("", theme)]
+    generic = theme.get("visualStyles", {}).get("*", {}).get("*")
+    if generic:
+        docs.append(("visualStyles/*/* checked as lineChart: ",
+                     {"name": theme.get("name", ""), "visualStyles": {"lineChart": {"*": generic}}}))
+    return [f"powerbi/dop_theme.json: {prefix}{'/'.join(map(str, e.path)) or '(root)'}: {e.message[:200]} "
+            f"({files[-1].name})"
+            for prefix, doc in docs for e in validator.iter_errors(doc)]
 
 
 # ----------------------------------------------------------------------------------------------------------------
@@ -462,6 +484,15 @@ def run_checks(project: pathlib.Path = ROOT / "powerbi", root: pathlib.Path = RO
         for f in resources_dir.iterdir():
             if not any(i.get("path") == f.name for i in registered):
                 problems.append(f"StaticResources/RegisteredResources/{f.name} has no entry in report.json")
+    problems.extend(theme_problems(theme_src))
+    images = {i.get("name") for i in registered if i.get("type") == "Image" and (resources_dir / i.get("path", "")).is_file()}
+    for page_json in sorted((report_dir / "definition" / "pages").glob("*/page.json")):
+        for bg in docs_json.get(page_json, {}).get("objects", {}).get("background", []):
+            item = (bg.get("properties", {}).get("image", {}).get("image", {}).get("url", {}).get("expr", {})
+                    .get("ResourcePackageItem", {}))
+            if item and (item.get("PackageName") != "RegisteredResources" or item.get("ItemName") not in images):
+                problems.append(f"{rel(page_json)}: background image {item.get('ItemName')!r} is not a registered "
+                                "image in StaticResources/RegisteredResources")
 
     # project wiring ------------------------------------------------------------------------------------------
     pbip = docs_json[project / f"{PROJECT}.pbip"]

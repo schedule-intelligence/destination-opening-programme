@@ -5,6 +5,7 @@ Writes `powerbi/DOP.pbip`, `powerbi/DOP.SemanticModel` (TMSL `model.bim`) and `p
 - the star-schema CSVs in `output/csv` (headers, plus every row to choose and verify each column type);
 - `powerbi/measures.dax` (every MEASURE, with its expression kept verbatim);
 - `powerbi/dop_theme.json` (registered as the report's custom theme);
+- a page background image, `dop_background.svg`, generated here from the grid constants (the navy header band);
 - the relationships and page design of POWERBI.md, encoded below as data. `scripts/check_pbip.py` cross-checks
   the relationships and column types against POWERBI.md.
 
@@ -51,14 +52,17 @@ SCHEMAS = {
 NAVY, TEAL, SLATE = "#1F3A5F", "#2B7A78", "#64748B"
 RED, AMBER, GREEN, WHITE, MUTED = "#C0392B", "#D68910", "#1E8449", "#FFFFFF", "#4A5568"
 
-# Canvas and grid (pixels): header band (header strip and title row, 8 px apart), then the content area with
-# 16 px margins and gutters
+# Canvas and grid (pixels): the header strip sits on a navy band painted by the page background image, the title
+# row under it, then the content area with 16 px margins and gutters
 PAGE_W, PAGE_H, GUTTER = 1280, 720, 16
+BAND_H = 72                                   # navy band behind the header strip, teal rule along its foot
 HEADER_Y, HEADER_H = 8, 56
-TITLE_Y, TITLE_H = 72, 56
+TITLE_Y, TITLE_H = 80, 48
 CONTENT_X, CONTENT_Y, CONTENT_W, CONTENT_H = 16, 144, 1248, 560
-SLOT_W = 200                                  # header slicers and the data-date card
+SLOT_W = 200                                  # header slicers
 MIN_W, MIN_H = 180, 90                        # smallest content visual
+CANVAS, BAND_SUBTEXT = "#F7F8FA", "#C9D4E3"
+BACKGROUND_FILE = "dop_background.svg"
 
 
 # ----------------------------------------------------------------------------------------------------------------
@@ -642,17 +646,16 @@ class ReportBuilder:
             "visualContainerObjects": {"background": [{"properties": {"show": flag(False)}}]},
         }
 
-    def card(self, fields: list[Field], title: str | None, value_size: int = 18, label: bool = False,
-             colour_by: str | None = None, align_left: bool = False, accent: str | None = NAVY,
-             alt: str | None = None) -> dict:
+    def card(self, fields: list[Field], title: str | None, value_size: int = 15, label: bool = False,
+             colour_by: str | None = None, accent: str | None = NAVY, alt: str | None = None,
+             label_size: int = 9) -> dict:
+        """The new card visual: several values with labels and accent bars, for boxes of 240 px and wider."""
         value = {"textWrap": flag(True), "fontSize": num(value_size)}
-        if align_left:
-            value["horizontalAlignment"] = lit(text("left"))
         objects = {
             "outline": [{"properties": {"show": flag(False)}, "selector": {"id": "default"}}],
             "value": [{"properties": value, "selector": {"id": "default"}}],
-            "label": [{"properties": ({"show": flag(True), "textWrap": flag(True), "fontSize": num(9)} if label
-                                      else {"show": flag(False)}), "selector": {"id": "default"}}],
+            "label": [{"properties": ({"show": flag(True), "textWrap": flag(True), "fontSize": num(label_size)}
+                                      if label else {"show": flag(False)}), "selector": {"id": "default"}}],
         }
         if colour_by:
             objects["value"].append({
@@ -663,6 +666,29 @@ class ReportBuilder:
                                      "selector": {"id": "default"}}]
         return {"visualType": "cardVisual", "query": {"queryState": {"Data": self.role(fields)}},
                 "objects": objects, "visualContainerObjects": self.container_objects(title, alt)}
+
+    def kpi(self, f: Field, title: str | None, value_size: int = 20, colour_by: str | None = None,
+            alt: str | None = None, wrap: bool = False) -> dict:
+        """One value in the classic card, centred in the whole box. The new card visual reserves padding inside each
+        value cell, which clips a 12 pt line in a 48 px card and truncates a 20 pt date in a 180 px card (seen in
+        Desktop). wrap=True lets a one-sentence headline take a second line."""
+        labels = {"fontSize": num(value_size)}
+        if colour_by:
+            labels["color"] = {"solid": {"color": {"expr": field_expr(mea(colour_by))}}}
+        return {"visualType": "card", "query": {"queryState": {"Values": self.role([f])}},
+                "objects": {"labels": [{"properties": labels}],
+                            "categoryLabels": [{"properties": {"show": flag(False)}}],
+                            "wordWrap": [{"properties": {"show": flag(wrap)}}]},
+                "visualContainerObjects": self.container_objects(title, alt)}
+
+    def multirow(self, fields: list[Field], title: str, value_size: int = 15, label_size: int = 9) -> dict:
+        """Several values side by side with their labels under them, in a narrow box (the multi-row card)."""
+        return {"visualType": "multiRowCard", "query": {"queryState": {"Values": self.role(fields)}},
+                "objects": {"dataLabels": [{"properties": {"fontSize": num(value_size)}}],
+                            "categoryLabels": [{"properties": {"show": flag(True), "fontSize": num(label_size)}}],
+                            "card": [{"properties": {"barShow": flag(True), "barColor": colour(NAVY),
+                                                     "barWeight": num(3)}}]},
+                "visualContainerObjects": self.container_objects(title)}
 
     def slicer(self, f: Field, header: str, mode: str, single: bool, strict: bool, sort_desc: bool = False,
                selected: str | None = None, sync: str | None = None) -> dict:
@@ -700,21 +726,25 @@ class ReportBuilder:
         return visual
 
     def table(self, fields: list[Field], title: str, sort: tuple[Field, str] | None = None,
-              value_objects: list[dict] | None = None) -> dict:
+              value_objects: list[dict] | None = None, widths: list[int] | None = None) -> dict:
+        """widths (px, one per field) fix the column widths, which grow in proportion to fill the box. Without them,
+        columns size to their longest value and the last columns of a wide table sit off to the right."""
         query = {"queryState": {"Values": self.role(fields)}}
         if sort:
             query["sortDefinition"] = self.sort(*sort)
-        return {
-            "visualType": "tableEx",
-            "query": query,
-            "objects": {
-                "columnHeaders": [{"properties": {"columnAdjustment": lit(text("growToFit")),
-                                                  "autoSizeColumnWidth": flag(True), "fontSize": num(9),
-                                                  "wordWrap": flag(True)}}],
-                "values": [{"properties": {"fontSize": num(9), "wordWrap": flag(False)}}] + (value_objects or []),
-            },
-            "visualContainerObjects": self.container_objects(title),
+        objects = {
+            "columnHeaders": [{"properties": {"columnAdjustment": lit(text("growToFit")),
+                                              "autoSizeColumnWidth": flag(widths is None), "fontSize": num(9),
+                                              "wordWrap": flag(True)}}],
+            "values": [{"properties": {"fontSize": num(9), "wordWrap": flag(False)}}] + (value_objects or []),
         }
+        if widths:
+            if len(widths) != len(fields):
+                raise ValueError(f"{title}: {len(widths)} widths for {len(fields)} columns")
+            objects["columnWidth"] = [{"properties": {"value": num(w)}, "selector": {"metadata": query_ref(f)}}
+                                      for f, w in zip(fields, widths)]
+        return {"visualType": "tableEx", "query": query, "objects": objects,
+                "visualContainerObjects": self.container_objects(title)}
 
     def matrix(self, rows: list[Field], columns: list[Field], values: list[Field], title: str,
                value_objects: list[dict] | None = None) -> dict:
@@ -736,7 +766,7 @@ class ReportBuilder:
 
     def chart(self, visual_type: str, category: Field, y: list[Field], title: str, series: Field | None = None,
               tooltips: list[Field] | None = None, sort: tuple[Field, str] | None = None,
-              legend: bool | None = None, labels: bool = False) -> dict:
+              legend: bool | None = None, labels: bool = False, y_title: str | None = None) -> dict:
         state = {"Category": self.role([category], active=True)}
         if series:
             state["Series"] = self.role([series])
@@ -747,9 +777,12 @@ class ReportBuilder:
         if sort:
             query["sortDefinition"] = self.sort(*sort)
         show_legend = legend if legend is not None else (series is not None or len(y) > 1)
+        value_axis = {"show": flag(True), "fontSize": num(9)}
+        if y_title:                       # by default the axis title lists every series and gets cut off
+            value_axis.update({"showAxisTitle": flag(True), "titleText": lit(text(y_title))})
         objects = {
             "categoryAxis": [{"properties": {"show": flag(True), "fontSize": num(9)}}],
-            "valueAxis": [{"properties": {"show": flag(True), "fontSize": num(9)}}],
+            "valueAxis": [{"properties": value_axis}],
             "legend": [{"properties": {"show": flag(show_legend)}}],
             "labels": [{"properties": {"show": flag(labels), "labelDisplayUnits": lit(text("1"))}}],
         }
@@ -766,21 +799,19 @@ class ReportBuilder:
         prefix = f"p{number:02d}"                 # visual names: p01_h1_programme, p01_v03_vs_bl0, ...
         placed: list[tuple[str, dict, tuple[int, int, int, int], dict | None]] = []
 
-        # header strip: programme textbox | [threshold slicer] | selected data-date card | data-date slicer
-        right = [s for s in ("threshold", "datecard", "data_date") if s == "datecard" or s in slicers]
+        # header strip on the navy band: programme textbox | [threshold slicer] | data-date slicer. The slicer shows
+        # the selected data date, so the strip carries no separate date card.
+        right = [s for s in ("threshold", "data_date") if s in slicers]
         text_w = CONTENT_W - len(right) * (SLOT_W + GUTTER)
         placed.append((f"{prefix}_h1_programme", self.textbox([
-            [(PROGRAMME, {"fontFamily": "Segoe UI Semibold", "fontSize": "15px", "color": NAVY, "fontWeight": "bold"})],
-            [(f"Schedule intelligence | {display}", {"fontFamily": "Segoe UI", "fontSize": "11px", "color": MUTED})],
+            [(PROGRAMME, {"fontFamily": "Segoe UI Semibold", "fontSize": "15px", "color": WHITE, "fontWeight": "bold"})],
+            [(f"Schedule intelligence | {display}", {"fontFamily": "Segoe UI", "fontSize": "11px",
+                                                     "color": BAND_SUBTEXT})],
         ]), (CONTENT_X, HEADER_Y, text_w, HEADER_H), None))
         x = CONTENT_X + text_w + GUTTER
         for slot in right:
             box = (x, HEADER_Y, SLOT_W, HEADER_H)
-            if slot == "datecard":
-                label = "Selected data date" if "data_date" in slicers else "Latest data date"
-                placed.append((f"{prefix}_h3_datadate", self.card([mea("Data date", label)], None, value_size=14,
-                                                                label=True, accent=TEAL, alt=label), box, None))
-            elif slot == "threshold":
+            if slot == "threshold":
                 placed.append((f"{prefix}_h2_threshold", self.slicer(
                     col(THRESHOLD_TABLE, THRESHOLD_TABLE), "Near-critical threshold (d)", "Dropdown",
                     single=True, strict=False, sync="NearCriticalThreshold"), box, None))
@@ -792,9 +823,8 @@ class ReportBuilder:
 
         # title row: the page's action-title measure (or the drilled activity)
         head = mea(title_measure) if title_measure else headline
-        placed.append((f"{prefix}_h0_title", self.card([head], None, value_size=12, align_left=True, accent=TEAL,
-                                                     alt=f"Page headline: {display}"),
-                       (CONTENT_X, TITLE_Y, CONTENT_W, TITLE_H), None))
+        placed.append((f"{prefix}_h0_title", self.kpi(head, None, value_size=11, alt=f"Page headline: {display}",
+                                                    wrap=True), (CONTENT_X, TITLE_Y, CONTENT_W, TITLE_H), None))
 
         # content grid
         counter = [0]
@@ -839,7 +869,13 @@ class ReportBuilder:
             self.files[f"definition/pages/{page}/visuals/{name}/visual.json"] = dumps(container)
 
         page_json = {"$schema": SCHEMAS["page"], "name": page, "displayName": display, "displayOption": "FitToPage",
-                     "height": PAGE_H, "width": PAGE_W}
+                     "height": PAGE_H, "width": PAGE_W, "objects": {"background": [{"properties": {
+                         "image": {"image": {
+                             "name": lit(text(BACKGROUND_FILE)),
+                             "url": {"expr": {"ResourcePackageItem": {"PackageName": "RegisteredResources",
+                                                                      "PackageType": 1, "ItemName": BACKGROUND_FILE}}},
+                             "scaling": lit(text("Fit"))}},
+                         "transparency": num(0)}}]}}
         if drillthrough:
             filter_name = "Filter" + hexid(24, page, "drillthrough", drillthrough.table, drillthrough.name)
             page_json["type"] = "Drillthrough"
@@ -881,16 +917,18 @@ def build_pages(rb: ReportBuilder) -> None:
     # 1 Executive summary --------------------------------------------------------------------------------------
     tf_min = mea("Total float (min)", "Minimum total float")
     kpis = [
-        ("day1_forecast", rb.card([mea("Day 1 forecast")], "Day 1 forecast", colour_by="Day 1 RAG colour")),
-        ("day1_float", rb.card([mea("Day 1 total float")], "Day 1 total float (working days)")),
-        ("vs_bl0", rb.card([mea("Day 1 variance vs BL0")], "Day 1 vs BL0 (calendar days)")),
-        ("vs_bl1", rb.card([mea("Day 1 variance vs BL1")], "Day 1 vs BL1 (calendar days)")),
-        ("vs_previous", rb.card([mea("Day 1 movement vs previous period")], "Day 1 vs previous update (calendar days)")),
-        ("dq_score", rb.card([mea("DQ score")], "Schedule quality (DQ score)")),
-        ("recon_status", rb.card([mea("Reconciliation status")], "Reconciliation status",
-                                 colour_by="Reconciliation colour")),
-        ("progress", rb.card([mea("Weighted % complete (actual)", "Actual"), mea("Planned % complete", "Planned")],
-                             "Progress: actual vs planned", value_size=16, label=True)),
+        # short titles stay on one line in a 180 px card (wd = working days, cd = calendar days); the classic card
+        # keeps a 20 pt dd-Mmm-yyyy date or "Reconciled" whole at that width
+        ("day1_forecast", rb.kpi(mea("Day 1 forecast"), "Day 1 forecast", colour_by="Day 1 RAG colour")),
+        ("day1_float", rb.kpi(mea("Day 1 total float"), "Day 1 total float (wd)")),
+        ("vs_bl0", rb.kpi(mea("Day 1 variance vs BL0"), "Day 1 vs BL0 (cd)")),
+        ("vs_bl1", rb.kpi(mea("Day 1 variance vs BL1"), "Day 1 vs BL1 (cd)")),
+        ("vs_previous", rb.kpi(mea("Day 1 movement vs previous period"), "Day 1 vs previous (cd)")),
+        ("dq_score", rb.kpi(mea("DQ score"), "DQ score (of 100)")),
+        ("recon_status", rb.kpi(mea("Reconciliation status"), "Reconciliation", colour_by="Reconciliation colour")),
+        # two values stack in a 180 px multi-row card; 13 pt and 8 pt labels keep both inside 128 px
+        ("progress", rb.multirow([mea("Weighted % complete (actual)", "Actual"), mea("Planned % complete", "Planned")],
+                                 "% complete", value_size=13, label_size=8)),
     ]
     cards = [(k, v, None) for k, v in kpis]
     rb.add_page(1, "exec", "Executive summary", "Title - Executive summary", [
@@ -910,19 +948,20 @@ def build_pages(rb: ReportBuilder) -> None:
                          agg("fact_s_curve", "forecast", "Sum", "Forecast"),
                          agg("fact_s_curve", "actual", "Sum", "Actual")],
                         "Progress S-curve: planned, forecast and actual % complete",
-                        sort=(col("fact_s_curve", "date"), "Ascending")), None)),
+                        sort=(col("fact_s_curve", "date"), "Ascending"), y_title="% complete"), None)),
                 ]),
                 (272, [
                     (420, ("top_risks", rb.table(
-                        [col("fact_risk", "risk_id", "Risk"), col("fact_risk", "title", "Title"),
-                         col("fact_risk", "owner_code", "Owner"), col("fact_risk", "score", "Score"),
-                         col("fact_risk", "trend", "Trend"), col("fact_risk", "schedule_impact_days", "Impact (days)")],
+                        # identifying columns first, the long title last: a narrow table shows what matters
+                        [col("fact_risk", "risk_id", "Risk"), col("fact_risk", "owner_code", "Owner"),
+                         col("fact_risk", "score", "Score"), col("fact_risk", "schedule_impact_days", "Impact (d)"),
+                         col("fact_risk", "title", "Title")],
                         "Top risks for the selected update (highest score first)",
                         sort=(col("fact_risk", "score"), "Descending")), None)),
                     (420, ("open_decisions", rb.table(
-                        [col("fact_decision", "decision_id", "Decision"), col("fact_decision", "ask", "Ask"),
-                         col("fact_decision", "owner", "Owner"), col("fact_decision", "needed_by", "Needed by"),
-                         col("fact_decision", "overdue", "Overdue")],
+                        [col("fact_decision", "decision_id", "Decision"), col("fact_decision", "needed_by", "Needed by"),
+                         col("fact_decision", "overdue", "Overdue"), col("fact_decision", "owner", "Owner"),
+                         col("fact_decision", "ask", "Ask")],
                         "Open decisions with owner and needed-by date",
                         sort=(col("fact_decision", "needed_by"), "Ascending")),
                         [(col("fact_decision", "status"), [text("Open")])])),
@@ -943,13 +982,15 @@ def build_pages(rb: ReportBuilder) -> None:
                 "Day 1 and readiness gate forecasts by data date (calendar days later than BL0)",
                 series=col(act, "activity_name", "Milestone"),
                 tooltips=[mea("Milestone forecast finish", "Forecast finish")],
-                sort=(col("dim_snapshot", "data_date"), "Ascending")), gate_filter)),
-            (616, ("slip_by_owner", rb.chart(
+                sort=(col("dim_snapshot", "data_date"), "Ascending"), y_title="Calendar days later than BL0"),
+                gate_filter)),
+            # a count that is non-zero in every update; the worst slip since the previous update is in the tooltip
+            (616, ("late_by_owner", rb.chart(
                 "clusteredBarChart", col("dim_owner", "owner_name", "Owner"),
-                [mea("Slip vs previous period", "Worst slip (calendar days)")],
-                "Worst slip since the previous update by owner (calendar days)",
-                tooltips=[mea("Activities slipped vs previous period", "Activities slipped")],
-                sort=(mea("Slip vs previous period"), "Descending"), labels=True), None)),
+                [mea("Milestones later than baseline in force", "Milestones later than baseline")],
+                "Milestones later than the baseline in force, by owner",
+                tooltips=[mea("Slip vs previous period", "Worst slip vs previous update (calendar days)")],
+                sort=(mea("Milestones later than baseline in force"), "Descending"), labels=True), None)),
         ]),
         (272, [
             (816, ("milestone_table", rb.table(
@@ -965,18 +1006,18 @@ def build_pages(rb: ReportBuilder) -> None:
                 "clusteredColumnChart", col("dim_date", "year_month", "Month"),
                 [mea("Milestone finishes (forecast)", "Forecast"), mea("Milestone finishes (BL1)", "BL1")],
                 "Milestone finishes per month: forecast vs BL1",
-                sort=(col("dim_date", "year_month"), "Ascending")), None)),
+                sort=(col("dim_date", "year_month"), "Ascending"), y_title="Milestone finishes"), None)),
         ]),
     ], no_filter_from_date=("gate_forecasts",))
 
     # 3 Critical path & look-ahead -----------------------------------------------------------------------------
     rb.add_page(3, "critical", "Critical path & look-ahead", "Title - Critical path", [
-        (110, [(1248, ("criticality_kpis", rb.card(
-            [mea("Critical count", "Critical"), mea("Near-critical count", "Near-critical (threshold slicer)"),
+        (120, [(1248, ("criticality_kpis", rb.card(
+            [mea("Critical count", "Critical"), mea("Near-critical count", "Near-critical"),
              mea("Negative float count", "Negative float"), mea("Longest path count", "Longest path"),
              mea("Total float (min)", "Minimum total float (d)"), mea("Look-back hit rate", "Look-back hit rate")],
-            "Criticality for the selected update", value_size=16, label=True), None))]),
-        (209, [
+            "Criticality for the selected update", value_size=18, label=True, label_size=10), None))]),
+        (204, [
             (740, ("longest_path", rb.table(
                 [col(act, "activity_id", "Activity ID"), col(act, "activity_name", "Activity"),
                  col(act, "owner_code", "Owner"), col(fas, "start", "Start"), col(fas, "finish", "Finish"),
@@ -988,22 +1029,23 @@ def build_pages(rb: ReportBuilder) -> None:
                 "lineChart", col("dim_snapshot", "data_date", "Data date"),
                 [mea("Day 1 total float"), mea("Float erosion")],
                 "Day 1 total float and float erosion by data date (working days)",
-                sort=(col("dim_snapshot", "data_date"), "Ascending")), None)),
+                sort=(col("dim_snapshot", "data_date"), "Ascending"), y_title="Working days"), None)),
         ]),
-        (209, [
+        (204, [
+            # look-back rows are the ones with an event: a start or a finish that fell due in the last 14 days
             (616, ("look_back", rb.table(
                 [col(act, "activity_id", "Activity ID"), col(act, "activity_name", "Activity"),
                  col(act, "owner_code", "Owner"), col(fas, "lookback_event", "Event"),
                  col(fas, "prev_finish", "Previous forecast"), col(fas, "lookback_achieved", "Achieved")],
                 "Look-back: items due in the last 14 days and whether they were achieved",
-                sort=(col(act, "activity_id"), "Ascending")),
-                [(col(fas, "lookback_achieved"), ["true", "false"])])),
+                sort=(col(act, "activity_id"), "Ascending"), widths=[100, 200, 50, 50, 95, 70]),
+                [(col(fas, "lookback_event"), [text("start"), text("finish")])])),
             (616, ("look_ahead", rb.table(
                 [col(act, "activity_id", "Activity ID"), col(act, "activity_name", "Activity"),
                  col(act, "owner_code", "Owner"), col(fas, "start", "Start"), col(fas, "finish", "Finish"),
                  col(fas, "total_float_d", "Total float (d)"), mea("Criticality band", "Band (2 critical, 1 near)")],
                 "Look-ahead: activities starting or finishing in the next 14 days",
-                sort=(col(fas, "start"), "Ascending")),
+                sort=(col(fas, "start"), "Ascending"), widths=[100, 165, 50, 78, 78, 55, 55]),
                 [(col(fas, "lookahead"), ["true"])])),
         ]),
     ], slicers=("threshold", "data_date"), no_filter_from_date=("float_erosion",))
@@ -1022,17 +1064,17 @@ def build_pages(rb: ReportBuilder) -> None:
             "nullColoringStrategy": {"strategy": {"Literal": {"Value": text("noColor")}}}}}}}}}}},
         "selector": {"data": [{"dataViewWildcard": {"matchingOption": 1}}], "metadata": query_ref(late)}}]
     rb.add_page(4, "interfaces", "Interfaces & readiness", "Title - Interfaces and readiness", [
-        (100, [(1248, ("interface_kpis", rb.card(
+        (120, [(1248, ("interface_kpis", rb.card(
             [mea("Interfaces late", "Late interfaces"), mea("Interfaces at risk", "At risk"),
              mea("Interface gap (max)", "Worst interface gap (days)"),
              mea("Readiness gap", "Worst readiness gap (days)"), mea("Readiness stages late", "Readiness stages late")],
-            "Interfaces and readiness for the selected update", value_size=16, label=True), None))]),
-        (222, [(1248, ("readiness_matrix", rb.matrix(
+            "Interfaces and readiness for the selected update", value_size=18, label=True, label_size=10), None))]),
+        (204, [(1248, ("readiness_matrix", rb.matrix(
             [col("fact_readiness", "asset_code", "Asset")], [col("fact_readiness", "stage", "Stage")],
             [agg("fact_readiness", "forecast", "Max", "Forecast"), gap],
             "Readiness chain by asset: forecast and gap to the date that protects Day 1 (calendar days; positive = late)",
             value_objects=gap_rules), None))]),
-        (206, [
+        (204, [
             (420, ("late_interfaces", rb.matrix(
                 [col("fact_interface", "giver_asset", "Giver")], [col("fact_interface", "receiver_asset", "Receiver")],
                 [late], "Late interfaces by giver and receiver asset", value_objects=late_scale), None)),
@@ -1049,12 +1091,12 @@ def build_pages(rb: ReportBuilder) -> None:
 
     # 5 Risks, decisions & recovery ----------------------------------------------------------------------------
     rb.add_page(5, "risks", "Risks, decisions & recovery", "Title - Decisions", [
-        (100, [(1248, ("recovery_kpis", rb.card(
+        (120, [(1248, ("recovery_kpis", rb.card(
             [mea("High risks", "High risks"), mea("Open decisions", "Open decisions"),
              mea("Overdue decisions", "Overdue decisions"), mea("Next decision needed by", "Next decision needed by"),
              mea("Recommended scenario", "Recommended scenario"), mea("Float gain", "Float gain (working days)")],
-            "Risks, decisions and recovery", value_size=16, label=True), None))]),
-        (214, [
+            "Risks, decisions and recovery", value_size=18, label=True, label_size=10), None))]),
+        (204, [
             (416, ("scenario_float", rb.chart(
                 "clusteredBarChart", col("fact_scenario", "scenario_id", "Scenario"),
                 [agg("fact_scenario", "day1_tf_d", "Sum", "Day 1 total float (working days)")],
@@ -1069,9 +1111,10 @@ def build_pages(rb: ReportBuilder) -> None:
                  col("fact_scenario", "residual_risk", "Residual risk"), col("fact_scenario", "decision", "Decisions"),
                  col("fact_scenario", "recommended", "Recommended")],
                 "Recovery scenarios: outcome, decisions needed and residual risk",
-                sort=(col("fact_scenario", "day1_tf_d"), "Descending")), None)),
+                sort=(col("fact_scenario", "day1_tf_d"), "Descending"),
+                widths=[60, 160, 85, 55, 60, 65, 70, 75, 70, 85]), None)),
         ]),
-        (214, [
+        (204, [
             (616, ("risk_register", rb.table(
                 [col("fact_risk", "risk_id", "Risk"), col("fact_risk", "title", "Title"),
                  col("fact_risk", "owner_code", "Owner"), col("fact_risk", "probability", "P"),
@@ -1092,17 +1135,19 @@ def build_pages(rb: ReportBuilder) -> None:
 
     # 6 Schedule quality (DCMA) --------------------------------------------------------------------------------
     rb.add_page(6, "quality", "Schedule quality (DCMA)", "Title - Schedule quality", [
-        (100, [
-            (300, ("dq_card", rb.card([mea("DQ score", "DQ score"), mea("DQ rating", "Rating")],
-                                      "DQ score and rating", value_size=16, label=True), None)),
-            (300, ("dcma_card", rb.card([mea("DCMA pass count", "Passed"), mea("DCMA applicable checks", "Applicable")],
-                                        "DCMA checks passed", value_size=16, label=True), None)),
-            (300, ("cpli_card", rb.card([mea("CPLI")], "CPLI (critical path length index)", value_size=16), None)),
-            (300, ("bei_card", rb.card([mea("BEI", "BEI"), mea("BEI tasks completed", "Completed"),
+        (120, [
+            # the BEI card holds three values, so it takes the extra width
+            (280, ("dq_card", rb.card([mea("DQ score", "DQ score"), mea("DQ rating", "Rating")],
+                                      "DQ score and rating", value_size=18, label=True, label_size=10), None)),
+            (280, ("dcma_card", rb.card([mea("DCMA pass count", "Passed"), mea("DCMA applicable checks", "Applicable")],
+                                        "DCMA checks passed", value_size=18, label=True, label_size=10), None)),
+            (240, ("cpli_card", rb.card([mea("CPLI")], "CPLI (critical path length index)", value_size=18), None)),
+            (400, ("bei_card", rb.card([mea("BEI", "BEI"), mea("BEI tasks completed", "Completed"),
                                         mea("BEI tasks due", "Due")],
-                                       "BEI (baseline execution index)", value_size=16, label=True), None)),
+                                       "BEI (baseline execution index)", value_size=18, label=True, label_size=10),
+                   None)),
         ]),
-        (214, [
+        (204, [
             (816, ("dcma_table", rb.table(
                 [col("fact_dcma_check", "check_id", "Check"), col("fact_dcma_check", "check_name", "Check name"),
                  col("fact_dcma_check", "group", "Group"), col("fact_dcma_check", "value", "Value"),
@@ -1115,7 +1160,7 @@ def build_pages(rb: ReportBuilder) -> None:
                 "DQ score by data date (Good 85 or more, Fair 70 to 85)",
                 sort=(col("dim_snapshot", "data_date"), "Ascending"), labels=True), None)),
         ]),
-        (214, [
+        (204, [
             (520, ("owner_scorecard", rb.table(
                 [col("dim_owner", "owner_name", "Owner"), mea("Owner DQ", "Owner DQ"),
                  col("fact_owner_scorecard", "incomplete", "Incomplete"), col("fact_owner_scorecard", "flagged", "Flagged"),
@@ -1145,22 +1190,23 @@ def build_pages(rb: ReportBuilder) -> None:
         [("5. This report: the CSV star schema, loaded through the CsvFolder parameter", lineage_style)],
     ])
     rb.add_page(7, "recon", "Reconciliation & lineage", "Title - Reconciliation", [
-        (100, [
-            (300, ("recon_status", rb.card([mea("Reconciliation status")], "Reconciliation status", value_size=16,
+        (120, [
+            (300, ("recon_status", rb.card([mea("Reconciliation status")], "Reconciliation status", value_size=18,
                                            colour_by="Reconciliation colour"), None)),
             (300, ("controls_card", rb.card([mea("Controls passed", "Passed"), mea("Controls total", "Total")],
-                                            "Controls passed", value_size=16, label=True), None)),
+                                            "Controls passed", value_size=18, label=True, label_size=10), None)),
             (300, ("source_file", rb.card([mea("Source file")], "Source file (P6 XER)", value_size=12), None)),
-            (300, ("baseline", rb.card([mea("Baseline in force")], "Baseline in force", value_size=16), None)),
+            (300, ("baseline", rb.card([mea("Baseline in force")], "Baseline in force", value_size=18), None)),
         ]),
-        (266, [(1248, ("controls_table", rb.table(
+        (246, [(1248, ("controls_table", rb.table(
             [col("fact_reconciliation", "control_id", "Control"), col("fact_reconciliation", "control", "Description"),
              col("fact_reconciliation", "source_value", "Source (XER)"),
              col("fact_reconciliation", "model_value", "Model (CSV)"),
              col("fact_reconciliation", "dashboard_value", "Dashboard (JSON)"),
              col("fact_reconciliation", "delta", "Delta"), col("fact_reconciliation", "passed", "Pass")],
             "Reconciliation controls: source, model and dashboard values, delta and pass",
-            sort=(col("fact_reconciliation", "control_id"), "Ascending")), None))]),
+            sort=(col("fact_reconciliation", "control_id"), "Ascending"),
+            widths=[120, 330, 190, 190, 190, 80, 70]), None))]),
         (162, [
             (616, ("lineage_text", lineage, None)),
             (616, ("source_files", rb.table(
@@ -1178,16 +1224,21 @@ def build_pages(rb: ReportBuilder) -> None:
         (126, [
             # dim_activity columns only: the drill-through filter on dim_activity does not reach dim_owner or
             # dim_calendar (filters run from the one side to the many side)
-            (832, ("attributes", rb.card(
+            # multi-row cards: names and dates show in full (the new card truncates seven values in 832 px)
+            (832, ("attributes", rb.multirow(
                 [agg(act, "activity_id", "Min", "Activity ID"), agg(act, "asset_name", "Min", "Asset"),
                  agg(act, "workstream_name", "Min", "Workstream"), agg(act, "package_name", "Min", "Package"),
                  agg(act, "owner_code", "Min", "Owner"), agg(act, "activity_type", "Min", "Type"),
                  agg(act, "phase", "Min", "Phase")],
-                "Activity attributes", value_size=12, label=True), None)),
-            (400, ("latest", rb.card(
-                [mea("Forecast finish", "Forecast finish"), mea("Finish variance vs BL1", "vs BL1 (days)"),
-                 mea("Total float (min)", "Total float (d)"), mea("Criticality band", "Criticality band")],
-                "Latest update", value_size=14, label=True), None)),
+                "Activity attributes", value_size=12, label_size=8), None)),
+            # the float column on the latest update, so a level-of-effort activity shows its own float (the float
+            # measures leave LOE out, as the summary does). A multi-row card shows the date as its card title,
+            # without the label, so the visual title names it.
+            (400, ("latest", rb.multirow(
+                [mea("Forecast finish", "Forecast finish"), agg(fas, "total_float_d", "Min", "Total float (d)"),
+                 mea("Finish variance vs BL1", "vs BL1 (days)"), mea("Criticality band", "Criticality band")],
+                "Latest update: forecast finish and float", value_size=12, label_size=8),
+                [(col("dim_snapshot", "is_latest"), ["true"])])),
         ]),
         (204, [(1248, ("history", rb.table(
             [col("dim_snapshot", "label", "Update"), col("dim_snapshot", "data_date", "Data date"),
@@ -1197,9 +1248,10 @@ def build_pages(rb: ReportBuilder) -> None:
              col(fas, "constraint_type", "Constraint"), col(fas, "dq_flags", "DQ flags")],
             "History across all updates", sort=(col("dim_snapshot", "data_date"), "Ascending")), None))]),
         (198, [
+            # the column itself, so a level-of-effort activity shows its float too (see the latest-update card)
             (616, ("float_history", rb.chart(
                 "lineChart", col("dim_snapshot", "data_date", "Data date"),
-                [mea("Total float (min)", "Total float (working days)")],
+                [agg(fas, "total_float_d", "Min", "Total float (working days)")],
                 "Total float by data date: when did this activity lose its float?",
                 sort=(col("dim_snapshot", "data_date"), "Ascending"), labels=True), None)),
             (616, ("drivers", rb.table(
@@ -1216,6 +1268,17 @@ def build_pages(rb: ReportBuilder) -> None:
 # ----------------------------------------------------------------------------------------------------------------
 # Project files
 # ----------------------------------------------------------------------------------------------------------------
+
+def background_svg() -> bytes:
+    """Page background: the light canvas and the navy header band with a teal rule along its foot. Generated from
+    the grid constants, so the band lines up with the header strip on every page."""
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{PAGE_W}" height="{PAGE_H}" '
+            f'viewBox="0 0 {PAGE_W} {PAGE_H}">\n'
+            f'  <rect width="{PAGE_W}" height="{PAGE_H}" fill="{CANVAS}"/>\n'
+            f'  <rect width="{PAGE_W}" height="{BAND_H}" fill="{NAVY}"/>\n'
+            f'  <rect y="{BAND_H - 3}" width="{PAGE_W}" height="3" fill="{TEAL}"/>\n'
+            '</svg>\n').encode("utf-8")
+
 
 def _platform(kind: str) -> dict:
     return {"$schema": SCHEMAS["platform"], "metadata": {"type": kind, "displayName": PROJECT},
@@ -1254,6 +1317,7 @@ def build_files(root: pathlib.Path = ROOT, csv_folder: str = DEFAULT_CSV_FOLDER)
         f"{rp}/definition.pbir": dumps({"$schema": SCHEMAS["pbir"], "version": "4.0",
                                         "datasetReference": {"byPath": {"path": f"../{sm}"}}}),
         f"{rp}/StaticResources/RegisteredResources/{THEME_FILE}": theme,
+        f"{rp}/StaticResources/RegisteredResources/{BACKGROUND_FILE}": background_svg(),
         f"{rp}/definition/version.json": dumps({"$schema": SCHEMAS["version"], "version": "2.0.0"}),
         f"{rp}/definition/report.json": dumps({
             "$schema": SCHEMAS["report"],
@@ -1266,7 +1330,8 @@ def build_files(root: pathlib.Path = ROOT, csv_folder: str = DEFAULT_CSV_FOLDER)
             "objects": {"section": [{"properties": {"verticalAlignment": lit(text("Top"))}}]},
             "resourcePackages": [
                 {"name": "RegisteredResources", "type": "RegisteredResources",
-                 "items": [{"name": THEME_FILE, "path": THEME_FILE, "type": "CustomTheme"}]},
+                 "items": [{"name": THEME_FILE, "path": THEME_FILE, "type": "CustomTheme"},
+                           {"name": BACKGROUND_FILE, "path": BACKGROUND_FILE, "type": "Image"}]},
                 {"name": "SharedResources", "type": "SharedResources",
                  "items": [{"name": BASE_THEME, "path": f"BaseThemes/{BASE_THEME}.json", "type": "BaseTheme"}]},
             ],

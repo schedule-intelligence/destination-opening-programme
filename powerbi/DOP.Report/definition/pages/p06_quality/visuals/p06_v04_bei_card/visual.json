@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
   "name": "p06_v04_bei_card",
   "position": {
-    "x": 964,
+    "x": 864,
     "y": 144,
-    "z": 9000,
-    "height": 100,
-    "width": 300,
-    "tabOrder": 9000
+    "z": 8000,
+    "height": 120,
+    "width": 400,
+    "tabOrder": 8000
   },
   "visual": {
     "visualType": "cardVisual",
@@ -94,7 +94,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "16D"
+                  "Value": "18D"
                 }
               }
             }
@@ -124,7 +124,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "9D"
+                  "Value": "10D"
                 }
               }
             }

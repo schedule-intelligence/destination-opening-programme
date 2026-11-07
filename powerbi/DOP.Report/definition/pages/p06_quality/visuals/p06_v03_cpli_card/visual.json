@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
   "name": "p06_v03_cpli_card",
   "position": {
-    "x": 648,
+    "x": 608,
     "y": 144,
-    "z": 8000,
-    "height": 100,
-    "width": 300,
-    "tabOrder": 8000
+    "z": 7000,
+    "height": 120,
+    "width": 240,
+    "tabOrder": 7000
   },
   "visual": {
     "visualType": "cardVisual",
@@ -63,7 +63,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "16D"
+                  "Value": "18D"
                 }
               }
             }

@@ -4,10 +4,10 @@
   "position": {
     "x": 844,
     "y": 432,
-    "z": 16000,
+    "z": 15000,
     "height": 272,
     "width": 420,
-    "tabOrder": 16000
+    "tabOrder": 15000
   },
   "visual": {
     "visualType": "tableEx",
@@ -38,12 +38,27 @@
                       "Entity": "fact_decision"
                     }
                   },
-                  "Property": "ask"
+                  "Property": "needed_by"
                 }
               },
-              "queryRef": "fact_decision.ask",
-              "nativeQueryRef": "ask",
-              "displayName": "Ask"
+              "queryRef": "fact_decision.needed_by",
+              "nativeQueryRef": "needed_by",
+              "displayName": "Needed by"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_decision"
+                    }
+                  },
+                  "Property": "overdue"
+                }
+              },
+              "queryRef": "fact_decision.overdue",
+              "nativeQueryRef": "overdue",
+              "displayName": "Overdue"
             },
             {
               "field": {
@@ -68,27 +83,12 @@
                       "Entity": "fact_decision"
                     }
                   },
-                  "Property": "needed_by"
+                  "Property": "ask"
                 }
               },
-              "queryRef": "fact_decision.needed_by",
-              "nativeQueryRef": "needed_by",
-              "displayName": "Needed by"
-            },
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "fact_decision"
-                    }
-                  },
-                  "Property": "overdue"
-                }
-              },
-              "queryRef": "fact_decision.overdue",
-              "nativeQueryRef": "overdue",
-              "displayName": "Overdue"
+              "queryRef": "fact_decision.ask",
+              "nativeQueryRef": "ask",
+              "displayName": "Ask"
             }
           ]
         }

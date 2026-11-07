@@ -1,13 +1,13 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
-  "name": "p02_v02_slip_by_owner",
+  "name": "p02_v02_late_by_owner",
   "position": {
     "x": 648,
     "y": 144,
-    "z": 6000,
+    "z": 5000,
     "height": 272,
     "width": 616,
-    "tabOrder": 6000
+    "tabOrder": 5000
   },
   "visual": {
     "visualType": "clusteredBarChart",
@@ -43,12 +43,12 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Slip vs previous period"
+                  "Property": "Milestones later than baseline in force"
                 }
               },
-              "queryRef": "_Measures.Slip vs previous period",
-              "nativeQueryRef": "Slip vs previous period",
-              "displayName": "Worst slip (calendar days)"
+              "queryRef": "_Measures.Milestones later than baseline in force",
+              "nativeQueryRef": "Milestones later than baseline in force",
+              "displayName": "Milestones later than baseline"
             }
           ]
         },
@@ -62,12 +62,12 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Activities slipped vs previous period"
+                  "Property": "Slip vs previous period"
                 }
               },
-              "queryRef": "_Measures.Activities slipped vs previous period",
-              "nativeQueryRef": "Activities slipped vs previous period",
-              "displayName": "Activities slipped"
+              "queryRef": "_Measures.Slip vs previous period",
+              "nativeQueryRef": "Slip vs previous period",
+              "displayName": "Worst slip vs previous update (calendar days)"
             }
           ]
         }
@@ -82,7 +82,7 @@
                     "Entity": "_Measures"
                   }
                 },
-                "Property": "Slip vs previous period"
+                "Property": "Milestones later than baseline in force"
               }
             },
             "direction": "Descending"
@@ -196,7 +196,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Worst slip since the previous update by owner (calendar days)'"
+                  "Value": "'Milestones later than the baseline in force, by owner'"
                 }
               }
             },
@@ -216,7 +216,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Worst slip since the previous update by owner (calendar days)'"
+                  "Value": "'Milestones later than the baseline in force, by owner'"
                 }
               }
             }

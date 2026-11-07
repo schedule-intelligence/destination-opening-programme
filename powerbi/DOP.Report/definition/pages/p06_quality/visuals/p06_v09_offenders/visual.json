@@ -3,11 +3,11 @@
   "name": "p06_v09_offenders",
   "position": {
     "x": 768,
-    "y": 490,
-    "z": 14000,
-    "height": 214,
+    "y": 500,
+    "z": 13000,
+    "height": 204,
     "width": 496,
-    "tabOrder": 14000
+    "tabOrder": 13000
   },
   "visual": {
     "visualType": "tableEx",

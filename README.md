@@ -69,6 +69,28 @@ Generated from the same reconciled JSON as the dashboard (`python -m dop run --a
 
 Slide previews are rendered from the generated `.pptx` files with LibreOffice (`scripts/render_pptx_previews.py`).
 
+## Power BI report
+
+The same reconciled CSVs load into a Power BI project, `powerbi/DOP.pbip`. It has a semantic model of 24 tables,
+26 relationships and 96 DAX measures, and seven report pages that mirror the dashboard tabs, plus a drill-through
+page for any activity. `python -m dop pbip` generates the project, and `scripts/check_pbip.py` validates it offline
+against Microsoft's published schemas. It was also opened, refreshed and checked page by page in Power BI Desktop
+(October 2026 release). For the latest update it shows the dashboard's numbers: Day 1 on 21-Oct-2027, total float
+−7 working days, 39 critical activities, a DQ score of 75.3 and 40 of 40 controls passing.
+
+| Executive summary | Critical path and look-ahead |
+|---|---|
+| ![Power BI executive summary](docs/screenshots/pbi_page_1_exec.png) | ![Power BI critical path and look-ahead](docs/screenshots/pbi_page_3_critical.png) |
+| **Schedule quality (DCMA)** | **Activity details (drill-through)** |
+| ![Power BI schedule quality](docs/screenshots/pbi_page_6_quality.png) | ![Power BI activity details](docs/screenshots/pbi_page_8_activity.png) |
+
+Other pages: [milestones](docs/screenshots/pbi_page_2_milestones.png) ·
+[interfaces and readiness](docs/screenshots/pbi_page_4_interfaces.png) ·
+[risks and recovery](docs/screenshots/pbi_page_5_risks.png) ·
+[reconciliation](docs/screenshots/pbi_page_7_recon.png). Download [DOP.pbix](docs/downloads/DOP.pbix), which
+includes the data and opens without a refresh. Alternatively, open `powerbi/DOP.pbip` and press Refresh
+([README_PBIP.md](powerbi/README_PBIP.md)).
+
 ## Two-minute tour
 
 1. **Executive Summary (30 s).** Read the headline sentence: status, risk and the decision needed. Then look at
@@ -178,7 +200,7 @@ schemas and the model), `python scripts/record_tour.py` (re-records the walkthro
 |---|---|
 | P6 XER files (2 baselines + 6 updates) | `data/xer/` |
 | Star schema (7 dims, 15 facts) for Power BI | `output/csv/` · [POWERBI.md](POWERBI.md) · [DATA_DICTIONARY.md](DATA_DICTIONARY.md) |
-| Power BI project: semantic model, 96 measures, 7 report pages + drill-through | `powerbi/DOP.pbip` · [README_PBIP.md](powerbi/README_PBIP.md) |
+| Power BI project: semantic model, 96 measures, 7 report pages + drill-through | `powerbi/DOP.pbip` · `docs/downloads/DOP.pbix` · [README_PBIP.md](powerbi/README_PBIP.md) |
 | Dashboard data (self-describing, reconciled) | `docs/data/dashboard.json` · [schema](docs/data/README.md) |
 | Reconciliation reports | `output/reports/reconciliation_<date>.md` |
 | Excel controls workbook per data date | `output/xlsx/DOP_controls_<date>.xlsx` |
@@ -223,8 +245,9 @@ schemas and the model), `python scripts/record_tour.py` (re-records the walkthro
 
 - No resource loading, cost or earned value yet (DCMA check 10 is reported N/A).
 - Monthly updates only; fortnightly packs reuse the monthly data date.
-- The Power BI project (`powerbi/DOP.pbip`) is generated and validated offline against the published schemas;
-  field parameters, bookmarks and row-level security remain short manual steps ([README_PBIP.md](powerbi/README_PBIP.md)).
+- The Power BI project (`powerbi/DOP.pbip`) is generated, validated offline against the published schemas and
+  checked in Power BI Desktop. Field parameters, bookmarks and row-level security remain short manual steps
+  ([README_PBIP.md](powerbi/README_PBIP.md)).
 - Roadmap: TASKRSRC and EV measures; Monte Carlo schedule risk analysis on the same network; UDF-driven interface
   register; automated XER intake from a shared folder with a scheduled refresh.
 

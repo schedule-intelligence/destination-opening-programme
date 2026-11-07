@@ -44,6 +44,11 @@
           "name": "dop_theme.json",
           "path": "dop_theme.json",
           "type": "CustomTheme"
+        },
+        {
+          "name": "dop_background.svg",
+          "path": "dop_background.svg",
+          "type": "Image"
         }
       ]
     },

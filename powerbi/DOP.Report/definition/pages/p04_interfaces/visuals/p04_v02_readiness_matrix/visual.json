@@ -3,11 +3,11 @@
   "name": "p04_v02_readiness_matrix",
   "position": {
     "x": 16,
-    "y": 260,
-    "z": 6000,
-    "height": 222,
+    "y": 280,
+    "z": 5000,
+    "height": 204,
     "width": 1248,
-    "tabOrder": 6000
+    "tabOrder": 5000
   },
   "visual": {
     "visualType": "pivotTable",

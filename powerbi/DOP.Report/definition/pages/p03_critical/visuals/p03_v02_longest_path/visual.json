@@ -3,11 +3,11 @@
   "name": "p03_v02_longest_path",
   "position": {
     "x": 16,
-    "y": 270,
-    "z": 7000,
-    "height": 209,
+    "y": 280,
+    "z": 6000,
+    "height": 204,
     "width": 740,
-    "tabOrder": 7000
+    "tabOrder": 6000
   },
   "visual": {
     "visualType": "tableEx",
