@@ -47,13 +47,14 @@ files `.pbi/localSettings.json` and `.pbi/cache.abf` out of git.
 | `Near-critical threshold` | Calculated table `GENERATESERIES ( 0, 30, 1 )`; `[Near-critical threshold (d)]` returns 10 when nothing is selected |
 | `_Measures` | All 96 measures from `measures.dax`, expressions unchanged, with display folders, descriptions and the format strings of POWERBI.md section 5 (dates `dd-mmm-yyyy`, day deltas `+0;-0;0`, ratios `0.000`, percentages `0.0%`, counts `0`) |
 | Extras from POWERBI.md | `fact_readiness[stage_order]` with `stage` sorted by it, `month_name` sorted by `month`, `label` sorted by `data_date`; hierarchies *Programme*, *P6 WBS* and *Calendar*; key and code columns not summarised; fact `snapshot_id` columns hidden |
-| Theme | `dop_theme.json` registered as the custom theme (`StaticResources/RegisteredResources`, `report.json`) on the CY26SU10 base theme. It is checked against Microsoft's report theme schema 2.159, copied unchanged into `scripts/theme_schema` with its MIT licence |
+| Theme | `dop_theme.json` registered as the custom theme (`StaticResources/RegisteredResources`, `report.json`) on the CY26SU10 base theme. Its `name` is `dop_theme.json`, the registered file name, as Microsoft's report validator requires. It is checked against Microsoft's report theme schema 2.159, copied unchanged into `scripts/theme_schema` with its MIT licence |
 | Page background | `dop_background.svg`, generated from the same grid as the visuals: the light canvas, a navy band behind the header strip and a teal rule under it |
 
 Every page is 1280 x 720 (Fit to page). The header strip sits on the navy band. It holds the programme name and
 a single-select data-date slicer on `dim_snapshot[data_date]`; pages 3 and 6 also have the near-critical
 threshold slicer. The data-date slicer shows the selected update. It is sorted newest first, opens on the latest
-update and is synced across pages 1 to 7. Under the band, a card shows the page's action title measure
+update and is synced across pages 1 to 7. The drill-through page has a Back button in place of the slicers, and
+the filter pane starts collapsed. Under the band, a card shows the page's action title measure
 (`[Title - ...]`), on two lines when the sentence is long. Single values use the classic card, which keeps a
 20 pt date whole in a 180 px box; rows of several values use the new card visual or, in narrow boxes, the
 multi-row card.
@@ -117,7 +118,6 @@ Drill through > Activity details works from it.
 |---|---|
 | Field parameters *Hierarchy level* and *Compare against* | Section 4 items 3 and 4, then section 7: slicers on pages 1, 2 and 3 |
 | Bookmarks *Compare - BL0*, *Compare - BL1*, *Decisions spotlight*, *Reset* | Section 7 (they depend on the *Compare against* field parameter) |
-| Back button on Activity details | Insert > Buttons > Back |
 | About & method page | `DashboardJson` parameter and the `definitions` query (section 2, step 4), then page 9 of section 6 |
 | Row-level security | Section 9 (needs the governed `security_owner_map.csv`, kept outside this repository) |
 | Page navigator and the "i" button | Section 6, after the page table |
@@ -131,6 +131,22 @@ Drill through > Activity details works from it.
 .\.venv\Scripts\python.exe scripts\check_pbip.py        # offline checks; exit 0 = clean
 .\.venv\Scripts\python.exe -m pytest -q tests\test_pbip.py
 ```
+
+With Node.js, Microsoft's report CLIs add a second validation and drive the open Desktop through the Desktop
+Bridge. The bridge needs Desktop June 2026 or later, with *Enable external tool access to Power BI Desktop through
+secure local APIs* ticked under Options > Preview features.
+
+```powershell
+npm install -g @microsoft/powerbi-report-authoring-cli @microsoft/powerbi-desktop-bridge-cli
+powerbi-report-author validate powerbi\DOP.Report        # Microsoft's PBIR validation
+powerbi-desktop open powerbi\DOP.pbip                    # then refresh once
+powerbi-desktop reload                                   # re-read the files after python -m dop pbip
+powerbi-desktop screenshot-all --output-dir shots        # a PNG of every page
+```
+
+`powerbi-report-author validate` reports no errors and nine warnings. The warnings say the 56 px header slicers
+are shorter than the 76 px it recommends. In Desktop their headers show in full at 1280 x 720; see the
+screenshots, which were captured this way.
 
 `python -m dop pbip` is not part of `run --all`, so a project saved from Desktop is never overwritten by a
 pipeline run. Run it only when you mean to replace the project, for example after the CSV columns or the

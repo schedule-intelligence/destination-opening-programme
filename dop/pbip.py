@@ -60,6 +60,7 @@ HEADER_Y, HEADER_H = 8, 56
 TITLE_Y, TITLE_H = 80, 48
 CONTENT_X, CONTENT_Y, CONTENT_W, CONTENT_H = 16, 144, 1248, 560
 SLOT_W = 200                                  # header slicers
+BACK_W = 120                                  # back button on the drill-through page
 MIN_W, MIN_H = 180, 90                        # smallest content visual
 CANVAS, BAND_SUBTEXT = "#F7F8FA", "#C9D4E3"
 BACKGROUND_FILE = "dop_background.svg"
@@ -690,6 +691,30 @@ class ReportBuilder:
                                                      "barWeight": num(3)}}]},
                 "visualContainerObjects": self.container_objects(title)}
 
+    @staticmethod
+    def back_button() -> dict:
+        """Back button for the drill-through page, white on the navy band (reading view has no other way back)."""
+        white, sel = colour(WHITE), {"id": "default"}
+        return {
+            "visualType": "actionButton",
+            "objects": {
+                "icon": [{"properties": {"show": flag(True), "shapeType": lit(text("back")), "lineColor": white,
+                                         "placement": lit(text("left"))}, "selector": sel}],
+                "text": [{"properties": {"show": flag(True), "text": lit(text("Back")), "fontColor": white,
+                                         "fontSize": num(11)}, "selector": sel}],
+                "fill": [{"properties": {"show": flag(False)}, "selector": sel}],
+                "outline": [{"properties": {"show": flag(False)}, "selector": sel}],
+            },
+            "visualContainerObjects": {
+                "visualLink": [{"properties": {"show": flag(True), "type": lit(text("Back")),
+                                               "tooltip": lit(text("Back to the page you came from"))}}],
+                "background": [{"properties": {"show": flag(False)}}],
+                "border": [{"properties": {"show": flag(False)}}],
+                "dropShadow": [{"properties": {"show": flag(False)}}],
+                "general": [{"properties": {"altText": lit(text("Back to the previous page"))}}],
+            },
+        }
+
     def slicer(self, f: Field, header: str, mode: str, single: bool, strict: bool, sort_desc: bool = False,
                selected: str | None = None, sync: str | None = None) -> dict:
         query = {"queryState": {"Values": self.role([f], active=True)}}
@@ -726,9 +751,10 @@ class ReportBuilder:
         return visual
 
     def table(self, fields: list[Field], title: str, sort: tuple[Field, str] | None = None,
-              value_objects: list[dict] | None = None, widths: list[int] | None = None) -> dict:
+              value_objects: list[dict] | None = None, widths: list[int] | None = None, wrap: bool = False) -> dict:
         """widths (px, one per field) fix the column widths, which grow in proportion to fill the box. Without them,
-        columns size to their longest value and the last columns of a wide table sit off to the right."""
+        columns size to their longest value and the last columns of a wide table sit off to the right. wrap=True
+        wraps long text values (asks, owners) onto more lines instead of cutting them off."""
         query = {"queryState": {"Values": self.role(fields)}}
         if sort:
             query["sortDefinition"] = self.sort(*sort)
@@ -736,7 +762,7 @@ class ReportBuilder:
             "columnHeaders": [{"properties": {"columnAdjustment": lit(text("growToFit")),
                                               "autoSizeColumnWidth": flag(widths is None), "fontSize": num(9),
                                               "wordWrap": flag(True)}}],
-            "values": [{"properties": {"fontSize": num(9), "wordWrap": flag(False)}}] + (value_objects or []),
+            "values": [{"properties": {"fontSize": num(9), "wordWrap": flag(wrap)}}] + (value_objects or []),
         }
         if widths:
             if len(widths) != len(fields):
@@ -802,7 +828,7 @@ class ReportBuilder:
         # header strip on the navy band: programme textbox | [threshold slicer] | data-date slicer. The slicer shows
         # the selected data date, so the strip carries no separate date card.
         right = [s for s in ("threshold", "data_date") if s in slicers]
-        text_w = CONTENT_W - len(right) * (SLOT_W + GUTTER)
+        text_w = CONTENT_W - len(right) * (SLOT_W + GUTTER) - (BACK_W + GUTTER if drillthrough else 0)
         placed.append((f"{prefix}_h1_programme", self.textbox([
             [(PROGRAMME, {"fontFamily": "Segoe UI Semibold", "fontSize": "15px", "color": WHITE, "fontWeight": "bold"})],
             [(f"Schedule intelligence | {display}", {"fontFamily": "Segoe UI", "fontSize": "11px",
@@ -820,6 +846,9 @@ class ReportBuilder:
                     col("dim_snapshot", "data_date"), "Data date", "Dropdown", single=True, strict=True,
                     sort_desc=True, selected=f"datetime'{self.latest}T00:00:00'", sync="DataDate"), box, None))
             x += SLOT_W + GUTTER
+        if drillthrough:
+            placed.append((f"{prefix}_h5_back", self.back_button(),
+                           (CONTENT_X + CONTENT_W - BACK_W, HEADER_Y + 8, BACK_W, HEADER_H - 16), None))
 
         # title row: the page's action-title measure (or the drilled activity)
         head = mea(title_measure) if title_measure else headline
@@ -957,13 +986,15 @@ def build_pages(rb: ReportBuilder) -> None:
                          col("fact_risk", "score", "Score"), col("fact_risk", "schedule_impact_days", "Impact (d)"),
                          col("fact_risk", "title", "Title")],
                         "Top risks for the selected update (highest score first)",
-                        sort=(col("fact_risk", "score"), "Descending")), None)),
+                        sort=(col("fact_risk", "score"), "Descending"), widths=[42, 52, 48, 56, 190]), None)),
+                    # the ask second and wrapped, so a reader sees what is being decided without scrolling
                     (420, ("open_decisions", rb.table(
-                        [col("fact_decision", "decision_id", "Decision"), col("fact_decision", "needed_by", "Needed by"),
-                         col("fact_decision", "overdue", "Overdue"), col("fact_decision", "owner", "Owner"),
-                         col("fact_decision", "ask", "Ask")],
+                        [col("fact_decision", "decision_id", "Decision"), col("fact_decision", "ask", "Ask"),
+                         col("fact_decision", "owner", "Owner"), col("fact_decision", "needed_by", "Needed by"),
+                         col("fact_decision", "overdue", "Overdue")],
                         "Open decisions with owner and needed-by date",
-                        sort=(col("fact_decision", "needed_by"), "Ascending")),
+                        sort=(col("fact_decision", "needed_by"), "Ascending"), widths=[62, 122, 82, 66, 60],
+                        wrap=True),
                         [(col("fact_decision", "status"), [text("Open")])])),
                 ]),
             ]),
@@ -1000,7 +1031,7 @@ def build_pages(rb: ReportBuilder) -> None:
                  col(fas, "var_finish_bl_d", "Variance vs baseline (days)"),
                  col(fas, "slip_vs_prev_d", "Movement vs previous (days)")],
                 "Milestones: owner, BL0, BL1, previous and current forecast finish, variance (calendar days)",
-                sort=(col(fas, "finish"), "Ascending")),
+                sort=(col(fas, "finish"), "Ascending"), widths=[104, 178, 52, 84, 84, 84, 84, 60, 60]),
                 [(col(act, "is_milestone"), ["true"])])),
             (416, ("finish_profile", rb.chart(
                 "clusteredColumnChart", col("dim_date", "year_month", "Month"),
@@ -1085,7 +1116,8 @@ def build_pages(rb: ReportBuilder) -> None:
                  col("fact_interface", "gap_days", "Gap (days)"), col("fact_interface", "status", "Status"),
                  col(act, "activity_id", "Giver activity")],
                 "Interfaces sorted by gap (calendar days; positive = late)",
-                sort=(col("fact_interface", "gap_days"), "Descending")), None)),
+                sort=(col("fact_interface", "gap_days"), "Descending"),
+                widths=[62, 220, 50, 64, 84, 84, 45, 60, 100]), None)),
         ]),
     ])
 
@@ -1122,14 +1154,16 @@ def build_pages(rb: ReportBuilder) -> None:
                  col("fact_risk", "trend", "Trend"), col("fact_risk", "mitigation_owner", "Mitigation owner"),
                  col("fact_risk", "schedule_impact_days", "Impact (days)"),
                  col("fact_risk", "min_linked_float_d", "Min linked float (d)")],
-                "Risk register for the selected update", sort=(col("fact_risk", "score"), "Descending")), None)),
+                "Risk register for the selected update", sort=(col("fact_risk", "score"), "Descending"),
+                widths=[42, 120, 52, 24, 24, 46, 52, 46, 80, 50, 56]), None)),
             (616, ("decision_log", rb.table(
                 [col("fact_decision", "decision_id", "Decision"), col("fact_decision", "ask", "Ask"),
                  col("fact_decision", "owner", "Owner"), col("fact_decision", "raised_data_date", "Raised"),
                  col("fact_decision", "needed_by", "Needed by"), col("fact_decision", "status", "Status"),
                  col("fact_decision", "overdue", "Overdue"), col("fact_decision", "closed_on", "Closed"),
                  col("fact_decision", "outcome", "Outcome")],
-                "Decision log (all decisions)", sort=(col("fact_decision", "needed_by"), "Ascending")), None)),
+                "Decision log (all decisions)", sort=(col("fact_decision", "needed_by"), "Ascending"),
+                widths=[58, 118, 72, 64, 64, 52, 58, 64, 48], wrap=True), None)),
         ]),
     ])
 
@@ -1173,7 +1207,8 @@ def build_pages(rb: ReportBuilder) -> None:
                 [col("fact_dcma_offender", "check_id", "Check"), col("fact_dcma_offender", "item", "Item"),
                  col(act, "activity_id", "Activity ID"), col(act, "activity_name", "Activity"),
                  col("fact_dcma_offender", "owner_code", "Owner")],
-                "Offenders for the selected check", sort=(col("fact_dcma_offender", "check_id"), "Ascending")), None)),
+                "Offenders for the selected check", sort=(col("fact_dcma_offender", "check_id"), "Ascending"),
+                widths=[48, 140, 92, 150, 52]), None)),
         ]),
     ], slicers=("threshold", "data_date"), no_filter_from_date=("dq_trend",))
 
@@ -1214,8 +1249,8 @@ def build_pages(rb: ReportBuilder) -> None:
                  col("dim_snapshot", "source_file", "Source file"), col("dim_snapshot", "sha256", "SHA-256"),
                  col("dim_snapshot", "baseline_in_force", "Baseline"),
                  col("dim_snapshot", "baseline_file", "Baseline file")],
-                "Source files and hashes for every update", sort=(col("dim_snapshot", "data_date"), "Ascending")),
-                None)),
+                "Source files and hashes for every update", sort=(col("dim_snapshot", "data_date"), "Ascending"),
+                widths=[52, 84, 160, 160, 60, 80]), None)),
         ]),
     ], no_filter_from_date=("source_files",))
 
@@ -1327,7 +1362,9 @@ def build_files(root: pathlib.Path = ROOT, csv_folder: str = DEFAULT_CSV_FOLDER)
                 "customTheme": {"name": THEME_FILE, "reportVersionAtImport": THEME_VERSION_AT_IMPORT,
                                 "type": "RegisteredResources"},
             },
-            "objects": {"section": [{"properties": {"verticalAlignment": lit(text("Top"))}}]},
+            # the filter pane starts collapsed: the page has the room, and readers can still open it
+            "objects": {"section": [{"properties": {"verticalAlignment": lit(text("Top"))}}],
+                        "outspacePane": [{"properties": {"expanded": flag(False)}}]},
             "resourcePackages": [
                 {"name": "RegisteredResources", "type": "RegisteredResources",
                  "items": [{"name": THEME_FILE, "path": THEME_FILE, "type": "CustomTheme"},

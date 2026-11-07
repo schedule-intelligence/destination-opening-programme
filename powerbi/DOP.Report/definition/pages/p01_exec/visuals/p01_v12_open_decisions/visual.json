@@ -38,27 +38,12 @@
                       "Entity": "fact_decision"
                     }
                   },
-                  "Property": "needed_by"
+                  "Property": "ask"
                 }
               },
-              "queryRef": "fact_decision.needed_by",
-              "nativeQueryRef": "needed_by",
-              "displayName": "Needed by"
-            },
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "fact_decision"
-                    }
-                  },
-                  "Property": "overdue"
-                }
-              },
-              "queryRef": "fact_decision.overdue",
-              "nativeQueryRef": "overdue",
-              "displayName": "Overdue"
+              "queryRef": "fact_decision.ask",
+              "nativeQueryRef": "ask",
+              "displayName": "Ask"
             },
             {
               "field": {
@@ -83,12 +68,27 @@
                       "Entity": "fact_decision"
                     }
                   },
-                  "Property": "ask"
+                  "Property": "needed_by"
                 }
               },
-              "queryRef": "fact_decision.ask",
-              "nativeQueryRef": "ask",
-              "displayName": "Ask"
+              "queryRef": "fact_decision.needed_by",
+              "nativeQueryRef": "needed_by",
+              "displayName": "Needed by"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_decision"
+                    }
+                  },
+                  "Property": "overdue"
+                }
+              },
+              "queryRef": "fact_decision.overdue",
+              "nativeQueryRef": "overdue",
+              "displayName": "Overdue"
             }
           ]
         }
@@ -125,7 +125,7 @@
             "autoSizeColumnWidth": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
                 }
               }
             },
@@ -159,10 +159,82 @@
             "wordWrap": {
               "expr": {
                 "Literal": {
-                  "Value": "false"
+                  "Value": "true"
                 }
               }
             }
+          }
+        }
+      ],
+      "columnWidth": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "62D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fact_decision.decision_id"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "122D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fact_decision.ask"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "82D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fact_decision.owner"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "66D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fact_decision.needed_by"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "60D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fact_decision.overdue"
           }
         }
       ]
