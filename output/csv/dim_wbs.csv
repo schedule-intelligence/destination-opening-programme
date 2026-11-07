@@ -1,0 +1,133 @@
+wbs_id,wbs_code,wbs_name,level,parent_wbs_id,path,level1,level2,level3,proj_node
+5001,DOP-IMS,Destination Opening Programme - Integrated Master Schedule,0,,Destination Opening Programme - Integrated Master Schedule,,,,True
+5002,MTP,Mesa Theme Park,1,5001.0,Mesa Theme Park,MTP,,,False
+5003,MTP.CON,Construction,2,5002.0,Mesa Theme Park > Construction,MTP,CON,,False
+5004,MTP.TNC,Testing & Commissioning,2,5002.0,Mesa Theme Park > Testing & Commissioning,MTP,TNC,,False
+5005,MTP.HOV,Handover,2,5002.0,Mesa Theme Park > Handover,MTP,HOV,,False
+5006,MTP.OPM,Operator Mobilisation & Training,2,5002.0,Mesa Theme Park > Operator Mobilisation & Training,MTP,OPM,,False
+5007,MTP.OTE,Operational Trials & Test Events,2,5002.0,Mesa Theme Park > Operational Trials & Test Events,MTP,OTE,,False
+5008,MTP.D1R,Day 1 Readiness,2,5002.0,Mesa Theme Park > Day 1 Readiness,MTP,D1R,,False
+5009,LWP,Lagoon Water Park,1,5001.0,Lagoon Water Park,LWP,,,False
+5010,LWP.CON,Construction,2,5009.0,Lagoon Water Park > Construction,LWP,CON,,False
+5011,LWP.TNC,Testing & Commissioning,2,5009.0,Lagoon Water Park > Testing & Commissioning,LWP,TNC,,False
+5012,LWP.HOV,Handover,2,5009.0,Lagoon Water Park > Handover,LWP,HOV,,False
+5013,LWP.OPM,Operator Mobilisation & Training,2,5009.0,Lagoon Water Park > Operator Mobilisation & Training,LWP,OPM,,False
+5014,LWP.OTE,Operational Trials & Test Events,2,5009.0,Lagoon Water Park > Operational Trials & Test Events,LWP,OTE,,False
+5015,LWP.D1R,Day 1 Readiness,2,5009.0,Lagoon Water Park > Day 1 Readiness,LWP,D1R,,False
+5016,DAR,Dune Arena,1,5001.0,Dune Arena,DAR,,,False
+5017,DAR.CON,Construction,2,5016.0,Dune Arena > Construction,DAR,CON,,False
+5018,DAR.TNC,Testing & Commissioning,2,5016.0,Dune Arena > Testing & Commissioning,DAR,TNC,,False
+5019,DAR.HOV,Handover,2,5016.0,Dune Arena > Handover,DAR,HOV,,False
+5020,DAR.OPM,Operator Mobilisation & Training,2,5016.0,Dune Arena > Operator Mobilisation & Training,DAR,OPM,,False
+5021,DAR.OTE,Operational Trials & Test Events,2,5016.0,Dune Arena > Operational Trials & Test Events,DAR,OTE,,False
+5022,DAR.D1R,Day 1 Readiness,2,5016.0,Dune Arena > Day 1 Readiness,DAR,D1R,,False
+5023,PBR,Palm Boulevard (Retail & Dining),1,5001.0,Palm Boulevard (Retail & Dining),PBR,,,False
+5024,PBR.CON,Construction,2,5023.0,Palm Boulevard (Retail & Dining) > Construction,PBR,CON,,False
+5025,PBR.TNC,Testing & Commissioning,2,5023.0,Palm Boulevard (Retail & Dining) > Testing & Commissioning,PBR,TNC,,False
+5026,PBR.HOV,Handover,2,5023.0,Palm Boulevard (Retail & Dining) > Handover,PBR,HOV,,False
+5027,PBR.OPM,Operator Mobilisation & Training,2,5023.0,Palm Boulevard (Retail & Dining) > Operator Mobilisation & Training,PBR,OPM,,False
+5028,PBR.OTE,Operational Trials & Test Events,2,5023.0,Palm Boulevard (Retail & Dining) > Operational Trials & Test Events,PBR,OTE,,False
+5029,PBR.D1R,Day 1 Readiness,2,5023.0,Palm Boulevard (Retail & Dining) > Day 1 Readiness,PBR,D1R,,False
+5030,PEW,Programme Enabling Works,1,5001.0,Programme Enabling Works,PEW,,,False
+5031,PEW.CON,Construction,2,5030.0,Programme Enabling Works > Construction,PEW,CON,,False
+5032,PEW.TNC,Testing & Commissioning,2,5030.0,Programme Enabling Works > Testing & Commissioning,PEW,TNC,,False
+5033,PEW.HOV,Handover,2,5030.0,Programme Enabling Works > Handover,PEW,HOV,,False
+5034,PEW.OPM,Operator Mobilisation & Training,2,5030.0,Programme Enabling Works > Operator Mobilisation & Training,PEW,OPM,,False
+5035,PEW.OTE,Operational Trials & Test Events,2,5030.0,Programme Enabling Works > Operational Trials & Test Events,PEW,OTE,,False
+5036,PEW.D1R,Day 1 Readiness,2,5030.0,Programme Enabling Works > Day 1 Readiness,PEW,D1R,,False
+5037,PRG,Programme Integration & Day 1,1,5001.0,Programme Integration & Day 1,PRG,,,False
+5038,PRG.CON,Construction,2,5037.0,Programme Integration & Day 1 > Construction,PRG,CON,,False
+5039,PRG.TNC,Testing & Commissioning,2,5037.0,Programme Integration & Day 1 > Testing & Commissioning,PRG,TNC,,False
+5040,PRG.HOV,Handover,2,5037.0,Programme Integration & Day 1 > Handover,PRG,HOV,,False
+5041,PRG.OPM,Operator Mobilisation & Training,2,5037.0,Programme Integration & Day 1 > Operator Mobilisation & Training,PRG,OPM,,False
+5042,PRG.OTE,Operational Trials & Test Events,2,5037.0,Programme Integration & Day 1 > Operational Trials & Test Events,PRG,OTE,,False
+5043,PRG.D1R,Day 1 Readiness,2,5037.0,Programme Integration & Day 1 > Day 1 Readiness,PRG,D1R,,False
+5044,DAR.CON.EXT,External Works,3,5017.0,Dune Arena > Construction > External Works,DAR,CON,EXT,False
+5045,DAR.CON.FIT,Fit-out & Finishes,3,5017.0,Dune Arena > Construction > Fit-out & Finishes,DAR,CON,FIT,False
+5046,DAR.CON.MEP,MEP Installation,3,5017.0,Dune Arena > Construction > MEP Installation,DAR,CON,MEP,False
+5047,DAR.CON.MGT,Management & Supervision,3,5017.0,Dune Arena > Construction > Management & Supervision,DAR,CON,MGT,False
+5048,DAR.CON.STR,Structure & Envelope,3,5017.0,Dune Arena > Construction > Structure & Envelope,DAR,CON,STR,False
+5049,DAR.CON.SYS,Specialist Systems,3,5017.0,Dune Arena > Construction > Specialist Systems,DAR,CON,SYS,False
+5050,DAR.D1R.GAT,Readiness Gates,3,5022.0,Dune Arena > Day 1 Readiness > Readiness Gates,DAR,D1R,GAT,False
+5051,DAR.HOV.APR,Authority Inspections & Approvals,3,5019.0,Dune Arena > Handover > Authority Inspections & Approvals,DAR,HOV,APR,False
+5052,DAR.HOV.HND,Completion & Handover,3,5019.0,Dune Arena > Handover > Completion & Handover,DAR,HOV,HND,False
+5053,DAR.HOV.SNG,Snagging & Defects,3,5019.0,Dune Arena > Handover > Snagging & Defects,DAR,HOV,SNG,False
+5054,DAR.OPM.RCT,Recruitment & Onboarding,3,5020.0,Dune Arena > Operator Mobilisation & Training > Recruitment & Onboarding,DAR,OPM,RCT,False
+5055,DAR.OPM.TRN,Training & Familiarisation,3,5020.0,Dune Arena > Operator Mobilisation & Training > Training & Familiarisation,DAR,OPM,TRN,False
+5056,DAR.OTE.TEV,Test Events,3,5021.0,Dune Arena > Operational Trials & Test Events > Test Events,DAR,OTE,TEV,False
+5057,DAR.OTE.TRL,Operational Trials,3,5021.0,Dune Arena > Operational Trials & Test Events > Operational Trials,DAR,OTE,TRL,False
+5058,DAR.TNC.COM,Systems Commissioning,3,5018.0,Dune Arena > Testing & Commissioning > Systems Commissioning,DAR,TNC,COM,False
+5059,DAR.TNC.IST,Integrated Systems Testing,3,5018.0,Dune Arena > Testing & Commissioning > Integrated Systems Testing,DAR,TNC,IST,False
+5060,DAR.TNC.PRE,Pre-commissioning,3,5018.0,Dune Arena > Testing & Commissioning > Pre-commissioning,DAR,TNC,PRE,False
+5061,LWP.CON.EXT,External Works,3,5010.0,Lagoon Water Park > Construction > External Works,LWP,CON,EXT,False
+5062,LWP.CON.FIT,Fit-out & Finishes,3,5010.0,Lagoon Water Park > Construction > Fit-out & Finishes,LWP,CON,FIT,False
+5063,LWP.CON.MEP,MEP Installation,3,5010.0,Lagoon Water Park > Construction > MEP Installation,LWP,CON,MEP,False
+5064,LWP.CON.MGT,Management & Supervision,3,5010.0,Lagoon Water Park > Construction > Management & Supervision,LWP,CON,MGT,False
+5065,LWP.CON.STR,Structure & Envelope,3,5010.0,Lagoon Water Park > Construction > Structure & Envelope,LWP,CON,STR,False
+5066,LWP.CON.SYS,Specialist Systems,3,5010.0,Lagoon Water Park > Construction > Specialist Systems,LWP,CON,SYS,False
+5067,LWP.D1R.GAT,Readiness Gates,3,5015.0,Lagoon Water Park > Day 1 Readiness > Readiness Gates,LWP,D1R,GAT,False
+5068,LWP.HOV.APR,Authority Inspections & Approvals,3,5012.0,Lagoon Water Park > Handover > Authority Inspections & Approvals,LWP,HOV,APR,False
+5069,LWP.HOV.HND,Completion & Handover,3,5012.0,Lagoon Water Park > Handover > Completion & Handover,LWP,HOV,HND,False
+5070,LWP.HOV.SNG,Snagging & Defects,3,5012.0,Lagoon Water Park > Handover > Snagging & Defects,LWP,HOV,SNG,False
+5071,LWP.OPM.RCT,Recruitment & Onboarding,3,5013.0,Lagoon Water Park > Operator Mobilisation & Training > Recruitment & Onboarding,LWP,OPM,RCT,False
+5072,LWP.OPM.TRN,Training & Familiarisation,3,5013.0,Lagoon Water Park > Operator Mobilisation & Training > Training & Familiarisation,LWP,OPM,TRN,False
+5073,LWP.OTE.TEV,Test Events,3,5014.0,Lagoon Water Park > Operational Trials & Test Events > Test Events,LWP,OTE,TEV,False
+5074,LWP.OTE.TRL,Operational Trials,3,5014.0,Lagoon Water Park > Operational Trials & Test Events > Operational Trials,LWP,OTE,TRL,False
+5075,LWP.TNC.COM,Systems Commissioning,3,5011.0,Lagoon Water Park > Testing & Commissioning > Systems Commissioning,LWP,TNC,COM,False
+5076,LWP.TNC.IST,Integrated Systems Testing,3,5011.0,Lagoon Water Park > Testing & Commissioning > Integrated Systems Testing,LWP,TNC,IST,False
+5077,LWP.TNC.PRE,Pre-commissioning,3,5011.0,Lagoon Water Park > Testing & Commissioning > Pre-commissioning,LWP,TNC,PRE,False
+5078,MTP.CON.EXT,External Works,3,5003.0,Mesa Theme Park > Construction > External Works,MTP,CON,EXT,False
+5079,MTP.CON.FIT,Fit-out & Finishes,3,5003.0,Mesa Theme Park > Construction > Fit-out & Finishes,MTP,CON,FIT,False
+5080,MTP.CON.MEP,MEP Installation,3,5003.0,Mesa Theme Park > Construction > MEP Installation,MTP,CON,MEP,False
+5081,MTP.CON.MGT,Management & Supervision,3,5003.0,Mesa Theme Park > Construction > Management & Supervision,MTP,CON,MGT,False
+5082,MTP.CON.STR,Structure & Envelope,3,5003.0,Mesa Theme Park > Construction > Structure & Envelope,MTP,CON,STR,False
+5083,MTP.CON.SYS,Specialist Systems,3,5003.0,Mesa Theme Park > Construction > Specialist Systems,MTP,CON,SYS,False
+5084,MTP.D1R.GAT,Readiness Gates,3,5008.0,Mesa Theme Park > Day 1 Readiness > Readiness Gates,MTP,D1R,GAT,False
+5085,MTP.HOV.APR,Authority Inspections & Approvals,3,5005.0,Mesa Theme Park > Handover > Authority Inspections & Approvals,MTP,HOV,APR,False
+5086,MTP.HOV.HND,Completion & Handover,3,5005.0,Mesa Theme Park > Handover > Completion & Handover,MTP,HOV,HND,False
+5087,MTP.HOV.SNG,Snagging & Defects,3,5005.0,Mesa Theme Park > Handover > Snagging & Defects,MTP,HOV,SNG,False
+5088,MTP.OPM.RCT,Recruitment & Onboarding,3,5006.0,Mesa Theme Park > Operator Mobilisation & Training > Recruitment & Onboarding,MTP,OPM,RCT,False
+5089,MTP.OPM.TRN,Training & Familiarisation,3,5006.0,Mesa Theme Park > Operator Mobilisation & Training > Training & Familiarisation,MTP,OPM,TRN,False
+5090,MTP.OTE.TEV,Test Events,3,5007.0,Mesa Theme Park > Operational Trials & Test Events > Test Events,MTP,OTE,TEV,False
+5091,MTP.OTE.TRL,Operational Trials,3,5007.0,Mesa Theme Park > Operational Trials & Test Events > Operational Trials,MTP,OTE,TRL,False
+5092,MTP.TNC.COM,Systems Commissioning,3,5004.0,Mesa Theme Park > Testing & Commissioning > Systems Commissioning,MTP,TNC,COM,False
+5093,MTP.TNC.IST,Integrated Systems Testing,3,5004.0,Mesa Theme Park > Testing & Commissioning > Integrated Systems Testing,MTP,TNC,IST,False
+5094,MTP.TNC.PRE,Pre-commissioning,3,5004.0,Mesa Theme Park > Testing & Commissioning > Pre-commissioning,MTP,TNC,PRE,False
+5095,PBR.CON.EXT,External Works,3,5024.0,Palm Boulevard (Retail & Dining) > Construction > External Works,PBR,CON,EXT,False
+5096,PBR.CON.FIT,Fit-out & Finishes,3,5024.0,Palm Boulevard (Retail & Dining) > Construction > Fit-out & Finishes,PBR,CON,FIT,False
+5097,PBR.CON.MEP,MEP Installation,3,5024.0,Palm Boulevard (Retail & Dining) > Construction > MEP Installation,PBR,CON,MEP,False
+5098,PBR.CON.MGT,Management & Supervision,3,5024.0,Palm Boulevard (Retail & Dining) > Construction > Management & Supervision,PBR,CON,MGT,False
+5099,PBR.CON.STR,Structure & Envelope,3,5024.0,Palm Boulevard (Retail & Dining) > Construction > Structure & Envelope,PBR,CON,STR,False
+5100,PBR.CON.SYS,Specialist Systems,3,5024.0,Palm Boulevard (Retail & Dining) > Construction > Specialist Systems,PBR,CON,SYS,False
+5101,PBR.D1R.GAT,Readiness Gates,3,5029.0,Palm Boulevard (Retail & Dining) > Day 1 Readiness > Readiness Gates,PBR,D1R,GAT,False
+5102,PBR.HOV.APR,Authority Inspections & Approvals,3,5026.0,Palm Boulevard (Retail & Dining) > Handover > Authority Inspections & Approvals,PBR,HOV,APR,False
+5103,PBR.HOV.HND,Completion & Handover,3,5026.0,Palm Boulevard (Retail & Dining) > Handover > Completion & Handover,PBR,HOV,HND,False
+5104,PBR.HOV.SNG,Snagging & Defects,3,5026.0,Palm Boulevard (Retail & Dining) > Handover > Snagging & Defects,PBR,HOV,SNG,False
+5105,PBR.OPM.RCT,Recruitment & Onboarding,3,5027.0,Palm Boulevard (Retail & Dining) > Operator Mobilisation & Training > Recruitment & Onboarding,PBR,OPM,RCT,False
+5106,PBR.OPM.TRN,Training & Familiarisation,3,5027.0,Palm Boulevard (Retail & Dining) > Operator Mobilisation & Training > Training & Familiarisation,PBR,OPM,TRN,False
+5107,PBR.OTE.TEV,Test Events,3,5028.0,Palm Boulevard (Retail & Dining) > Operational Trials & Test Events > Test Events,PBR,OTE,TEV,False
+5108,PBR.OTE.TRL,Operational Trials,3,5028.0,Palm Boulevard (Retail & Dining) > Operational Trials & Test Events > Operational Trials,PBR,OTE,TRL,False
+5109,PBR.TNC.COM,Systems Commissioning,3,5025.0,Palm Boulevard (Retail & Dining) > Testing & Commissioning > Systems Commissioning,PBR,TNC,COM,False
+5110,PBR.TNC.IST,Integrated Systems Testing,3,5025.0,Palm Boulevard (Retail & Dining) > Testing & Commissioning > Integrated Systems Testing,PBR,TNC,IST,False
+5111,PBR.TNC.PRE,Pre-commissioning,3,5025.0,Palm Boulevard (Retail & Dining) > Testing & Commissioning > Pre-commissioning,PBR,TNC,PRE,False
+5112,PEW.CON.CLG,District Cooling,3,5031.0,Programme Enabling Works > Construction > District Cooling,PEW,CON,CLG,False
+5113,PEW.CON.ICT,Telecom & ICT,3,5031.0,Programme Enabling Works > Construction > Telecom & ICT,PEW,CON,ICT,False
+5114,PEW.CON.MGT,Management & Supervision,3,5031.0,Programme Enabling Works > Construction > Management & Supervision,PEW,CON,MGT,False
+5115,PEW.CON.PWR,Power,3,5031.0,Programme Enabling Works > Construction > Power,PEW,CON,PWR,False
+5116,PEW.CON.RDS,Roads,3,5031.0,Programme Enabling Works > Construction > Roads,PEW,CON,RDS,False
+5117,PEW.CON.TRS,Transit,3,5031.0,Programme Enabling Works > Construction > Transit,PEW,CON,TRS,False
+5118,PEW.CON.WAT,Water & Drainage,3,5031.0,Programme Enabling Works > Construction > Water & Drainage,PEW,CON,WAT,False
+5119,PEW.HOV.APR,Authority Inspections & Approvals,3,5033.0,Programme Enabling Works > Handover > Authority Inspections & Approvals,PEW,HOV,APR,False
+5120,PEW.OPM.RCT,Recruitment & Onboarding,3,5034.0,Programme Enabling Works > Operator Mobilisation & Training > Recruitment & Onboarding,PEW,OPM,RCT,False
+5121,PEW.OTE.TRL,Operational Trials,3,5035.0,Programme Enabling Works > Operational Trials & Test Events > Operational Trials,PEW,OTE,TRL,False
+5122,PEW.TNC.CLG,District Cooling,3,5032.0,Programme Enabling Works > Testing & Commissioning > District Cooling,PEW,TNC,CLG,False
+5123,PEW.TNC.ICT,Telecom & ICT,3,5032.0,Programme Enabling Works > Testing & Commissioning > Telecom & ICT,PEW,TNC,ICT,False
+5124,PEW.TNC.PWR,Power,3,5032.0,Programme Enabling Works > Testing & Commissioning > Power,PEW,TNC,PWR,False
+5125,PEW.TNC.TRS,Transit,3,5032.0,Programme Enabling Works > Testing & Commissioning > Transit,PEW,TNC,TRS,False
+5126,PEW.TNC.WAT,Water & Drainage,3,5032.0,Programme Enabling Works > Testing & Commissioning > Water & Drainage,PEW,TNC,WAT,False
+5127,PRG.D1R.GAT,Readiness Gates,3,5043.0,Programme Integration & Day 1 > Day 1 Readiness > Readiness Gates,PRG,D1R,GAT,False
+5128,PRG.D1R.MGT,Management & Supervision,3,5043.0,Programme Integration & Day 1 > Day 1 Readiness > Management & Supervision,PRG,D1R,MGT,False
+5129,PRG.OPM.RCT,Recruitment & Onboarding,3,5041.0,Programme Integration & Day 1 > Operator Mobilisation & Training > Recruitment & Onboarding,PRG,OPM,RCT,False
+5130,PRG.OPM.TRN,Training & Familiarisation,3,5041.0,Programme Integration & Day 1 > Operator Mobilisation & Training > Training & Familiarisation,PRG,OPM,TRN,False
+5131,PRG.OTE.TEV,Test Events,3,5042.0,Programme Integration & Day 1 > Operational Trials & Test Events > Test Events,PRG,OTE,TEV,False
+5132,PRG.OTE.TRL,Operational Trials,3,5042.0,Programme Integration & Day 1 > Operational Trials & Test Events > Operational Trials,PRG,OTE,TRL,False

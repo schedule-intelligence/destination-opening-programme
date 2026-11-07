@@ -1,0 +1,241 @@
+snapshot_id,control_id,control,source_value,model_value,dashboard_value,delta,passed
+20260528,R01,Activity count,289,289,289,0.0,True
+20260528,R02.TK_Active,Activities by status - TK_Active,20,20,20,0.0,True
+20260528,R02.TK_Complete,Activities by status - TK_Complete,16,16,16,0.0,True
+20260528,R02.TK_NotStart,Activities by status - TK_NotStart,253,253,253,0.0,True
+20260528,R03.DAR,Activities by asset - DAR,59,59,59,0.0,True
+20260528,R03.LWP,Activities by asset - LWP,59,59,59,0.0,True
+20260528,R03.MTP,Activities by asset - MTP,59,59,59,0.0,True
+20260528,R03.PBR,Activities by asset - PBR,59,59,59,0.0,True
+20260528,R03.PEW,Activities by asset - PEW,34,34,34,0.0,True
+20260528,R03.PRG,Activities by asset - PRG,19,19,19,0.0,True
+20260528,R04.CON,Activities by workstream - CON,120,120,120,0.0,True
+20260528,R04.D1R,Activities by workstream - D1R,17,17,17,0.0,True
+20260528,R04.HOV,Activities by workstream - HOV,32,32,32,0.0,True
+20260528,R04.OPM,Activities by workstream - OPM,44,44,44,0.0,True
+20260528,R04.OTE,Activities by workstream - OTE,21,21,21,0.0,True
+20260528,R04.TNC,Activities by workstream - TNC,55,55,55,0.0,True
+20260528,R05,Relationship count,489,489,489,0.0,True
+20260528,R06,Milestone count,39,39,39,0.0,True
+20260528,R07,Day 1 early finish,2027-09-30,2027-09-30,2027-09-30,,True
+20260528,R08,Day 1 late finish,2027-10-14,2027-10-14,2027-10-14,,True
+20260528,R09.DAR-CON-M142,Key milestone finish - DAR-CON-M142,2027-03-25,2027-03-25,2027-03-25,,True
+20260528,R09.DAR-D1R-M020,Key milestone finish - DAR-D1R-M020,2027-09-22,2027-09-22,2027-09-22,,True
+20260528,R09.LWP-CON-M142,Key milestone finish - LWP-CON-M142,2027-03-30,2027-03-30,2027-03-30,,True
+20260528,R09.LWP-D1R-M020,Key milestone finish - LWP-D1R-M020,2027-09-14,2027-09-14,2027-09-14,,True
+20260528,R09.MTP-CON-M142,Key milestone finish - MTP-CON-M142,2027-02-09,2027-02-09,2027-02-09,,True
+20260528,R09.MTP-D1R-M020,Key milestone finish - MTP-D1R-M020,2027-09-14,2027-09-14,2027-09-14,,True
+20260528,R09.PBR-CON-M142,Key milestone finish - PBR-CON-M142,2027-02-14,2027-02-14,2027-02-14,,True
+20260528,R09.PBR-D1R-M020,Key milestone finish - PBR-D1R-M020,2027-09-08,2027-09-08,2027-09-08,,True
+20260528,R09.PRG-D1R-M010,Key milestone finish - PRG-D1R-M010,2027-03-30,2027-03-30,2027-03-30,,True
+20260528,R09.PRG-D1R-M020,Key milestone finish - PRG-D1R-M020,2027-07-23,2027-07-23,2027-07-23,,True
+20260528,R09.PRG-D1R-M030,Key milestone finish - PRG-D1R-M030,2027-08-19,2027-08-19,2027-08-19,,True
+20260528,R09.PRG-D1R-M040,Key milestone finish - PRG-D1R-M040,2027-09-30,2027-09-30,2027-09-30,,True
+20260528,R09.PRG-D1R-M999,Key milestone finish - PRG-D1R-M999,2027-09-30,2027-09-30,2027-09-30,,True
+20260528,R10,Sum of remaining duration (h),62008.0,62008.0,62008,0.0,True
+20260528,R11,Weighted % complete,13.97,13.97,13.97,0.0,True
+20260528,R12,Critical activity count,19,19,19,0.0,True
+20260528,R13,Data date,2026-05-28,2026-05-28,2026-05-28,,True
+20260528,R14,Baseline reference,BL0,BL0,BL0,,True
+20260528,R15,Source file SHA-256,121a876b41fac0d0545e49b129c0ec11c0c6f2eb1baa909dacbbc89329be8ac2,121a876b41fac0d0545e49b129c0ec11c0c6f2eb1baa909dacbbc89329be8ac2,121a876b41fac0d0545e49b129c0ec11c0c6f2eb1baa909dacbbc89329be8ac2,,True
+20260528,R16,Engine re-schedule matches P6 dates,289,289,289,0.0,True
+20260625,R01,Activity count,290,290,290,0.0,True
+20260625,R02.TK_Active,Activities by status - TK_Active,19,19,19,0.0,True
+20260625,R02.TK_Complete,Activities by status - TK_Complete,22,22,22,0.0,True
+20260625,R02.TK_NotStart,Activities by status - TK_NotStart,249,249,249,0.0,True
+20260625,R03.DAR,Activities by asset - DAR,60,60,60,0.0,True
+20260625,R03.LWP,Activities by asset - LWP,59,59,59,0.0,True
+20260625,R03.MTP,Activities by asset - MTP,59,59,59,0.0,True
+20260625,R03.PBR,Activities by asset - PBR,59,59,59,0.0,True
+20260625,R03.PEW,Activities by asset - PEW,34,34,34,0.0,True
+20260625,R03.PRG,Activities by asset - PRG,19,19,19,0.0,True
+20260625,R04.CON,Activities by workstream - CON,121,121,121,0.0,True
+20260625,R04.D1R,Activities by workstream - D1R,17,17,17,0.0,True
+20260625,R04.HOV,Activities by workstream - HOV,32,32,32,0.0,True
+20260625,R04.OPM,Activities by workstream - OPM,44,44,44,0.0,True
+20260625,R04.OTE,Activities by workstream - OTE,21,21,21,0.0,True
+20260625,R04.TNC,Activities by workstream - TNC,55,55,55,0.0,True
+20260625,R05,Relationship count,491,491,491,0.0,True
+20260625,R06,Milestone count,39,39,39,0.0,True
+20260625,R07,Day 1 early finish,2027-09-30,2027-09-30,2027-09-30,,True
+20260625,R08,Day 1 late finish,2027-10-14,2027-10-14,2027-10-14,,True
+20260625,R09.DAR-CON-M142,Key milestone finish - DAR-CON-M142,2027-03-24,2027-03-24,2027-03-24,,True
+20260625,R09.DAR-D1R-M020,Key milestone finish - DAR-D1R-M020,2027-09-22,2027-09-22,2027-09-22,,True
+20260625,R09.LWP-CON-M142,Key milestone finish - LWP-CON-M142,2027-03-30,2027-03-30,2027-03-30,,True
+20260625,R09.LWP-D1R-M020,Key milestone finish - LWP-D1R-M020,2027-09-14,2027-09-14,2027-09-14,,True
+20260625,R09.MTP-CON-M142,Key milestone finish - MTP-CON-M142,2027-02-09,2027-02-09,2027-02-09,,True
+20260625,R09.MTP-D1R-M020,Key milestone finish - MTP-D1R-M020,2027-09-14,2027-09-14,2027-09-14,,True
+20260625,R09.PBR-CON-M142,Key milestone finish - PBR-CON-M142,2027-02-14,2027-02-14,2027-02-14,,True
+20260625,R09.PBR-D1R-M020,Key milestone finish - PBR-D1R-M020,2027-09-08,2027-09-08,2027-09-08,,True
+20260625,R09.PRG-D1R-M010,Key milestone finish - PRG-D1R-M010,2027-03-30,2027-03-30,2027-03-30,,True
+20260625,R09.PRG-D1R-M020,Key milestone finish - PRG-D1R-M020,2027-07-23,2027-07-23,2027-07-23,,True
+20260625,R09.PRG-D1R-M030,Key milestone finish - PRG-D1R-M030,2027-08-19,2027-08-19,2027-08-19,,True
+20260625,R09.PRG-D1R-M040,Key milestone finish - PRG-D1R-M040,2027-09-30,2027-09-30,2027-09-30,,True
+20260625,R09.PRG-D1R-M999,Key milestone finish - PRG-D1R-M999,2027-09-30,2027-09-30,2027-09-30,,True
+20260625,R10,Sum of remaining duration (h),58968.0,58968.0,58968,0.0,True
+20260625,R11,Weighted % complete,18.19,18.19,18.19,0.0,True
+20260625,R12,Critical activity count,19,19,19,0.0,True
+20260625,R13,Data date,2026-06-25,2026-06-25,2026-06-25,,True
+20260625,R14,Baseline reference,BL0,BL0,BL0,,True
+20260625,R15,Source file SHA-256,f834b725d1fa89e92b5e86df59c7ee11a5f96a7b85ff6425260ea0b10f5fda1b,f834b725d1fa89e92b5e86df59c7ee11a5f96a7b85ff6425260ea0b10f5fda1b,f834b725d1fa89e92b5e86df59c7ee11a5f96a7b85ff6425260ea0b10f5fda1b,,True
+20260625,R16,Engine re-schedule matches P6 dates (excl. 1 integrity-flagged),289,289,289,0.0,True
+20260730,R01,Activity count,290,290,290,0.0,True
+20260730,R02.TK_Active,Activities by status - TK_Active,17,17,17,0.0,True
+20260730,R02.TK_Complete,Activities by status - TK_Complete,32,32,32,0.0,True
+20260730,R02.TK_NotStart,Activities by status - TK_NotStart,241,241,241,0.0,True
+20260730,R03.DAR,Activities by asset - DAR,60,60,60,0.0,True
+20260730,R03.LWP,Activities by asset - LWP,59,59,59,0.0,True
+20260730,R03.MTP,Activities by asset - MTP,59,59,59,0.0,True
+20260730,R03.PBR,Activities by asset - PBR,59,59,59,0.0,True
+20260730,R03.PEW,Activities by asset - PEW,34,34,34,0.0,True
+20260730,R03.PRG,Activities by asset - PRG,19,19,19,0.0,True
+20260730,R04.CON,Activities by workstream - CON,121,121,121,0.0,True
+20260730,R04.D1R,Activities by workstream - D1R,17,17,17,0.0,True
+20260730,R04.HOV,Activities by workstream - HOV,32,32,32,0.0,True
+20260730,R04.OPM,Activities by workstream - OPM,44,44,44,0.0,True
+20260730,R04.OTE,Activities by workstream - OTE,21,21,21,0.0,True
+20260730,R04.TNC,Activities by workstream - TNC,55,55,55,0.0,True
+20260730,R05,Relationship count,493,493,493,0.0,True
+20260730,R06,Milestone count,39,39,39,0.0,True
+20260730,R07,Day 1 early finish,2027-10-06,2027-10-06,2027-10-06,,True
+20260730,R08,Day 1 late finish,2027-10-14,2027-10-14,2027-10-14,,True
+20260730,R09.DAR-CON-M142,Key milestone finish - DAR-CON-M142,2027-03-30,2027-03-30,2027-03-30,,True
+20260730,R09.DAR-D1R-M020,Key milestone finish - DAR-D1R-M020,2027-09-29,2027-09-29,2027-09-29,,True
+20260730,R09.LWP-CON-M142,Key milestone finish - LWP-CON-M142,2027-03-30,2027-03-30,2027-03-30,,True
+20260730,R09.LWP-D1R-M020,Key milestone finish - LWP-D1R-M020,2027-09-14,2027-09-14,2027-09-14,,True
+20260730,R09.MTP-CON-M142,Key milestone finish - MTP-CON-M142,2027-02-09,2027-02-09,2027-02-09,,True
+20260730,R09.MTP-D1R-M020,Key milestone finish - MTP-D1R-M020,2027-09-14,2027-09-14,2027-09-14,,True
+20260730,R09.PBR-CON-M142,Key milestone finish - PBR-CON-M142,2027-03-14,2027-03-14,2027-03-14,,True
+20260730,R09.PBR-D1R-M020,Key milestone finish - PBR-D1R-M020,2027-09-08,2027-09-08,2027-09-08,,True
+20260730,R09.PRG-D1R-M010,Key milestone finish - PRG-D1R-M010,2027-03-30,2027-03-30,2027-03-30,,True
+20260730,R09.PRG-D1R-M020,Key milestone finish - PRG-D1R-M020,2027-07-23,2027-07-23,2027-07-23,,True
+20260730,R09.PRG-D1R-M030,Key milestone finish - PRG-D1R-M030,2027-08-19,2027-08-19,2027-08-19,,True
+20260730,R09.PRG-D1R-M040,Key milestone finish - PRG-D1R-M040,2027-10-06,2027-10-06,2027-10-06,,True
+20260730,R09.PRG-D1R-M999,Key milestone finish - PRG-D1R-M999,2027-10-06,2027-10-06,2027-10-06,,True
+20260730,R10,Sum of remaining duration (h),55224.0,55224.0,55224,0.0,True
+20260730,R11,Weighted % complete,23.28,23.28,23.28,0.0,True
+20260730,R12,Critical activity count,11,11,11,0.0,True
+20260730,R13,Data date,2026-07-30,2026-07-30,2026-07-30,,True
+20260730,R14,Baseline reference,BL1,BL1,BL1,,True
+20260730,R15,Source file SHA-256,212d7ec1aa7ab7a81434c49b8bd6fffceeeebe1f7933fb827fdf2f64e4bc9129,212d7ec1aa7ab7a81434c49b8bd6fffceeeebe1f7933fb827fdf2f64e4bc9129,212d7ec1aa7ab7a81434c49b8bd6fffceeeebe1f7933fb827fdf2f64e4bc9129,,True
+20260730,R16,Engine re-schedule matches P6 dates (excl. 1 integrity-flagged),289,289,289,0.0,True
+20260827,R01,Activity count,290,290,290,0.0,True
+20260827,R02.TK_Active,Activities by status - TK_Active,17,17,17,0.0,True
+20260827,R02.TK_Complete,Activities by status - TK_Complete,42,42,42,0.0,True
+20260827,R02.TK_NotStart,Activities by status - TK_NotStart,231,231,231,0.0,True
+20260827,R03.DAR,Activities by asset - DAR,60,60,60,0.0,True
+20260827,R03.LWP,Activities by asset - LWP,59,59,59,0.0,True
+20260827,R03.MTP,Activities by asset - MTP,59,59,59,0.0,True
+20260827,R03.PBR,Activities by asset - PBR,59,59,59,0.0,True
+20260827,R03.PEW,Activities by asset - PEW,34,34,34,0.0,True
+20260827,R03.PRG,Activities by asset - PRG,19,19,19,0.0,True
+20260827,R04.CON,Activities by workstream - CON,121,121,121,0.0,True
+20260827,R04.D1R,Activities by workstream - D1R,17,17,17,0.0,True
+20260827,R04.HOV,Activities by workstream - HOV,32,32,32,0.0,True
+20260827,R04.OPM,Activities by workstream - OPM,44,44,44,0.0,True
+20260827,R04.OTE,Activities by workstream - OTE,21,21,21,0.0,True
+20260827,R04.TNC,Activities by workstream - TNC,55,55,55,0.0,True
+20260827,R05,Relationship count,494,494,494,0.0,True
+20260827,R06,Milestone count,39,39,39,0.0,True
+20260827,R07,Day 1 early finish,2027-10-11,2027-10-11,2027-10-11,,True
+20260827,R08,Day 1 late finish,2027-10-14,2027-10-14,2027-10-14,,True
+20260827,R09.DAR-CON-M142,Key milestone finish - DAR-CON-M142,2027-04-04,2027-04-04,2027-04-04,,True
+20260827,R09.DAR-D1R-M020,Key milestone finish - DAR-D1R-M020,2027-10-04,2027-10-04,2027-10-04,,True
+20260827,R09.LWP-CON-M142,Key milestone finish - LWP-CON-M142,2027-03-30,2027-03-30,2027-03-30,,True
+20260827,R09.LWP-D1R-M020,Key milestone finish - LWP-D1R-M020,2027-09-14,2027-09-14,2027-09-14,,True
+20260827,R09.MTP-CON-M142,Key milestone finish - MTP-CON-M142,2027-02-09,2027-02-09,2027-02-09,,True
+20260827,R09.MTP-D1R-M020,Key milestone finish - MTP-D1R-M020,2027-09-14,2027-09-14,2027-09-14,,True
+20260827,R09.PBR-CON-M142,Key milestone finish - PBR-CON-M142,2027-03-14,2027-03-14,2027-03-14,,True
+20260827,R09.PBR-D1R-M020,Key milestone finish - PBR-D1R-M020,2027-09-08,2027-09-08,2027-09-08,,True
+20260827,R09.PRG-D1R-M010,Key milestone finish - PRG-D1R-M010,2027-04-04,2027-04-04,2027-04-04,,True
+20260827,R09.PRG-D1R-M020,Key milestone finish - PRG-D1R-M020,2027-07-23,2027-07-23,2027-07-23,,True
+20260827,R09.PRG-D1R-M030,Key milestone finish - PRG-D1R-M030,2027-08-19,2027-08-19,2027-08-19,,True
+20260827,R09.PRG-D1R-M040,Key milestone finish - PRG-D1R-M040,2027-10-11,2027-10-11,2027-10-11,,True
+20260827,R09.PRG-D1R-M999,Key milestone finish - PRG-D1R-M999,2027-10-11,2027-10-11,2027-10-11,,True
+20260827,R10,Sum of remaining duration (h),52128.0,52128.0,52128,0.0,True
+20260827,R11,Weighted % complete,26.68,26.68,26.68,0.0,True
+20260827,R12,Critical activity count,18,18,18,0.0,True
+20260827,R13,Data date,2026-08-27,2026-08-27,2026-08-27,,True
+20260827,R14,Baseline reference,BL1,BL1,BL1,,True
+20260827,R15,Source file SHA-256,66f2af2b1069c59717e95b70df8522cf7e0cdffe756e99498714126930fe1dec,66f2af2b1069c59717e95b70df8522cf7e0cdffe756e99498714126930fe1dec,66f2af2b1069c59717e95b70df8522cf7e0cdffe756e99498714126930fe1dec,,True
+20260827,R16,Engine re-schedule matches P6 dates (excl. 2 integrity-flagged),288,288,288,0.0,True
+20260924,R01,Activity count,291,291,291,0.0,True
+20260924,R02.TK_Active,Activities by status - TK_Active,22,22,22,0.0,True
+20260924,R02.TK_Complete,Activities by status - TK_Complete,45,45,45,0.0,True
+20260924,R02.TK_NotStart,Activities by status - TK_NotStart,224,224,224,0.0,True
+20260924,R03.DAR,Activities by asset - DAR,61,61,61,0.0,True
+20260924,R03.LWP,Activities by asset - LWP,59,59,59,0.0,True
+20260924,R03.MTP,Activities by asset - MTP,59,59,59,0.0,True
+20260924,R03.PBR,Activities by asset - PBR,59,59,59,0.0,True
+20260924,R03.PEW,Activities by asset - PEW,34,34,34,0.0,True
+20260924,R03.PRG,Activities by asset - PRG,19,19,19,0.0,True
+20260924,R04.CON,Activities by workstream - CON,122,122,122,0.0,True
+20260924,R04.D1R,Activities by workstream - D1R,17,17,17,0.0,True
+20260924,R04.HOV,Activities by workstream - HOV,32,32,32,0.0,True
+20260924,R04.OPM,Activities by workstream - OPM,44,44,44,0.0,True
+20260924,R04.OTE,Activities by workstream - OTE,21,21,21,0.0,True
+20260924,R04.TNC,Activities by workstream - TNC,55,55,55,0.0,True
+20260924,R05,Relationship count,499,499,499,0.0,True
+20260924,R06,Milestone count,39,39,39,0.0,True
+20260924,R07,Day 1 early finish,2027-10-28,2027-10-28,2027-10-28,,True
+20260924,R08,Day 1 late finish,2027-10-14,2027-10-14,2027-10-14,,True
+20260924,R09.DAR-CON-M142,Key milestone finish - DAR-CON-M142,2027-04-26,2027-04-26,2027-04-26,,True
+20260924,R09.DAR-D1R-M020,Key milestone finish - DAR-D1R-M020,2027-10-21,2027-10-21,2027-10-21,,True
+20260924,R09.LWP-CON-M142,Key milestone finish - LWP-CON-M142,2027-03-30,2027-03-30,2027-03-30,,True
+20260924,R09.LWP-D1R-M020,Key milestone finish - LWP-D1R-M020,2027-09-14,2027-09-14,2027-09-14,,True
+20260924,R09.MTP-CON-M142,Key milestone finish - MTP-CON-M142,2027-02-09,2027-02-09,2027-02-09,,True
+20260924,R09.MTP-D1R-M020,Key milestone finish - MTP-D1R-M020,2027-09-14,2027-09-14,2027-09-14,,True
+20260924,R09.PBR-CON-M142,Key milestone finish - PBR-CON-M142,2027-03-14,2027-03-14,2027-03-14,,True
+20260924,R09.PBR-D1R-M020,Key milestone finish - PBR-D1R-M020,2027-09-08,2027-09-08,2027-09-08,,True
+20260924,R09.PRG-D1R-M010,Key milestone finish - PRG-D1R-M010,2027-04-26,2027-04-26,2027-04-26,,True
+20260924,R09.PRG-D1R-M020,Key milestone finish - PRG-D1R-M020,2027-07-23,2027-07-23,2027-07-23,,True
+20260924,R09.PRG-D1R-M030,Key milestone finish - PRG-D1R-M030,2027-09-02,2027-09-02,2027-09-02,,True
+20260924,R09.PRG-D1R-M040,Key milestone finish - PRG-D1R-M040,2027-10-28,2027-10-28,2027-10-28,,True
+20260924,R09.PRG-D1R-M999,Key milestone finish - PRG-D1R-M999,2027-10-28,2027-10-28,2027-10-28,,True
+20260924,R10,Sum of remaining duration (h),49464.0,49464.0,49464,0.0,True
+20260924,R11,Weighted % complete,30.01,30.01,30.01,0.0,True
+20260924,R12,Critical activity count,43,43,43,0.0,True
+20260924,R13,Data date,2026-09-24,2026-09-24,2026-09-24,,True
+20260924,R14,Baseline reference,BL1,BL1,BL1,,True
+20260924,R15,Source file SHA-256,333e0124c4c857b957061ee3517c2c7f0d01cde48a26453f5307fbf7a57cc59a,333e0124c4c857b957061ee3517c2c7f0d01cde48a26453f5307fbf7a57cc59a,333e0124c4c857b957061ee3517c2c7f0d01cde48a26453f5307fbf7a57cc59a,,True
+20260924,R16,Engine re-schedule matches P6 dates,291,291,291,0.0,True
+20261029,R01,Activity count,291,291,291,0.0,True
+20261029,R02.TK_Active,Activities by status - TK_Active,31,31,31,0.0,True
+20261029,R02.TK_Complete,Activities by status - TK_Complete,55,55,55,0.0,True
+20261029,R02.TK_NotStart,Activities by status - TK_NotStart,205,205,205,0.0,True
+20261029,R03.DAR,Activities by asset - DAR,61,61,61,0.0,True
+20261029,R03.LWP,Activities by asset - LWP,59,59,59,0.0,True
+20261029,R03.MTP,Activities by asset - MTP,59,59,59,0.0,True
+20261029,R03.PBR,Activities by asset - PBR,59,59,59,0.0,True
+20261029,R03.PEW,Activities by asset - PEW,34,34,34,0.0,True
+20261029,R03.PRG,Activities by asset - PRG,19,19,19,0.0,True
+20261029,R04.CON,Activities by workstream - CON,122,122,122,0.0,True
+20261029,R04.D1R,Activities by workstream - D1R,17,17,17,0.0,True
+20261029,R04.HOV,Activities by workstream - HOV,32,32,32,0.0,True
+20261029,R04.OPM,Activities by workstream - OPM,44,44,44,0.0,True
+20261029,R04.OTE,Activities by workstream - OTE,21,21,21,0.0,True
+20261029,R04.TNC,Activities by workstream - TNC,55,55,55,0.0,True
+20261029,R05,Relationship count,499,499,499,0.0,True
+20261029,R06,Milestone count,39,39,39,0.0,True
+20261029,R07,Day 1 early finish,2027-10-21,2027-10-21,2027-10-21,,True
+20261029,R08,Day 1 late finish,2027-10-14,2027-10-14,2027-10-14,,True
+20261029,R09.DAR-CON-M142,Key milestone finish - DAR-CON-M142,2027-04-20,2027-04-20,2027-04-20,,True
+20261029,R09.DAR-D1R-M020,Key milestone finish - DAR-D1R-M020,2027-10-14,2027-10-14,2027-10-14,,True
+20261029,R09.LWP-CON-M142,Key milestone finish - LWP-CON-M142,2027-03-30,2027-03-30,2027-03-30,,True
+20261029,R09.LWP-D1R-M020,Key milestone finish - LWP-D1R-M020,2027-09-14,2027-09-14,2027-09-14,,True
+20261029,R09.MTP-CON-M142,Key milestone finish - MTP-CON-M142,2027-02-09,2027-02-09,2027-02-09,,True
+20261029,R09.MTP-D1R-M020,Key milestone finish - MTP-D1R-M020,2027-09-14,2027-09-14,2027-09-14,,True
+20261029,R09.PBR-CON-M142,Key milestone finish - PBR-CON-M142,2027-03-14,2027-03-14,2027-03-14,,True
+20261029,R09.PBR-D1R-M020,Key milestone finish - PBR-D1R-M020,2027-09-08,2027-09-08,2027-09-08,,True
+20261029,R09.PRG-D1R-M010,Key milestone finish - PRG-D1R-M010,2027-04-20,2027-04-20,2027-04-20,,True
+20261029,R09.PRG-D1R-M020,Key milestone finish - PRG-D1R-M020,2027-07-23,2027-07-23,2027-07-23,,True
+20261029,R09.PRG-D1R-M030,Key milestone finish - PRG-D1R-M030,2027-08-26,2027-08-26,2027-08-26,,True
+20261029,R09.PRG-D1R-M040,Key milestone finish - PRG-D1R-M040,2027-10-21,2027-10-21,2027-10-21,,True
+20261029,R09.PRG-D1R-M999,Key milestone finish - PRG-D1R-M999,2027-10-21,2027-10-21,2027-10-21,,True
+20261029,R10,Sum of remaining duration (h),42984.0,42984.0,42984,0.0,True
+20261029,R11,Weighted % complete,38.58,38.58,38.58,0.0,True
+20261029,R12,Critical activity count,39,39,39,0.0,True
+20261029,R13,Data date,2026-10-29,2026-10-29,2026-10-29,,True
+20261029,R14,Baseline reference,BL1,BL1,BL1,,True
+20261029,R15,Source file SHA-256,bf458482b5583046c5a82b518236c285972ed206dc86108f6fcf4f43d9a02d02,bf458482b5583046c5a82b518236c285972ed206dc86108f6fcf4f43d9a02d02,bf458482b5583046c5a82b518236c285972ed206dc86108f6fcf4f43d9a02d02,,True
+20261029,R16,Engine re-schedule matches P6 dates,291,291,291,0.0,True

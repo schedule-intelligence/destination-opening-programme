@@ -1,0 +1,35 @@
+interface_id,giver,receiver,description
+IF-01,PEW-TNC-M021,MTP-TNC-2010,Permanent power to Mesa Theme Park for pre-commissioning
+IF-02,PEW-TNC-M021,LWP-TNC-2010,Permanent power to Lagoon Water Park for pre-commissioning
+IF-03,PEW-TNC-M031,DAR-TNC-2010,Permanent power to Dune Arena for pre-commissioning
+IF-04,PEW-TNC-M031,PBR-TNC-2010,Permanent power to Palm Boulevard (Retail & Dining) for pre-commissioning
+IF-05,PEW-TNC-M041,MTP-TNC-2110,District cooling to Mesa Theme Park for HVAC commissioning
+IF-06,PEW-TNC-M041,LWP-TNC-2110,District cooling to Lagoon Water Park for HVAC commissioning
+IF-07,PEW-TNC-M041,DAR-TNC-2110,District cooling to Dune Arena for HVAC commissioning
+IF-08,PEW-TNC-M041,PBR-TNC-2110,District cooling to Palm Boulevard (Retail & Dining) for HVAC commissioning
+IF-09,MTP-CON-M142,MTP-TNC-2210,Mesa Theme Park construction complete to IST (construction > T&C)
+IF-10,LWP-CON-M142,LWP-TNC-2210,Lagoon Water Park construction complete to IST (construction > T&C)
+IF-11,DAR-CON-M142,DAR-TNC-2210,Dune Arena construction complete to IST (construction > T&C)
+IF-12,PBR-CON-M142,PBR-TNC-2210,Palm Boulevard (Retail & Dining) construction complete to IST (construction > T&C)
+IF-13,MTP-TNC-M220,MTP-OPM-M120,Mesa Theme Park T&C complete to operator site access (T&C > operator)
+IF-14,LWP-TNC-M220,LWP-OPM-M120,Lagoon Water Park T&C complete to operator site access (T&C > operator)
+IF-15,DAR-TNC-M220,DAR-OPM-M120,Dune Arena T&C complete to operator site access (T&C > operator)
+IF-16,PBR-TNC-M220,PBR-OPM-M120,Palm Boulevard (Retail & Dining) T&C complete to operator site access (T&C > operator)
+IF-17,MTP-TNC-M220,MTP-HOV-3110,Mesa Theme Park T&C complete to authority inspection (T&C > handover)
+IF-18,LWP-TNC-M220,LWP-HOV-3110,Lagoon Water Park T&C complete to authority inspection (T&C > handover)
+IF-19,DAR-TNC-M220,DAR-HOV-3110,Dune Arena T&C complete to authority inspection (T&C > handover)
+IF-20,PBR-TNC-M220,PBR-HOV-3110,Palm Boulevard (Retail & Dining) T&C complete to authority inspection (T&C > handover)
+IF-21,MTP-HOV-M130,MTP-OPM-4130,Mesa Theme Park occupancy certificate to operator familiarisation
+IF-22,LWP-HOV-M130,LWP-OPM-4130,Lagoon Water Park occupancy certificate to operator familiarisation
+IF-23,DAR-HOV-M130,DAR-OPM-4130,Dune Arena occupancy certificate to operator familiarisation
+IF-24,PBR-HOV-M130,PBR-OPM-4130,Palm Boulevard (Retail & Dining) occupancy certificate to operator familiarisation
+IF-25,MTP-HOV-M230,MTP-OTE-5010,Mesa Theme Park handover to operator to operational trials
+IF-26,LWP-HOV-M230,LWP-OTE-5010,Lagoon Water Park handover to operator to operational trials
+IF-27,DAR-HOV-M230,DAR-OTE-5010,Dune Arena handover to operator to operational trials
+IF-28,PBR-HOV-M230,PBR-OTE-5010,Palm Boulevard (Retail & Dining) handover to operator to operational trials
+IF-29,MTP-D1R-M020,PRG-D1R-6010,Mesa Theme Park Day 1 ready to programme go/no-go review
+IF-30,LWP-D1R-M020,PRG-D1R-6010,Lagoon Water Park Day 1 ready to programme go/no-go review
+IF-31,DAR-D1R-M020,PRG-D1R-6010,Dune Arena Day 1 ready to programme go/no-go review
+IF-32,PBR-D1R-M020,PRG-D1R-6010,Palm Boulevard (Retail & Dining) Day 1 ready to programme go/no-go review
+IF-33,PEW-TNC-M071,PEW-OTE-5010,Transit ready to transit trial running
+IF-34,PEW-OTE-5010,PRG-OTE-5020,Transit trial running to integrated destination test event

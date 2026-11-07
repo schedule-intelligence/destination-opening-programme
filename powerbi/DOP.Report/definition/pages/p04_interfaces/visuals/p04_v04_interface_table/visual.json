@@ -1,0 +1,273 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
+  "name": "p04_v04_interface_table",
+  "position": {
+    "x": 452,
+    "y": 500,
+    "z": 7000,
+    "height": 204,
+    "width": 812,
+    "tabOrder": 7000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_interface"
+                    }
+                  },
+                  "Property": "interface_id"
+                }
+              },
+              "queryRef": "fact_interface.interface_id",
+              "nativeQueryRef": "interface_id",
+              "displayName": "Interface"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_interface"
+                    }
+                  },
+                  "Property": "description"
+                }
+              },
+              "queryRef": "fact_interface.description",
+              "nativeQueryRef": "description",
+              "displayName": "Description"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_interface"
+                    }
+                  },
+                  "Property": "giver_owner"
+                }
+              },
+              "queryRef": "fact_interface.giver_owner",
+              "nativeQueryRef": "giver_owner",
+              "displayName": "Giver"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_interface"
+                    }
+                  },
+                  "Property": "receiver_owner"
+                }
+              },
+              "queryRef": "fact_interface.receiver_owner",
+              "nativeQueryRef": "receiver_owner",
+              "displayName": "Receiver"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_interface"
+                    }
+                  },
+                  "Property": "need_by"
+                }
+              },
+              "queryRef": "fact_interface.need_by",
+              "nativeQueryRef": "need_by",
+              "displayName": "Need by"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_interface"
+                    }
+                  },
+                  "Property": "giver_forecast"
+                }
+              },
+              "queryRef": "fact_interface.giver_forecast",
+              "nativeQueryRef": "giver_forecast",
+              "displayName": "Giver forecast"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_interface"
+                    }
+                  },
+                  "Property": "gap_days"
+                }
+              },
+              "queryRef": "fact_interface.gap_days",
+              "nativeQueryRef": "gap_days",
+              "displayName": "Gap (days)"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_interface"
+                    }
+                  },
+                  "Property": "status"
+                }
+              },
+              "queryRef": "fact_interface.status",
+              "nativeQueryRef": "status",
+              "displayName": "Status"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_activity"
+                    }
+                  },
+                  "Property": "activity_id"
+                }
+              },
+              "queryRef": "dim_activity.activity_id",
+              "nativeQueryRef": "activity_id",
+              "displayName": "Giver activity"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "fact_interface"
+                  }
+                },
+                "Property": "gap_days"
+              }
+            },
+            "direction": "Descending"
+          }
+        ]
+      }
+    },
+    "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "columnAdjustment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'growToFit'"
+                }
+              }
+            },
+            "autoSizeColumnWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "values": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Interfaces sorted by gap (calendar days; positive = late)'"
+                }
+              }
+            },
+            "titleWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Interfaces sorted by gap (calendar days; positive = late)'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

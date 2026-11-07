@@ -1,0 +1,43 @@
+period,data_date,step,date,activity,cycle
+S1,2026-05-28,T-2,2026-05-24,Progress updates due from schedule owners,monthly
+S1,2026-05-28,T0,2026-05-28,Data date / cut-off; P6 schedule frozen for the period,monthly
+S1,2026-05-28,T+1,2026-06-01,Planner QA: DCMA and update-discipline checks; owner queries issued,monthly
+S1,2026-05-28,T+2,2026-06-02,"Schedule re-run (F9), XER export, pipeline run and reconciliation gate",monthly
+S1,2026-05-28,T+3,2026-06-03,Dashboard refresh and draft pack; owner sign-off of variances,monthly
+S1,2026-05-28,T+4,2026-06-04,Pack issued (monthly steering committee / fortnightly flash),monthly
+S1,2026-05-28,T+5,2026-06-07,Forum: steering committee (monthly) or delivery review (fortnightly),monthly
+S2,2026-06-25,T-2,2026-06-23,Progress updates due from schedule owners,monthly
+S2,2026-06-25,T0,2026-06-25,Data date / cut-off; P6 schedule frozen for the period,monthly
+S2,2026-06-25,T+1,2026-06-28,Planner QA: DCMA and update-discipline checks; owner queries issued,monthly
+S2,2026-06-25,T+2,2026-06-29,"Schedule re-run (F9), XER export, pipeline run and reconciliation gate",monthly
+S2,2026-06-25,T+3,2026-06-30,Dashboard refresh and draft pack; owner sign-off of variances,monthly
+S2,2026-06-25,T+4,2026-07-01,Pack issued (monthly steering committee / fortnightly flash),monthly
+S2,2026-06-25,T+5,2026-07-02,Forum: steering committee (monthly) or delivery review (fortnightly),monthly
+S3,2026-07-30,T-2,2026-07-28,Progress updates due from schedule owners,monthly
+S3,2026-07-30,T0,2026-07-30,Data date / cut-off; P6 schedule frozen for the period,monthly
+S3,2026-07-30,T+1,2026-08-02,Planner QA: DCMA and update-discipline checks; owner queries issued,monthly
+S3,2026-07-30,T+2,2026-08-03,"Schedule re-run (F9), XER export, pipeline run and reconciliation gate",monthly
+S3,2026-07-30,T+3,2026-08-04,Dashboard refresh and draft pack; owner sign-off of variances,monthly
+S3,2026-07-30,T+4,2026-08-05,Pack issued (monthly steering committee / fortnightly flash),monthly
+S3,2026-07-30,T+5,2026-08-06,Forum: steering committee (monthly) or delivery review (fortnightly),monthly
+S4,2026-08-27,T-2,2026-08-25,Progress updates due from schedule owners,monthly
+S4,2026-08-27,T0,2026-08-27,Data date / cut-off; P6 schedule frozen for the period,monthly
+S4,2026-08-27,T+1,2026-08-30,Planner QA: DCMA and update-discipline checks; owner queries issued,monthly
+S4,2026-08-27,T+2,2026-08-31,"Schedule re-run (F9), XER export, pipeline run and reconciliation gate",monthly
+S4,2026-08-27,T+3,2026-09-01,Dashboard refresh and draft pack; owner sign-off of variances,monthly
+S4,2026-08-27,T+4,2026-09-02,Pack issued (monthly steering committee / fortnightly flash),monthly
+S4,2026-08-27,T+5,2026-09-03,Forum: steering committee (monthly) or delivery review (fortnightly),monthly
+S5,2026-09-24,T-2,2026-09-21,Progress updates due from schedule owners,monthly
+S5,2026-09-24,T0,2026-09-24,Data date / cut-off; P6 schedule frozen for the period,monthly
+S5,2026-09-24,T+1,2026-09-27,Planner QA: DCMA and update-discipline checks; owner queries issued,monthly
+S5,2026-09-24,T+2,2026-09-28,"Schedule re-run (F9), XER export, pipeline run and reconciliation gate",monthly
+S5,2026-09-24,T+3,2026-09-29,Dashboard refresh and draft pack; owner sign-off of variances,monthly
+S5,2026-09-24,T+4,2026-09-30,Pack issued (monthly steering committee / fortnightly flash),monthly
+S5,2026-09-24,T+5,2026-10-01,Forum: steering committee (monthly) or delivery review (fortnightly),monthly
+S6,2026-10-29,T-2,2026-10-27,Progress updates due from schedule owners,monthly
+S6,2026-10-29,T0,2026-10-29,Data date / cut-off; P6 schedule frozen for the period,monthly
+S6,2026-10-29,T+1,2026-11-01,Planner QA: DCMA and update-discipline checks; owner queries issued,monthly
+S6,2026-10-29,T+2,2026-11-02,"Schedule re-run (F9), XER export, pipeline run and reconciliation gate",monthly
+S6,2026-10-29,T+3,2026-11-03,Dashboard refresh and draft pack; owner sign-off of variances,monthly
+S6,2026-10-29,T+4,2026-11-04,Pack issued (monthly steering committee / fortnightly flash),monthly
+S6,2026-10-29,T+5,2026-11-05,Forum: steering committee (monthly) or delivery review (fortnightly),monthly

@@ -1,0 +1,157 @@
+snapshot_id,check_id,check_name,group,kind,threshold,weight,value,denominator,count,passed,score,definition,playbook
+20260528,D01,Missing logic,DCMA,pct_max,5.0,10,1.498,267.0,4,True,10.0,Incomplete tasks/milestones without a predecessor or successor (project start and Day 1 excluded),missing-logic
+20260528,D02,Leads (negative lags),DCMA,count_max,0.0,6,2.0,473.0,2,False,3.6,Relationships with a negative lag to an incomplete successor,leads
+20260528,D03,Lags,DCMA,pct_max,5.0,4,3.594,473.0,17,True,4.0,Share of relationships (incomplete successor) with a positive lag,lags
+20260528,D04,Relationship types (FS),DCMA,pct_min,90.0,4,93.235,473.0,32,True,4.0,Share of relationships that are Finish-to-Start,relationship-types
+20260528,D05,Hard constraints,DCMA,pct_max,5.0,8,1.124,267.0,3,True,8.0,Share of incomplete activities with MSO/MFO/SNLT/FNLT/Start On/Finish On,hard-constraints
+20260528,D06,High float (> 44 d),DCMA,pct_max,5.0,5,22.472,267.0,60,False,0.0,Share of incomplete activities with total float above 44 working days,high-float
+20260528,D07,Negative float,DCMA,count_max,0.0,10,0.0,267.0,0,True,10.0,Incomplete activities with total float below zero,negative-float
+20260528,D08,High duration (> 44 d),DCMA,pct_max,5.0,5,2.183,229.0,5,True,5.0,Share of incomplete tasks with original duration above 44 working days,high-duration
+20260528,D09,Invalid dates,DCMA,count_max,0.0,10,0.0,289.0,0,True,10.0,"Actual dates after the data date, or forecast dates before it",invalid-dates
+20260528,D10,Resources,DCMA,na,,0,,,,,0.0,Not applicable: the IMS is not resource-loaded (time-based integration schedule),resources
+20260528,D11,Missed tasks,DCMA,pct_max,5.0,5,5.882,17.0,1,False,4.12,Share of tasks due by the data date (baseline finish) that finished late or are not finished,missed-tasks
+20260528,D12,Critical path test,DCMA,pass,,6,1.0,1.0,0,True,6.0,Adding 600 working days to a longest-path task moves Day 1 by the same amount,critical-path-test
+20260528,D13,CPLI,DCMA,ratio_min,0.95,5,1.029,,0,True,5.0,Critical Path Length Index = (critical path length + Day 1 total float) / critical path length,cpli
+20260528,D14,BEI,DCMA,ratio_min,0.95,5,0.941,17.0,1,False,4.56,Baseline Execution Index = tasks completed / tasks due by the data date,bei
+20260528,U01,Out-of-sequence progress,Update discipline,count_max,0.0,4,0.0,289.0,0,True,4.0,Started although an FS predecessor is not complete (or an SS predecessor not started),out-of-sequence
+20260528,U02,Actuals after data date,Update discipline,count_max,0.0,0,0.0,289.0,0,True,0.0,Actual start/finish later than the data date (also counted in D09),invalid-dates
+20260528,U03,Remaining duration on completed,Update discipline,count_max,0.0,2,0.0,289.0,0,True,2.0,Completed activities that still carry remaining duration,remaining-on-complete
+20260528,U04,Progress without actual start,Update discipline,count_max,0.0,2,0.0,289.0,0,True,2.0,Physical % or consumed duration recorded with no actual start,progress-without-start
+20260528,U05,Missing activity codes,Update discipline,count_max,0.0,2,3.0,289.0,3,False,0.8,"Activities without Workstream, Asset or Owner code",missing-codes
+20260528,U06,Duplicate names,Update discipline,count_max,0.0,1,4.0,289.0,4,False,0.2,Activities sharing a name within the same asset (WBS level 1),duplicate-names
+20260528,U07,LOE driving work / critical,Update discipline,count_max,0.0,1,0.0,289.0,0,True,1.0,"Level-of-effort activities with successors, on the longest path or with TF <= 0",loe
+20260528,U08,Data date matches cut-off,Update discipline,pass,,1,1.0,1.0,0,True,1.0,Project data date equals the cut-off in the reporting calendar,data-date
+20260528,U09,Stale in-progress,Update discipline,count_max,0.0,2,0.0,289.0,0,True,2.0,In progress in both periods with no change in remaining duration or % complete,stale
+20260528,U10,SF relationships,Update discipline,count_max,0.0,1,2.0,289.0,2,False,0.6,Start-to-Finish relationships (incomplete successor),relationship-types
+20260528,U11,Missing from baseline,Update discipline,count_max,0.0,1,0.0,289.0,0,True,1.0,Activities not present in the baseline in force,baseline
+20260528,U12,Long lags (> 20 d),Update discipline,count_max,0.0,0,3.0,289.0,3,False,0.0,Relationships with lag above 20 working days (informational),lags
+20260625,D01,Missing logic,DCMA,pct_max,5.0,10,1.527,262.0,4,True,10.0,Incomplete tasks/milestones without a predecessor or successor (project start and Day 1 excluded),missing-logic
+20260625,D02,Leads (negative lags),DCMA,count_max,0.0,6,2.0,469.0,2,False,3.6,Relationships with a negative lag to an incomplete successor,leads
+20260625,D03,Lags,DCMA,pct_max,5.0,4,3.625,469.0,17,True,4.0,Share of relationships (incomplete successor) with a positive lag,lags
+20260625,D04,Relationship types (FS),DCMA,pct_min,90.0,4,93.177,469.0,32,True,4.0,Share of relationships that are Finish-to-Start,relationship-types
+20260625,D05,Hard constraints,DCMA,pct_max,5.0,8,1.145,262.0,3,True,8.0,Share of incomplete activities with MSO/MFO/SNLT/FNLT/Start On/Finish On,hard-constraints
+20260625,D06,High float (> 44 d),DCMA,pct_max,5.0,5,22.901,262.0,60,False,0.0,Share of incomplete activities with total float above 44 working days,high-float
+20260625,D07,Negative float,DCMA,count_max,0.0,10,0.0,262.0,0,True,10.0,Incomplete activities with total float below zero,negative-float
+20260625,D08,High duration (> 44 d),DCMA,pct_max,5.0,5,2.679,224.0,6,True,5.0,Share of incomplete tasks with original duration above 44 working days,high-duration
+20260625,D09,Invalid dates,DCMA,count_max,0.0,10,1.0,290.0,1,False,8.0,"Actual dates after the data date, or forecast dates before it",invalid-dates
+20260625,D10,Resources,DCMA,na,,0,,,,,0.0,Not applicable: the IMS is not resource-loaded (time-based integration schedule),resources
+20260625,D11,Missed tasks,DCMA,pct_max,5.0,5,13.043,23.0,3,False,0.0,Share of tasks due by the data date (baseline finish) that finished late or are not finished,missed-tasks
+20260625,D12,Critical path test,DCMA,pass,,6,1.0,1.0,0,True,6.0,Adding 600 working days to a longest-path task moves Day 1 by the same amount,critical-path-test
+20260625,D13,CPLI,DCMA,ratio_min,0.95,5,1.03,,0,True,5.0,Critical Path Length Index = (critical path length + Day 1 total float) / critical path length,cpli
+20260625,D14,BEI,DCMA,ratio_min,0.95,5,0.957,23.0,3,True,5.0,Baseline Execution Index = tasks completed / tasks due by the data date,bei
+20260625,U01,Out-of-sequence progress,Update discipline,count_max,0.0,4,1.0,290.0,1,False,3.2,Started although an FS predecessor is not complete (or an SS predecessor not started),out-of-sequence
+20260625,U02,Actuals after data date,Update discipline,count_max,0.0,0,1.0,290.0,1,False,0.0,Actual start/finish later than the data date (also counted in D09),invalid-dates
+20260625,U03,Remaining duration on completed,Update discipline,count_max,0.0,2,0.0,290.0,0,True,2.0,Completed activities that still carry remaining duration,remaining-on-complete
+20260625,U04,Progress without actual start,Update discipline,count_max,0.0,2,0.0,290.0,0,True,2.0,Physical % or consumed duration recorded with no actual start,progress-without-start
+20260625,U05,Missing activity codes,Update discipline,count_max,0.0,2,3.0,290.0,3,False,0.8,"Activities without Workstream, Asset or Owner code",missing-codes
+20260625,U06,Duplicate names,Update discipline,count_max,0.0,1,4.0,290.0,4,False,0.2,Activities sharing a name within the same asset (WBS level 1),duplicate-names
+20260625,U07,LOE driving work / critical,Update discipline,count_max,0.0,1,0.0,290.0,0,True,1.0,"Level-of-effort activities with successors, on the longest path or with TF <= 0",loe
+20260625,U08,Data date matches cut-off,Update discipline,pass,,1,1.0,1.0,0,True,1.0,Project data date equals the cut-off in the reporting calendar,data-date
+20260625,U09,Stale in-progress,Update discipline,count_max,0.0,2,0.0,290.0,0,True,2.0,In progress in both periods with no change in remaining duration or % complete,stale
+20260625,U10,SF relationships,Update discipline,count_max,0.0,1,2.0,290.0,2,False,0.6,Start-to-Finish relationships (incomplete successor),relationship-types
+20260625,U11,Missing from baseline,Update discipline,count_max,0.0,1,1.0,290.0,1,False,0.8,Activities not present in the baseline in force,baseline
+20260625,U12,Long lags (> 20 d),Update discipline,count_max,0.0,0,3.0,290.0,3,False,0.0,Relationships with lag above 20 working days (informational),lags
+20260730,D01,Missing logic,DCMA,pct_max,5.0,10,1.19,252.0,3,True,10.0,Incomplete tasks/milestones without a predecessor or successor (project start and Day 1 excluded),missing-logic
+20260730,D02,Leads (negative lags),DCMA,count_max,0.0,6,2.0,459.0,2,False,3.6,Relationships with a negative lag to an incomplete successor,leads
+20260730,D03,Lags,DCMA,pct_max,5.0,4,4.139,459.0,19,True,4.0,Share of relationships (incomplete successor) with a positive lag,lags
+20260730,D04,Relationship types (FS),DCMA,pct_min,90.0,4,92.593,459.0,34,True,4.0,Share of relationships that are Finish-to-Start,relationship-types
+20260730,D05,Hard constraints,DCMA,pct_max,5.0,8,0.794,252.0,2,True,8.0,Share of incomplete activities with MSO/MFO/SNLT/FNLT/Start On/Finish On,hard-constraints
+20260730,D06,High float (> 44 d),DCMA,pct_max,5.0,5,24.603,252.0,62,False,0.0,Share of incomplete activities with total float above 44 working days,high-float
+20260730,D07,Negative float,DCMA,count_max,0.0,10,0.0,252.0,0,True,10.0,Incomplete activities with total float below zero,negative-float
+20260730,D08,High duration (> 44 d),DCMA,pct_max,5.0,5,1.869,214.0,4,True,5.0,Share of incomplete tasks with original duration above 44 working days,high-duration
+20260730,D09,Invalid dates,DCMA,count_max,0.0,10,0.0,290.0,0,True,10.0,"Actual dates after the data date, or forecast dates before it",invalid-dates
+20260730,D10,Resources,DCMA,na,,0,,,,,0.0,Not applicable: the IMS is not resource-loaded (time-based integration schedule),resources
+20260730,D11,Missed tasks,DCMA,pct_max,5.0,5,0.0,32.0,0,True,5.0,Share of tasks due by the data date (baseline finish) that finished late or are not finished,missed-tasks
+20260730,D12,Critical path test,DCMA,pass,,6,1.0,1.0,0,True,6.0,Adding 600 working days to a longest-path task moves Day 1 by the same amount,critical-path-test
+20260730,D13,CPLI,DCMA,ratio_min,0.95,5,1.019,,0,True,5.0,Critical Path Length Index = (critical path length + Day 1 total float) / critical path length,cpli
+20260730,D14,BEI,DCMA,ratio_min,0.95,5,1.0,32.0,0,True,5.0,Baseline Execution Index = tasks completed / tasks due by the data date,bei
+20260730,U01,Out-of-sequence progress,Update discipline,count_max,0.0,4,0.0,290.0,0,True,4.0,Started although an FS predecessor is not complete (or an SS predecessor not started),out-of-sequence
+20260730,U02,Actuals after data date,Update discipline,count_max,0.0,0,0.0,290.0,0,True,0.0,Actual start/finish later than the data date (also counted in D09),invalid-dates
+20260730,U03,Remaining duration on completed,Update discipline,count_max,0.0,2,1.0,290.0,1,False,1.6,Completed activities that still carry remaining duration,remaining-on-complete
+20260730,U04,Progress without actual start,Update discipline,count_max,0.0,2,0.0,290.0,0,True,2.0,Physical % or consumed duration recorded with no actual start,progress-without-start
+20260730,U05,Missing activity codes,Update discipline,count_max,0.0,2,2.0,290.0,2,False,1.2,"Activities without Workstream, Asset or Owner code",missing-codes
+20260730,U06,Duplicate names,Update discipline,count_max,0.0,1,2.0,290.0,2,False,0.6,Activities sharing a name within the same asset (WBS level 1),duplicate-names
+20260730,U07,LOE driving work / critical,Update discipline,count_max,0.0,1,0.0,290.0,0,True,1.0,"Level-of-effort activities with successors, on the longest path or with TF <= 0",loe
+20260730,U08,Data date matches cut-off,Update discipline,pass,,1,1.0,1.0,0,True,1.0,Project data date equals the cut-off in the reporting calendar,data-date
+20260730,U09,Stale in-progress,Update discipline,count_max,0.0,2,0.0,290.0,0,True,2.0,In progress in both periods with no change in remaining duration or % complete,stale
+20260730,U10,SF relationships,Update discipline,count_max,0.0,1,2.0,290.0,2,False,0.6,Start-to-Finish relationships (incomplete successor),relationship-types
+20260730,U11,Missing from baseline,Update discipline,count_max,0.0,1,0.0,290.0,0,True,1.0,Activities not present in the baseline in force,baseline
+20260730,U12,Long lags (> 20 d),Update discipline,count_max,0.0,0,4.0,290.0,4,False,0.0,Relationships with lag above 20 working days (informational),lags
+20260827,D01,Missing logic,DCMA,pct_max,5.0,10,1.24,242.0,3,True,10.0,Incomplete tasks/milestones without a predecessor or successor (project start and Day 1 excluded),missing-logic
+20260827,D02,Leads (negative lags),DCMA,count_max,0.0,6,2.0,443.0,2,False,3.6,Relationships with a negative lag to an incomplete successor,leads
+20260827,D03,Lags,DCMA,pct_max,5.0,4,4.515,443.0,20,True,4.0,Share of relationships (incomplete successor) with a positive lag,lags
+20260827,D04,Relationship types (FS),DCMA,pct_min,90.0,4,92.099,443.0,35,True,4.0,Share of relationships that are Finish-to-Start,relationship-types
+20260827,D05,Hard constraints,DCMA,pct_max,5.0,8,1.24,242.0,3,True,8.0,Share of incomplete activities with MSO/MFO/SNLT/FNLT/Start On/Finish On,hard-constraints
+20260827,D06,High float (> 44 d),DCMA,pct_max,5.0,5,25.207,242.0,61,False,0.0,Share of incomplete activities with total float above 44 working days,high-float
+20260827,D07,Negative float,DCMA,count_max,0.0,10,11.0,242.0,11,False,0.0,Incomplete activities with total float below zero,negative-float
+20260827,D08,High duration (> 44 d),DCMA,pct_max,5.0,5,0.49,204.0,1,True,5.0,Share of incomplete tasks with original duration above 44 working days,high-duration
+20260827,D09,Invalid dates,DCMA,count_max,0.0,10,1.0,290.0,1,False,8.0,"Actual dates after the data date, or forecast dates before it",invalid-dates
+20260827,D10,Resources,DCMA,na,,0,,,,,0.0,Not applicable: the IMS is not resource-loaded (time-based integration schedule),resources
+20260827,D11,Missed tasks,DCMA,pct_max,5.0,5,2.326,43.0,1,True,5.0,Share of tasks due by the data date (baseline finish) that finished late or are not finished,missed-tasks
+20260827,D12,Critical path test,DCMA,pass,,6,1.0,1.0,0,True,6.0,Adding 600 working days to a longest-path task moves Day 1 by the same amount,critical-path-test
+20260827,D13,CPLI,DCMA,ratio_min,0.95,5,1.007,,0,True,5.0,Critical Path Length Index = (critical path length + Day 1 total float) / critical path length,cpli
+20260827,D14,BEI,DCMA,ratio_min,0.95,5,0.977,43.0,1,True,5.0,Baseline Execution Index = tasks completed / tasks due by the data date,bei
+20260827,U01,Out-of-sequence progress,Update discipline,count_max,0.0,4,0.0,290.0,0,True,4.0,Started although an FS predecessor is not complete (or an SS predecessor not started),out-of-sequence
+20260827,U02,Actuals after data date,Update discipline,count_max,0.0,0,0.0,290.0,0,True,0.0,Actual start/finish later than the data date (also counted in D09),invalid-dates
+20260827,U03,Remaining duration on completed,Update discipline,count_max,0.0,2,0.0,290.0,0,True,2.0,Completed activities that still carry remaining duration,remaining-on-complete
+20260827,U04,Progress without actual start,Update discipline,count_max,0.0,2,1.0,290.0,1,False,1.6,Physical % or consumed duration recorded with no actual start,progress-without-start
+20260827,U05,Missing activity codes,Update discipline,count_max,0.0,2,1.0,290.0,1,False,1.6,"Activities without Workstream, Asset or Owner code",missing-codes
+20260827,U06,Duplicate names,Update discipline,count_max,0.0,1,2.0,290.0,2,False,0.6,Activities sharing a name within the same asset (WBS level 1),duplicate-names
+20260827,U07,LOE driving work / critical,Update discipline,count_max,0.0,1,1.0,290.0,1,False,0.8,"Level-of-effort activities with successors, on the longest path or with TF <= 0",loe
+20260827,U08,Data date matches cut-off,Update discipline,pass,,1,1.0,1.0,0,True,1.0,Project data date equals the cut-off in the reporting calendar,data-date
+20260827,U09,Stale in-progress,Update discipline,count_max,0.0,2,1.0,290.0,1,False,1.6,In progress in both periods with no change in remaining duration or % complete,stale
+20260827,U10,SF relationships,Update discipline,count_max,0.0,1,2.0,290.0,2,False,0.6,Start-to-Finish relationships (incomplete successor),relationship-types
+20260827,U11,Missing from baseline,Update discipline,count_max,0.0,1,0.0,290.0,0,True,1.0,Activities not present in the baseline in force,baseline
+20260827,U12,Long lags (> 20 d),Update discipline,count_max,0.0,0,4.0,290.0,4,False,0.0,Relationships with lag above 20 working days (informational),lags
+20260924,D01,Missing logic,DCMA,pct_max,5.0,10,0.833,240.0,2,True,10.0,Incomplete tasks/milestones without a predecessor or successor (project start and Day 1 excluded),missing-logic
+20260924,D02,Leads (negative lags),DCMA,count_max,0.0,6,2.0,443.0,2,False,3.6,Relationships with a negative lag to an incomplete successor,leads
+20260924,D03,Lags,DCMA,pct_max,5.0,4,4.515,443.0,20,True,4.0,Share of relationships (incomplete successor) with a positive lag,lags
+20260924,D04,Relationship types (FS),DCMA,pct_min,90.0,4,92.099,443.0,35,True,4.0,Share of relationships that are Finish-to-Start,relationship-types
+20260924,D05,Hard constraints,DCMA,pct_max,5.0,8,1.25,240.0,3,True,8.0,Share of incomplete activities with MSO/MFO/SNLT/FNLT/Start On/Finish On,hard-constraints
+20260924,D06,High float (> 44 d),DCMA,pct_max,5.0,5,22.5,240.0,54,False,0.0,Share of incomplete activities with total float above 44 working days,high-float
+20260924,D07,Negative float,DCMA,count_max,0.0,10,37.0,240.0,37,False,0.0,Incomplete activities with total float below zero,negative-float
+20260924,D08,High duration (> 44 d),DCMA,pct_max,5.0,5,0.495,202.0,1,True,5.0,Share of incomplete tasks with original duration above 44 working days,high-duration
+20260924,D09,Invalid dates,DCMA,count_max,0.0,10,0.0,291.0,0,True,10.0,"Actual dates after the data date, or forecast dates before it",invalid-dates
+20260924,D10,Resources,DCMA,na,,0,,,,,0.0,Not applicable: the IMS is not resource-loaded (time-based integration schedule),resources
+20260924,D11,Missed tasks,DCMA,pct_max,5.0,5,2.174,46.0,1,True,5.0,Share of tasks due by the data date (baseline finish) that finished late or are not finished,missed-tasks
+20260924,D12,Critical path test,DCMA,pass,,6,1.0,1.0,0,True,6.0,Adding 600 working days to a longest-path task moves Day 1 by the same amount,critical-path-test
+20260924,D13,CPLI,DCMA,ratio_min,0.95,5,0.965,,0,True,5.0,Critical Path Length Index = (critical path length + Day 1 total float) / critical path length,cpli
+20260924,D14,BEI,DCMA,ratio_min,0.95,5,0.978,46.0,1,True,5.0,Baseline Execution Index = tasks completed / tasks due by the data date,bei
+20260924,U01,Out-of-sequence progress,Update discipline,count_max,0.0,4,0.0,291.0,0,True,4.0,Started although an FS predecessor is not complete (or an SS predecessor not started),out-of-sequence
+20260924,U02,Actuals after data date,Update discipline,count_max,0.0,0,0.0,291.0,0,True,0.0,Actual start/finish later than the data date (also counted in D09),invalid-dates
+20260924,U03,Remaining duration on completed,Update discipline,count_max,0.0,2,0.0,291.0,0,True,2.0,Completed activities that still carry remaining duration,remaining-on-complete
+20260924,U04,Progress without actual start,Update discipline,count_max,0.0,2,0.0,291.0,0,True,2.0,Physical % or consumed duration recorded with no actual start,progress-without-start
+20260924,U05,Missing activity codes,Update discipline,count_max,0.0,2,1.0,291.0,1,False,1.6,"Activities without Workstream, Asset or Owner code",missing-codes
+20260924,U06,Duplicate names,Update discipline,count_max,0.0,1,2.0,291.0,2,False,0.6,Activities sharing a name within the same asset (WBS level 1),duplicate-names
+20260924,U07,LOE driving work / critical,Update discipline,count_max,0.0,1,2.0,291.0,2,False,0.6,"Level-of-effort activities with successors, on the longest path or with TF <= 0",loe
+20260924,U08,Data date matches cut-off,Update discipline,pass,,1,1.0,1.0,0,True,1.0,Project data date equals the cut-off in the reporting calendar,data-date
+20260924,U09,Stale in-progress,Update discipline,count_max,0.0,2,2.0,291.0,2,False,1.2,In progress in both periods with no change in remaining duration or % complete,stale
+20260924,U10,SF relationships,Update discipline,count_max,0.0,1,2.0,291.0,2,False,0.6,Start-to-Finish relationships (incomplete successor),relationship-types
+20260924,U11,Missing from baseline,Update discipline,count_max,0.0,1,1.0,291.0,1,False,0.8,Activities not present in the baseline in force,baseline
+20260924,U12,Long lags (> 20 d),Update discipline,count_max,0.0,0,4.0,291.0,4,False,0.0,Relationships with lag above 20 working days (informational),lags
+20261029,D01,Missing logic,DCMA,pct_max,5.0,10,0.87,230.0,2,True,10.0,Incomplete tasks/milestones without a predecessor or successor (project start and Day 1 excluded),missing-logic
+20261029,D02,Leads (negative lags),DCMA,count_max,0.0,6,2.0,428.0,2,False,3.6,Relationships with a negative lag to an incomplete successor,leads
+20261029,D03,Lags,DCMA,pct_max,5.0,4,4.439,428.0,19,True,4.0,Share of relationships (incomplete successor) with a positive lag,lags
+20261029,D04,Relationship types (FS),DCMA,pct_min,90.0,4,92.056,428.0,34,True,4.0,Share of relationships that are Finish-to-Start,relationship-types
+20261029,D05,Hard constraints,DCMA,pct_max,5.0,8,0.87,230.0,2,True,8.0,Share of incomplete activities with MSO/MFO/SNLT/FNLT/Start On/Finish On,hard-constraints
+20261029,D06,High float (> 44 d),DCMA,pct_max,5.0,5,22.609,230.0,52,False,0.0,Share of incomplete activities with total float above 44 working days,high-float
+20261029,D07,Negative float,DCMA,count_max,0.0,10,36.0,230.0,36,False,0.0,Incomplete activities with total float below zero,negative-float
+20261029,D08,High duration (> 44 d),DCMA,pct_max,5.0,5,0.521,192.0,1,True,5.0,Share of incomplete tasks with original duration above 44 working days,high-duration
+20261029,D09,Invalid dates,DCMA,count_max,0.0,10,0.0,291.0,0,True,10.0,"Actual dates after the data date, or forecast dates before it",invalid-dates
+20261029,D10,Resources,DCMA,na,,0,,,,,0.0,Not applicable: the IMS is not resource-loaded (time-based integration schedule),resources
+20261029,D11,Missed tasks,DCMA,pct_max,5.0,5,11.864,59.0,7,False,0.0,Share of tasks due by the data date (baseline finish) that finished late or are not finished,missed-tasks
+20261029,D12,Critical path test,DCMA,pass,,6,1.0,1.0,0,True,6.0,Adding 600 working days to a longest-path task moves Day 1 by the same amount,critical-path-test
+20261029,D13,CPLI,DCMA,ratio_min,0.95,5,0.98,,0,True,5.0,Critical Path Length Index = (critical path length + Day 1 total float) / critical path length,cpli
+20261029,D14,BEI,DCMA,ratio_min,0.95,5,0.932,59.0,7,False,4.11,Baseline Execution Index = tasks completed / tasks due by the data date,bei
+20261029,U01,Out-of-sequence progress,Update discipline,count_max,0.0,4,0.0,291.0,0,True,4.0,Started although an FS predecessor is not complete (or an SS predecessor not started),out-of-sequence
+20261029,U02,Actuals after data date,Update discipline,count_max,0.0,0,0.0,291.0,0,True,0.0,Actual start/finish later than the data date (also counted in D09),invalid-dates
+20261029,U03,Remaining duration on completed,Update discipline,count_max,0.0,2,0.0,291.0,0,True,2.0,Completed activities that still carry remaining duration,remaining-on-complete
+20261029,U04,Progress without actual start,Update discipline,count_max,0.0,2,0.0,291.0,0,True,2.0,Physical % or consumed duration recorded with no actual start,progress-without-start
+20261029,U05,Missing activity codes,Update discipline,count_max,0.0,2,0.0,291.0,0,True,2.0,"Activities without Workstream, Asset or Owner code",missing-codes
+20261029,U06,Duplicate names,Update discipline,count_max,0.0,1,2.0,291.0,2,False,0.6,Activities sharing a name within the same asset (WBS level 1),duplicate-names
+20261029,U07,LOE driving work / critical,Update discipline,count_max,0.0,1,2.0,291.0,2,False,0.6,"Level-of-effort activities with successors, on the longest path or with TF <= 0",loe
+20261029,U08,Data date matches cut-off,Update discipline,pass,,1,1.0,1.0,0,True,1.0,Project data date equals the cut-off in the reporting calendar,data-date
+20261029,U09,Stale in-progress,Update discipline,count_max,0.0,2,0.0,291.0,0,True,2.0,In progress in both periods with no change in remaining duration or % complete,stale
+20261029,U10,SF relationships,Update discipline,count_max,0.0,1,2.0,291.0,2,False,0.6,Start-to-Finish relationships (incomplete successor),relationship-types
+20261029,U11,Missing from baseline,Update discipline,count_max,0.0,1,1.0,291.0,1,False,0.8,Activities not present in the baseline in force,baseline
+20261029,U12,Long lags (> 20 d),Update discipline,count_max,0.0,0,4.0,291.0,4,False,0.0,Relationships with lag above 20 working days (informational),lags

@@ -1,0 +1,10 @@
+owner_code,owner_name,accountable_role
+MWC,Main Works Contractor,MWC Project Director
+MEP,MEP & Systems Contractor,MEP Package Manager
+ICA,Independent Commissioning Authority,Lead Commissioning Manager
+OPR,Destination Operator,Operator Readiness Lead
+PMO,Programme Management Office,Programme Controls Manager
+AAT,Authority Approvals Team,Approvals Manager
+FMS,Facilities Management,FM Mobilisation Manager
+SSY,Security & Safety,Head of Security & Safety
+UNASSIGNED,Owner code missing,Programme Controls Manager

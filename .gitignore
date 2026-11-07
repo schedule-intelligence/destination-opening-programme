@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+output/tmp/
+.confidential_terms.txt
+_build_notes/
+**/.pbi/cache.abf
+**/.pbi/localSettings.json

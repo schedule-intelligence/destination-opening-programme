@@ -1,0 +1,123 @@
+[
+  {
+    "id": "A",
+    "name": "Zone-based completion: commission and snag the arena by zone",
+    "description": "Start IST and snagging zone by zone once final finishes are under way, overlap show-systems and fire commissioning, add a second ICA witness team; correct the LOE link that holds IST.",
+    "owner": "Lead Commissioning Manager",
+    "decision": "D-07",
+    "cost": "Second ICA witness team (8 weeks)",
+    "deltas": [
+      {
+        "op": "rel_remove",
+        "pred": "DAR-CON-M142",
+        "succ": "DAR-TNC-2210"
+      },
+      {
+        "op": "rel_remove",
+        "pred": "DAR-CON-9010",
+        "succ": "DAR-TNC-2210"
+      },
+      {
+        "op": "rel_add",
+        "pred": "DAR-CON-1225",
+        "succ": "DAR-TNC-2210",
+        "type": "FS",
+        "lag_days": 0
+      },
+      {
+        "op": "rel_add",
+        "pred": "DAR-CON-M142",
+        "succ": "DAR-TNC-2210",
+        "type": "FF",
+        "lag_days": 5
+      },
+      {
+        "op": "rel_set",
+        "pred": "DAR-TNC-2120",
+        "succ": "DAR-TNC-2130",
+        "type": "SS",
+        "lag_days": 8
+      },
+      {
+        "op": "rel_remove",
+        "pred": "DAR-CON-M142",
+        "succ": "DAR-HOV-3010"
+      },
+      {
+        "op": "rel_add",
+        "pred": "DAR-CON-1225",
+        "succ": "DAR-HOV-3010",
+        "type": "SS",
+        "lag_days": 25
+      },
+      {
+        "op": "rel_add",
+        "pred": "DAR-CON-M142",
+        "succ": "DAR-HOV-3010",
+        "type": "FF",
+        "lag_days": 12
+      },
+      {
+        "op": "dur_factor",
+        "id": "DAR-TNC-2110",
+        "factor": 0.85
+      },
+      {
+        "op": "dur_factor",
+        "id": "DAR-TNC-2130",
+        "factor": 0.85
+      },
+      {
+        "op": "dur_factor",
+        "id": "DAR-TNC-2140",
+        "factor": 0.8
+      },
+      {
+        "op": "dur_factor",
+        "id": "DAR-TNC-2145",
+        "factor": 0.8
+      }
+    ]
+  },
+  {
+    "id": "B",
+    "name": "Phased handover with early operator access",
+    "description": "Operator familiarisation starts in completed zones under a temporary occupancy permit, so about 20% of it is done before the full occupancy certificate; operator access brought forward.",
+    "owner": "Operator Readiness Lead",
+    "decision": "D-08",
+    "cost": "Temporary occupancy permit; zone security staffing",
+    "deltas": [
+      {
+        "op": "dur_factor",
+        "id": "DAR-OPM-4130",
+        "factor": 0.8
+      },
+      {
+        "op": "constraint",
+        "id": "DAR-OPM-M120",
+        "type": "CS_MSOA",
+        "date": "2027-05-29"
+      }
+    ]
+  },
+  {
+    "id": "C",
+    "name": "Extra training shifts",
+    "description": "Double training shifts compress SOP validation by 15% and classroom training by 25%.",
+    "owner": "Operator Readiness Lead",
+    "decision": "",
+    "cost": "Overtime and trainer agency fees",
+    "deltas": [
+      {
+        "op": "dur_factor",
+        "id": "DAR-OPM-4140",
+        "factor": 0.85
+      },
+      {
+        "op": "dur_factor",
+        "id": "DAR-OPM-4110",
+        "factor": 0.75
+      }
+    ]
+  }
+]

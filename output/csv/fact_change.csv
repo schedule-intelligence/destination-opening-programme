@@ -1,0 +1,7 @@
+change_id,title,reason,change_type,raised_data_date,approver,approval_date,status,baseline_effect,linked_activity,day1_impact_days
+CR-001,Approve BL0 integrated master schedule,Programme baseline,Baseline,2026-04-30,Steering Committee,2026-04-28,Approved,BL0 created,PRG-D1R-M999,
+CR-002,Arena acoustic treatment to seating bowl,Operator requirement after acoustic review,Scope,2026-06-25,Programme Director,2026-06-22,Approved,No re-baseline (added to forecast),DAR-CON-1240,
+CR-003,Arena zone-based FOH re-sequence plus premium suites and finishes scope,Mitigate MEP delay; client scope,Scope & sequence,2026-07-30,Steering Committee,2026-07-23,Approved,BL1 created 30-Jul-2026,DAR-CON-M142,6.0
+CR-004,"Arena T&C compression (overlaps, added commissioning teams)",Recover float lost to MEP,Sequence,2026-08-27,Lead Commissioning Manager,2026-08-20,Approved,No re-baseline,DAR-TNC-M220,
+CR-005,Arena fire-strategy changes: additional smoke extract works,Authority fire-strategy review,Scope,2026-09-24,Programme Director,2026-09-22,Approved,No re-baseline; variance reported against BL1,DAR-CON-1250,17.0
+CR-006,"Recovery options A + B for the arena (zone commissioning, phased handover)",Recover Day 1,Sequence,2026-10-29,Steering Committee,,Pending,Subject to D-07 / D-08,DAR-TNC-2210,

@@ -1,0 +1,1453 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DOP Schedule Intelligence</title>
+<meta name="description" content="Decision-ready view of the fictional Destination Opening Programme: P6-format schedules, schedule quality, readiness, risks and recovery.">
+<link rel="icon" href="data:,">
+<script>
+  /* Apply the stored theme before first paint (storage may be blocked: fail quietly). */
+  (function () { try { var t = localStorage.getItem('dop-theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {} })();
+</script>
+<style>
+:root{
+  color-scheme:light;
+  --bg:#F7F8FA;--surface:#FFFFFF;--surface-2:#F2F4F7;--border:#E2E8F0;--text:#1A202C;--muted:#4A5568;
+  --brand:#1F3A5F;--brand-ink:#FFFFFF;--brand-muted:#C9D5E6;--accent:#2B7A78;--focus:#2B7A78;
+  --s1:#1F3A5F;--s2:#2B7A78;--s3:#B7791F;--s4:#8E6C8A;--s5:#64748B;
+  --red:#C0392B;--amber:#D68910;--green:#1E8449;
+  --red-ink:#A93226;--amber-ink:#8A5A0B;--green-ink:#1A6E3C;--ok-on-brand:#A7E3C1;
+  --grid:#E2E8F0;--shadow:0 1px 2px rgba(15,23,42,.05);
+  --red-bg:color-mix(in srgb,var(--red) 13%,var(--surface));
+  --amber-bg:color-mix(in srgb,var(--amber) 16%,var(--surface));
+  --green-bg:color-mix(in srgb,var(--green) 12%,var(--surface));
+  --accent-bg:color-mix(in srgb,var(--accent) 10%,var(--surface));
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0F172A;--surface:#1E293B;--surface-2:#172235;--border:#334155;--text:#E2E8F0;--muted:#94A3B8;
+    --brand:#16213A;--brand-ink:#E2E8F0;--brand-muted:#94A3B8;--accent:#5FB8B3;--focus:#5FB8B3;
+    --s1:#8DB0DC;--s2:#5FB8B3;--s3:#E0A84A;--s4:#C4A3C0;--s5:#94A3B8;
+    --red:#E35D50;--amber:#E9A23B;--green:#3DB26C;
+    --red-ink:#F59A90;--amber-ink:#F2C26B;--green-ink:#86D8A6;--ok-on-brand:#86D8A6;
+    --grid:#334155;--shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0F172A;--surface:#1E293B;--surface-2:#172235;--border:#334155;--text:#E2E8F0;--muted:#94A3B8;
+  --brand:#16213A;--brand-ink:#E2E8F0;--brand-muted:#94A3B8;--accent:#5FB8B3;--focus:#5FB8B3;
+  --s1:#8DB0DC;--s2:#5FB8B3;--s3:#E0A84A;--s4:#C4A3C0;--s5:#94A3B8;
+  --red:#E35D50;--amber:#E9A23B;--green:#3DB26C;
+  --red-ink:#F59A90;--amber-ink:#F2C26B;--green-ink:#86D8A6;--ok-on-brand:#86D8A6;
+  --grid:#334155;--shadow:none;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 "Segoe UI",system-ui,-apple-system,Arial,sans-serif;overflow-x:hidden}
+a{color:var(--accent)}
+h1,h2,h3,h4{line-height:1.3}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:3px}
+.wrap{max-width:1400px;margin:0 auto;padding:0 24px}
+@media (max-width:640px){.wrap{padding:0 16px}}
+.skip{position:absolute;left:-9999px;top:0;background:var(--surface);color:var(--text);padding:8px 12px;z-index:100}
+.skip:focus{left:8px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.muted{color:var(--muted)}
+.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.nw{white-space:nowrap}
+
+/* Header */
+.hdr{background:var(--brand);color:var(--brand-ink)}
+.hdr .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:10px 28px;padding-top:12px;padding-bottom:12px}
+.brand{min-width:0}
+.eyebrow{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--brand-muted);margin:0}
+.brand h1{margin:0;font-size:19px;font-weight:600}
+.facts{display:flex;flex-wrap:wrap;gap:6px 26px;margin:0;flex:1 1 520px;min-width:0}
+.facts>div{min-width:0}
+.facts dt{font-size:11px;color:var(--brand-muted);margin:0}
+.facts dd{margin:0;font-weight:600;font-size:13px;overflow-wrap:anywhere}
+.rec-ok{color:var(--ok-on-brand)}
+.rec-bad{background:#C0392B;color:#fff;padding:1px 8px;border-radius:4px}
+.btn{font:inherit;font-size:13px;border-radius:6px;padding:6px 12px;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text);min-height:32px}
+.btn-ghost{background:transparent;color:var(--brand-ink);border-color:color-mix(in srgb,var(--brand-ink) 40%,transparent)}
+.btn-ghost:hover{background:color-mix(in srgb,var(--brand-ink) 10%,transparent)}
+
+/* Controls */
+.controls{background:var(--surface);border-bottom:1px solid var(--border)}
+.controls .wrap{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;padding-top:10px;padding-bottom:10px}
+.ctl{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);min-width:0;max-width:100%}
+select,input[type=search]{font:inherit;font-size:13px;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 8px;min-height:32px;max-width:100%;min-width:0}
+.ctl select{max-width:min(320px,100%)}
+.crumbs{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);min-width:0;flex-wrap:wrap}
+.crumbs ol{list-style:none;display:flex;flex-wrap:wrap;margin:0;padding:0;align-items:center}
+.crumbs li{display:flex;align-items:center}
+.crumbs li+li::before{content:"\203A";margin:0 6px;color:var(--muted)}
+.crumb{font:inherit;font-size:13px;background:none;border:0;padding:2px 4px;color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.crumb[aria-current="page"]{color:var(--text);text-decoration:none;font-weight:600;cursor:default}
+.ctx{flex-basis:100%;margin:0;font-size:12px;color:var(--muted)}
+.ctx:empty{display:none}
+
+/* Tabs */
+.tabs{background:var(--surface);border-bottom:1px solid var(--border)}
+@media (min-width:900px){.tabs{position:sticky;top:0;z-index:20}}
+.tabs .wrap{display:flex;gap:0;overflow-x:auto;scrollbar-width:thin}
+.tab{appearance:none;border:0;background:none;font:inherit;font-size:13px;color:var(--muted);padding:11px 6px 9px;border-bottom:3px solid transparent;white-space:nowrap;cursor:pointer;font-weight:500}
+.tab:hover{color:var(--text)}
+.tab[aria-selected="true"]{color:var(--text);border-bottom-color:var(--accent);font-weight:600}
+.tab .n{color:var(--muted);margin-right:4px;font-variant-numeric:tabular-nums}
+@media (max-width:1400px){.tab{font-size:12.5px;padding-left:5px;padding-right:5px}}
+@media (max-width:1320px){.tab{font-size:12px;padding-left:4px;padding-right:4px}.tab .n{margin-right:3px}}
+
+/* Layout */
+main{padding:18px 0 32px}
+[role=tabpanel]:focus-visible{outline-offset:6px}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(12,minmax(0,1fr));margin-bottom:16px}
+.c12{grid-column:span 12}.c8{grid-column:span 8}.c7{grid-column:span 7}.c6{grid-column:span 6}.c5{grid-column:span 5}.c4{grid-column:span 4}
+@media (max-width:1100px){.grid>*{grid-column:span 12}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;min-width:0;box-shadow:var(--shadow)}
+.card>h3,.card-h h3{font-size:15px;margin:0 0 2px;font-weight:600}
+.card .sub{margin:0 0 12px;color:var(--muted);font-size:12px}
+.card h4{font-size:13px;margin:14px 0 6px}
+.sowhat{margin:12px 0 0;padding-top:9px;border-top:1px dashed var(--border);font-size:13px}
+.sowhat::before{content:"So what: ";font-weight:600;color:var(--accent)}
+.chartbox{position:relative;height:270px;min-width:0}
+.chartbox.tall{height:330px}
+.legend-note{font-size:12px;color:var(--muted);margin:6px 0 0}
+.empty{color:var(--muted);font-style:italic}
+.err{color:var(--red-ink);font-weight:600}
+.row-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 10px}
+
+/* Hero */
+.hero{border-left:4px solid var(--accent)}
+.headline{font-size:21px;font-weight:600;margin:4px 0 10px;line-height:1.35}
+.hero .eyebrow{color:var(--muted)}
+.msgs{margin:0;padding-left:18px;color:var(--text)}
+.msgs li{margin:3px 0}
+.asks{border-left:4px solid var(--red)}
+.ask{padding:9px 0;border-bottom:1px solid var(--border)}
+.ask:last-child{border-bottom:0}
+.ask .q{font-weight:600}
+.ask .m{font-size:12px;color:var(--muted)}
+.reco{margin-top:10px;padding:10px 12px;border-radius:8px;background:var(--accent-bg);font-size:13px}
+
+/* Tiles */
+.tiles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:16px}
+@media (max-width:1100px){.tiles{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:640px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tile{background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--border);border-radius:10px;padding:11px 14px;min-width:0}
+.tile.is-ref{border-top-color:var(--accent);background:var(--accent-bg)}
+.tile .lab{font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.tile .val{font-size:23px;font-weight:600;line-height:1.25;margin:3px 0 2px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.tile .note{font-size:12px;color:var(--muted)}
+.hero .tiles{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));margin:16px 0 0;gap:10px}
+.hero .tile{padding:9px 12px}
+.hero .tile .val{font-size:20px}
+.t td.wide{min-width:230px}
+.reco-panel{border:1px solid var(--accent);border-radius:8px;padding:12px 14px;background:var(--accent-bg);font-size:13px}
+.reco-panel h4{margin:0 0 6px;font-size:14px}
+.reco-panel dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:8px 0 0}
+.reco-panel dt{color:var(--muted)}.reco-panel dd{margin:0;font-weight:600}
+.tile{position:relative}
+.tile .ref-tag{position:absolute;top:-9px;right:8px;font-size:10px;line-height:16px;padding:0 6px;border-radius:4px;text-transform:uppercase;letter-spacing:.05em;background:var(--accent);color:var(--surface);font-weight:700;white-space:nowrap}
+.stats{display:flex;flex-wrap:wrap;gap:6px 16px;margin:14px 0 0;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2);font-size:13px}
+.stats>div{display:flex;align-items:baseline;gap:6px;min-width:0}
+.stats b{font-size:17px;font-variant-numeric:tabular-nums}
+.stats span{color:var(--muted)}
+.tone-red{color:var(--red-ink)}.tone-amber{color:var(--amber-ink)}.tone-green{color:var(--green-ink)}
+
+/* Info icon */
+.info{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;border:1px solid var(--muted);color:var(--muted);font-size:10px;font-weight:700;font-style:normal;cursor:help;flex:none;line-height:1;vertical-align:middle}
+
+/* Tables */
+.tw{overflow:auto;max-width:100%;border:1px solid var(--border);border-radius:8px;max-height:440px}
+.tw.free{max-height:none}
+table.t{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+.t th{position:sticky;top:0;background:var(--surface-2);text-align:left;font-weight:600;font-size:12px;color:var(--muted);padding:7px 10px;border-bottom:1px solid var(--border);white-space:nowrap;z-index:1;vertical-align:bottom}
+.t td{padding:6px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+.t tbody tr:last-child td{border-bottom:0}
+.t tr.hl td{background:var(--accent-bg)}
+.t tr.key td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+.t th button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;font-weight:600}
+.t th[aria-sort] button::after{content:" \2195";opacity:.45}
+.t th[aria-sort="ascending"] button::after{content:" \2191";opacity:1}
+.t th[aria-sort="descending"] button::after{content:" \2193";opacity:1}
+.t tr.clickable{cursor:pointer}
+.t tr.clickable:hover td{background:var(--surface-2)}
+.t tr.sel td{background:var(--accent-bg)}
+.alink{font:inherit;background:none;border:0;padding:0;color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:2px;text-align:left;white-space:nowrap}
+.aname{display:block;color:var(--muted);font-size:12px;white-space:normal;min-width:160px}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{display:inline-flex;gap:4px;align-items:center;font-size:12px;border:1px solid var(--border);border-radius:6px;padding:1px 6px;background:var(--surface-2)}
+
+/* Pills / status */
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:1px 8px;border-radius:999px;border:1px solid var(--border);white-space:nowrap;background:var(--surface);color:var(--text);line-height:1.6}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:none}
+.pill.red{background:var(--red-bg);border-color:color-mix(in srgb,var(--red) 45%,var(--border))}.pill.red i{background:var(--red);border-radius:1px}
+.pill.amber{background:var(--amber-bg);border-color:color-mix(in srgb,var(--amber) 50%,var(--border))}.pill.amber i{background:var(--amber);transform:rotate(45deg);border-radius:1px}
+.pill.green{background:var(--green-bg);border-color:color-mix(in srgb,var(--green) 45%,var(--border))}.pill.green i{background:var(--green)}
+.pill.accent{background:var(--accent-bg);border-color:var(--accent)}.pill.accent i{background:var(--accent)}
+.var.late,.mv.up{color:var(--red-ink);font-weight:600}
+.var.early,.mv.dn{color:var(--green-ink)}
+.mv.eq{color:var(--muted)}
+.tf.red{color:var(--red-ink);font-weight:600}.tf.amber{color:var(--amber-ink);font-weight:600}
+.spark{vertical-align:middle}
+
+/* RAG matrix */
+.ragw{overflow-x:auto}
+table.rag{border-collapse:separate;border-spacing:4px;width:100%;font-size:12px;min-width:520px}
+.rag th{font-weight:600;color:var(--muted);text-align:center;padding:2px 4px;font-size:12px}
+.rag th[scope=row]{text-align:left;white-space:nowrap}
+.rag td{padding:0}
+.rc{display:flex;align-items:center;justify-content:center;gap:5px;width:100%;min-height:34px;border:1px solid var(--border);border-radius:6px;font:inherit;font-size:12px;font-weight:600;color:var(--text);cursor:pointer;background:var(--surface-2);font-variant-numeric:tabular-nums;padding:2px 4px}
+.rc .l{font-size:10px;font-weight:700;padding:0 4px;border-radius:3px;line-height:16px}
+.rc.red{background:var(--red-bg);border-color:color-mix(in srgb,var(--red) 40%,var(--border))}.rc.red .l{background:#C0392B;color:#fff}
+.rc.amber{background:var(--amber-bg);border-color:color-mix(in srgb,var(--amber) 45%,var(--border))}.rc.amber .l{background:#D68910;color:#1A202C}
+.rc.green{background:var(--green-bg);border-color:color-mix(in srgb,var(--green) 40%,var(--border))}.rc.green .l{background:#1E8449;color:#fff}
+.rc.done .l{background:var(--s5);color:#fff}
+.rc.na{cursor:default;color:var(--muted);background:transparent;border-style:dashed}
+.rc.sel{outline:2px solid var(--accent);outline-offset:1px}
+.rc.tot{border-width:2px}
+.keyrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;font-size:12px;color:var(--muted)}
+
+/* Gantt */
+.gw{overflow-x:auto;border:1px solid var(--border);border-radius:8px}
+.gantt{min-width:860px;--gl:300px;--gt:76px;font-size:12px;position:relative}
+.g-axis,.g-row{display:grid;grid-template-columns:var(--gl) minmax(0,1fr) var(--gt);align-items:center}
+.g-axis{background:var(--surface-2);border-bottom:1px solid var(--border);height:28px;font-weight:600;color:var(--muted)}
+.g-axis>div:first-child,.g-axis>div:last-child{padding:0 8px}
+.g-ticks{position:relative;height:100%;overflow:hidden}
+.g-tick{position:absolute;top:0;bottom:0;border-left:1px solid var(--grid);padding-left:3px;font-size:10px;font-weight:400;line-height:28px;white-space:nowrap}
+.g-row{min-height:30px;border-bottom:1px solid var(--border)}
+.g-row:last-child{border-bottom:0}
+.g-row.dim{opacity:.35}
+.g-lab{padding:3px 8px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;position:sticky;left:0;z-index:3;background:var(--surface);align-self:stretch;display:flex;align-items:center}
+.g-axis>div:first-child{position:sticky;left:0;z-index:3;background:var(--surface-2);align-self:stretch;display:flex;align-items:center}
+.g-lab>span{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.g-lab>.alink{flex:none}
+.g-lab .alink{margin-right:6px}
+.loe-tag{flex:none;margin-left:6px;font:inherit;font-size:11px;font-weight:600;line-height:1.5;padding:0 7px;border-radius:999px;cursor:pointer;color:var(--amber-ink);background:var(--amber-bg);border:1px dashed var(--amber)}
+.loe-tag:hover,.loe-tag:focus-visible{border-style:solid}
+.g-track{position:relative;height:30px}
+.g-bar{position:absolute;top:9px;height:12px;border-radius:3px;background:var(--s1);overflow:hidden;min-width:3px}
+.g-bar.red{background:var(--red)}.g-bar.amber{background:var(--amber)}.g-bar.cmp{background:var(--s5)}
+.g-bar.loe{background:transparent;border:1.5px dashed var(--s5)}
+.g-done{position:absolute;left:0;top:0;bottom:0;background:repeating-linear-gradient(45deg,rgba(255,255,255,.55) 0 3px,transparent 3px 6px)}
+.g-ms{position:absolute;top:9px;width:12px;height:12px;margin-left:-6px;transform:rotate(45deg);background:var(--s1)}
+.g-ms.red{background:var(--red)}.g-ms.amber{background:var(--amber)}
+.g-tf{padding:0 8px;text-align:right}
+.g-ddl{position:absolute;top:0;bottom:0;width:0;border-left:2px dashed var(--accent);pointer-events:none;z-index:2}
+@media (max-width:640px){.gantt{--gl:150px;--gt:58px;min-width:600px}}
+.gkey{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);margin:8px 0 0}
+.gkey span{display:inline-flex;align-items:center;gap:6px}
+.gkey b{display:inline-block;width:18px;height:10px;border-radius:2px}
+
+/* Readiness chain */
+.chain-asset{margin:0 0 14px}
+.chain-asset h4{margin:0 0 6px;font-size:13px;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.chain-asset h4 span{font-weight:400;color:var(--muted);font-size:12px}
+.chain{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+@media (max-width:1100px){.chain{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:560px){.chain{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stg{border:1px solid var(--border);border-left:4px solid var(--s5);border-radius:6px;padding:7px 9px;background:var(--surface);font-size:12px;min-width:0}
+.stg.red{border-left-color:var(--red);background:var(--red-bg)}.stg.amber{border-left-color:var(--amber)}.stg.green{border-left-color:var(--green)}
+.stg .nm{font-weight:600;display:block}
+.stg .dt{font-size:14px;font-weight:600;display:block;font-variant-numeric:tabular-nums}
+.stg .mt{color:var(--muted);display:block}
+.stg .sp{color:var(--muted);font-size:11px;display:block}
+
+/* Lineage */
+.lin{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:22px}
+.lin li{position:relative;border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--surface-2);font-size:12px;min-width:0}
+.lin li b{display:block;font-size:13px;margin-bottom:3px}
+.lin li .d{color:var(--muted);overflow-wrap:anywhere}
+.lin li.gate{border:2px solid var(--accent);background:var(--accent-bg)}
+.lin li.gate.fail{border-color:var(--red);background:var(--red-bg)}
+.lin li:not(:last-child)::after{content:"\2192";position:absolute;right:-16px;top:50%;transform:translateY(-50%);color:var(--accent);font-weight:700;font-size:16px}
+@media (max-width:1100px){.lin{grid-template-columns:1fr;gap:20px}.lin li:not(:last-child)::after{content:"\2193";right:auto;left:50%;top:auto;bottom:-20px;transform:translateX(-50%)}}
+ol.steps{margin:0;padding-left:20px}ol.steps li{margin:4px 0}
+.prose p,.prose li{max-width:80ch}
+.prose ul{padding-left:20px}
+code{font-family:Consolas,"Cascadia Mono",monospace;font-size:12px;background:var(--surface-2);padding:1px 4px;border-radius:4px;overflow-wrap:anywhere}
+
+/* Explorer */
+.explorer{margin-top:4px}
+.explorer>summary{cursor:pointer;font-weight:600;font-size:14px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;list-style-position:inside}
+.explorer[open]>summary{border-radius:10px 10px 0 0;border-bottom:0}
+.explorer .xbody{background:var(--surface);border:1px solid var(--border);border-top:0;border-radius:0 0 10px 10px;padding:12px 16px 16px}
+.explorer .xs{font-weight:400;color:var(--muted);font-size:12px}
+
+/* Drawer */
+.backdrop{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:40}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:600px;max-width:100%;background:var(--surface);border-left:1px solid var(--border);z-index:50;overflow-y:auto;padding:16px 18px 40px;box-shadow:-8px 0 24px rgba(0,0,0,.18)}
+.drawer h2{font-size:17px;margin:0;line-height:1.35}
+.drawer h3{font-size:13px;margin:16px 0 6px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.dhead{display:flex;gap:10px;align-items:flex-start;justify-content:space-between}
+.dhead .btn{white-space:nowrap;flex:none}
+.kv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 16px;margin:0}
+.kv>div{min-width:0;border-bottom:1px solid var(--border);padding-bottom:4px}
+.kv dt{font-size:11px;color:var(--muted)}.kv dd{margin:0;font-weight:600;font-size:13px;overflow-wrap:anywhere}
+[hidden]{display:none!important}
+footer{border-top:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:12px}
+footer .wrap{padding-top:14px;padding-bottom:18px}
+.loading{padding:40px 0;color:var(--muted)}
+
+@media print{
+  :root,:root[data-theme="dark"]{color-scheme:light;--bg:#fff;--surface:#fff;--surface-2:#F2F4F7;--border:#E2E8F0;--text:#1A202C;--muted:#4A5568;--brand:#fff;--brand-ink:#1A202C;--brand-muted:#4A5568;--accent:#2B7A78;--s1:#1F3A5F;--s2:#2B7A78;--s3:#B7791F;--s4:#8E6C8A;--s5:#64748B;--red:#C0392B;--amber:#D68910;--green:#1E8449;--red-ink:#A93226;--amber-ink:#8A5A0B;--green-ink:#1A6E3C;--ok-on-brand:#1A6E3C;--grid:#E2E8F0}
+  .controls,.tabs,.drawer,.backdrop,.explorer,.skip,.noprint,#theme-btn{display:none!important}
+  body{background:#fff}
+  .card,.tile{box-shadow:none;break-inside:avoid}
+  .tw{max-height:none!important;overflow:visible}
+  [role=tabpanel][hidden]{display:none!important}
+  .hdr{border-bottom:2px solid #1F3A5F}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="hdr">
+  <div class="wrap">
+    <div class="brand">
+      <p class="eyebrow">Schedule intelligence · Programme controls</p>
+      <h1 id="h-name">Destination Opening Programme</h1>
+    </div>
+    <dl class="facts" aria-live="polite">
+      <div><dt>Data date</dt><dd id="h-dd">–</dd></div>
+      <div><dt>Baseline in force</dt><dd id="h-bl">–</dd></div>
+      <div><dt>Reconciliation</dt><dd id="h-rec">–</dd></div>
+      <div><dt>DQ score</dt><dd id="h-dq">–</dd></div>
+      <div><dt>Generated</dt><dd id="h-gen">–</dd></div>
+    </dl>
+    <button type="button" class="btn btn-ghost noprint" id="theme-btn" aria-pressed="false">Dark mode</button>
+  </div>
+</header>
+
+<div class="controls" role="region" aria-label="Report controls">
+  <div class="wrap">
+    <label class="ctl" for="sel-dd">Data date <select id="sel-dd"></select></label>
+    <label class="ctl" for="sel-cmp">Compare to
+      <select id="sel-cmp">
+        <option value="prev">Previous period</option>
+        <option value="BL0">BL0 (original baseline)</option>
+        <option value="BL1">BL1 (re-baseline, CR-003)</option>
+      </select>
+    </label>
+    <nav class="crumbs" aria-label="Drill-down"><span>Scope</span><ol id="crumbs"></ol></nav>
+    <label class="ctl" for="sel-drill">Drill into <select id="sel-drill"></select></label>
+    <p class="ctx" id="ctx-note" aria-live="polite"></p>
+  </div>
+</div>
+
+<nav class="tabs" aria-label="Dashboard sections">
+  <div class="wrap" role="tablist" id="tablist" aria-label="Dashboard sections"></div>
+</nav>
+
+<main id="main">
+  <div class="wrap">
+    <div id="panels"><p class="loading">Loading programme data…</p></div>
+    <details class="explorer" id="explorer">
+      <summary>Activity explorer <span class="xs" id="x-sum"></span></summary>
+      <div class="xbody">
+        <div class="row-actions">
+          <label class="ctl" for="x-q">Search <input type="search" id="x-q" placeholder="ID, name or owner" autocomplete="off"></label>
+          <span class="muted" id="x-count" aria-live="polite"></span>
+        </div>
+        <div id="x-table"></div>
+      </div>
+    </details>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap" id="foot">Fictional programme and data.</div>
+</footer>
+
+<div class="backdrop" id="backdrop" hidden></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dr-title" hidden tabindex="-1"></aside>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+'use strict';
+(function () {
+  /* ------------------------------------------------------------------ constants */
+  var REPO = 'https://github.com/schedule-intelligence/destination-opening-programme';
+  var SITE = 'https://schedule-intelligence.github.io/destination-opening-programme/';
+  var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var MINUS = '−';
+  var TABS = [
+    ['exec', 'Executive summary'], ['ms', 'Milestones & slippage trend'], ['cp', 'Critical path & look-back/ahead'],
+    ['if', 'Interfaces & readiness gap'], ['risk', 'Risks, decisions & recovery'], ['dq', 'Schedule quality (DCMA)'],
+    ['recon', 'Reconciliation & lineage'], ['about', 'About & method']
+  ];
+  var GATES = ['PRG-D1R-M999', 'PRG-D1R-M010', 'PRG-D1R-M020', 'PRG-D1R-M030', 'PRG-D1R-M040'];
+  var ASSET_READY = ['MTP-D1R-M020', 'LWP-D1R-M020', 'DAR-D1R-M020', 'PBR-D1R-M020'];
+  var KEY_MS = GATES.concat(ASSET_READY);
+  var SHORT = {
+    'PRG-D1R-M999': 'Day 1 Opening', 'PRG-D1R-M010': 'RG1 Construction complete', 'PRG-D1R-M020': 'RG2 T&C complete',
+    'PRG-D1R-M030': 'RG3 Ready to operate', 'PRG-D1R-M040': 'RG4 Go/no-go',
+    'MTP-D1R-M020': 'Mesa Theme Park ready', 'LWP-D1R-M020': 'Lagoon Water Park ready',
+    'DAR-D1R-M020': 'Dune Arena ready', 'PBR-D1R-M020': 'Palm Boulevard ready'
+  };
+  var DASH = [[], [6, 4], [2, 3], [9, 3, 2, 3], [12, 4]];
+  /* Filled shapes only: point borders use the surface colour, so a stroked shape (cross) would vanish. */
+  var PTS = ['circle', 'rect', 'triangle', 'rectRot', 'rectRounded'];
+  var STATUS = { TK_NotStart: 'Not started', TK_Active: 'In progress', TK_Complete: 'Complete' };
+  var CMP = {
+    prev: { label: 'previous period', short: 'prev.', v: 'slip_vs_prev_d', f: 'prev_finish', mv: 'movement_vs_prev_d', measure: 'Slip vs previous period' },
+    BL0: { label: 'BL0', short: 'BL0', v: 'var_finish_bl0_d', f: 'bl0_finish', mv: 'var_bl0_d', measure: 'Finish variance vs BL0' },
+    BL1: { label: 'BL1', short: 'BL1', v: 'var_finish_bl1_d', f: 'bl1_finish', mv: 'var_bl1_d', measure: 'Finish variance vs BL1' }
+  };
+
+  /* ------------------------------------------------------------------ state */
+  var D = null, DIM = new Map(), DEFS = new Map(), DATES = [], SMETA = {}, CACHE = {}, TMI = new Map(), NC = 10;
+  var ST = { dd: null, cmp: 'BL1', tab: 'exec', drill: { asset: null, ws: null, pkg: null, act: null },
+    sort: { key: 'start', dir: 1 }, q: '', ifDim: 'asset', ifCell: null, dqCheck: null, drawer: null, opener: null };
+  var CH = {};
+
+  /* ------------------------------------------------------------------ helpers */
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function dn(s) { if (!s || typeof s !== 'string') return null; var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s); if (!m) return null; return Date.UTC(+m[1], +m[2] - 1, +m[3]) / 864e5; }
+  function fdn(n) { if (n == null || !isFinite(n)) return '–'; var d = new Date(n * 864e5); return pad(d.getUTCDate()) + '-' + MON[d.getUTCMonth()] + '-' + d.getUTCFullYear(); }
+  function fd(s) { var n = dn(s); return n == null ? '–' : fdn(n); }
+  function fmon(n) { var d = new Date(n * 864e5); return MON[d.getUTCMonth()] + ' ' + String(d.getUTCFullYear()).slice(2); }
+  function isNum(v) { return v !== null && v !== '' && v !== undefined && !isNaN(v) && isFinite(v); }
+  function sd(n, u) { if (!isNum(n)) return '–'; n = Math.round(n * 10) / 10; return (n > 0 ? '+' : n < 0 ? MINUS : '±') + Math.abs(n) + (u ? ' ' + u : ''); }
+  function nf(v, dp) { if (!isNum(v)) return '–'; return dp != null ? Number(v).toFixed(dp) : String(v); }
+  function cols(t) { if (!t || !t.cols || !t.rows) return []; var c = t.cols; return t.rows.map(function (r) { var o = {}; for (var i = 0; i < c.length; i++) o[c[i]] = r[i]; return o; }); }
+  function by(arr, k) { var m = new Map(); (arr || []).forEach(function (x) { m.set(x[k], x); }); return m; }
+  function ownerName(c) { var o = D.meta.owners && D.meta.owners[c]; return o ? o.name : (c || '–'); }
+  function assetName(c) { return (D.meta.assets && D.meta.assets[c]) || c || '–'; }
+  function wsName(c) { return (D.meta.workstreams && D.meta.workstreams[c]) || c || '–'; }
+  function pkgName(c) { return (D.meta.packages && D.meta.packages[c]) || c || '–'; }
+  function actName(id) { var m = DIM.get(id); return m ? m.activity_name : id; }
+  function ragOf(tf) { if (!isNum(tf)) return null; return tf < 0 ? 'red' : tf <= NC ? 'amber' : 'green'; }
+  function ragLabel(r) { return r === 'red' ? 'Red' : r === 'amber' ? 'Amber' : r === 'green' ? 'Green' : r === 'done' ? 'Complete' : 'n/a'; }
+  function pill(tone, text, title) { return '<span class="pill ' + (tone || '') + '"' + (title ? ' title="' + esc(title) + '"' : '') + '><i aria-hidden="true"></i>' + esc(text) + '</span>'; }
+  function defText(m) { var d = DEFS.get(m); if (!d) return ''; return d.definition + (d.formula ? ' Formula: ' + d.formula + '.' : '') + (d.unit ? ' Unit: ' + d.unit + '.' : ''); }
+  function info(m) { var t = defText(m); return t ? ' <span class="info" tabindex="0" role="img" aria-label="' + esc(m + ': ' + t) + '" title="' + esc(m + ': ' + t) + '">i</span>' : ''; }
+  function actBtn(id, label) { return '<button type="button" class="alink" data-act="' + esc(id) + '">' + esc(label || id) + '</button>'; }
+  function actCell(id) { return actBtn(id) + '<span class="aname">' + esc(actName(id)) + '</span>'; }
+  function tfCell(tf) { if (!isNum(tf)) return '<span class="muted">–</span>'; return '<span class="tf ' + (ragOf(tf) || '') + '">' + sd(tf, 'wd') + '</span>'; }
+  function varCell(v) { if (!isNum(v)) return '<span class="muted">–</span>'; return '<span class="var ' + (v > 0 ? 'late' : v < 0 ? 'early' : '') + '">' + sd(v, 'cd') + '</span>'; }
+  function mvCell(n) {
+    if (!isNum(n)) return '<span class="muted">–</span>';
+    if (n > 0) return '<span class="mv up" title="Later than the previous period">▲ ' + sd(n, 'cd') + '</span>';
+    if (n < 0) return '<span class="mv dn" title="Earlier than the previous period">▼ ' + sd(n, 'cd') + '</span>';
+    return '<span class="mv eq" title="No change">► ±0</span>';
+  }
+  function trendCell(n) {
+    if (!isNum(n)) return '–';
+    if (n > 0) return '<span class="mv up" title="Score rising (worse)">▲ ' + sd(n) + '</span>';
+    if (n < 0) return '<span class="mv dn" title="Score falling (better)">▼ ' + sd(n) + '</span>';
+    return '<span class="mv eq" title="Unchanged">► steady</span>';
+  }
+  function statusPill(s) { return s === 'TK_Complete' ? pill('', 'Complete') : s === 'TK_Active' ? pill('accent', 'In progress') : pill('', 'Not started'); }
+  function C() { return CMP[ST.cmp]; }
+  function sum(a) { return a.reduce(function (x, y) { return x + y; }, 0); }
+  function plural(n, w, p) { return n + ' ' + (n === 1 ? w : (p || w + 's')); }
+
+  function table(headers, rows, opt) {
+    opt = opt || {};
+    var th = headers.map(function (h) {
+      return '<th scope="col"' + (h.cls ? ' class="' + h.cls + '"' : '') + (h.title ? ' title="' + esc(h.title) + '"' : '') + '>' + h.t + '</th>';
+    }).join('');
+    var body = rows.length ? rows.map(function (r) {
+      if (typeof r === 'string') return r;
+      var cells = r.cells || r;
+      return '<tr' + (r.cls ? ' class="' + r.cls + '"' : '') + (r.attr || '') + '>' + cells.map(function (c, i) {
+        var h = headers[i] || {}; return '<td' + (h.cls ? ' class="' + h.cls + '"' : '') + '>' + (c == null ? '–' : c) + '</td>';
+      }).join('') + '</tr>';
+    }).join('') : '<tr><td colspan="' + headers.length + '" class="empty">' + esc(opt.empty || 'Nothing in the selected scope.') + '</td></tr>';
+    return '<div class="tw' + (opt.free ? ' free' : '') + '"' + (opt.max ? ' style="max-height:' + opt.max + 'px" data-max="' + opt.max + '"' : '') + ' tabindex="0" role="region" aria-label="' + esc(opt.label || 'Table') + '"><table class="t"' + (opt.id ? ' id="' + opt.id + '"' : '') + '><thead><tr>' + th + '</tr></thead><tbody>' + body + '</tbody></table></div>';
+  }
+  // a scrolling table box ends on a whole row, so the first view never shows a row cut in half
+  function snapBoxes(root) {
+    (root || document).querySelectorAll('.tw[data-max]').forEach(function (b) {
+      var max = +b.getAttribute('data-max'), th = b.querySelector('thead'), tb = b.querySelector('tbody');
+      if (!th || !tb || !b.offsetParent) return;
+      b.style.maxHeight = max + 'px';                  // measure from the intended size, not from an earlier snap
+      var cs = getComputedStyle(b), bd = parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth);
+      var edge = cs.boxSizing === 'border-box' ? bd : 0, hbar = Math.max(0, b.offsetHeight - b.clientHeight - bd);
+      var room = max - edge - hbar, fit = th.getBoundingClientRect().height, rows = tb.rows, i = 0;
+      for (; i < rows.length; i++) { var rh = rows[i].getBoundingClientRect().height; if (fit + rh > room) break; fit += rh; }
+      if (i < rows.length) b.style.maxHeight = (Math.floor(fit) + edge + hbar) + 'px';
+    });
+  }
+  function card(cls, title, sub, body, sowhat) {
+    return '<section class="card ' + (cls || '') + '"><h3>' + title + '</h3>' + (sub ? '<p class="sub">' + sub + '</p>' : '') + body + (sowhat ? '<p class="sowhat">' + sowhat + '</p>' : '') + '</section>';
+  }
+  function chartBox(id, label, tall) { return '<div class="chartbox' + (tall ? ' tall' : '') + '"><canvas id="' + id + '" role="img" aria-label="' + esc(label) + '"></canvas></div>'; }
+
+  /* ------------------------------------------------------------------ data model */
+  function S(dd) {
+    dd = dd || ST.dd;
+    if (CACHE[dd]) return CACHE[dd];
+    var raw = D.snapshots[dd] || {};
+    var acts = cols(raw.acts).map(function (a) {
+      var m = DIM.get(a.activity_id) || {};
+      a.name = m.activity_name || a.activity_id; a.asset = m.asset_code; a.ws = m.workstream_code; a.pkg = m.package_code;
+      a.owner = m.owner_code; a.atype = m.activity_type; a.ms = !!m.is_milestone; return a;
+    });
+    var byId = new Map(acts.map(function (a) { return [a.activity_id, a]; }));
+    var rels = cols(raw.rels), P = new Map(), Su = new Map();
+    rels.forEach(function (r) {
+      if (!P.has(r.succ)) P.set(r.succ, []); P.get(r.succ).push(r);
+      if (!Su.has(r.pred)) Su.set(r.pred, []); Su.get(r.pred).push(r);
+    });
+    CACHE[dd] = { dd: dd, raw: raw, sum: raw.summary || {}, acts: acts, by: byId, rels: rels, P: P, Su: Su, idx: DATES.indexOf(dd),
+      meta: SMETA[dd] || {}, nar: raw.narrative || { so_what: {} } };
+    if (!CACHE[dd].nar.so_what) CACHE[dd].nar.so_what = {};
+    return CACHE[dd];
+  }
+  function prevDD(dd) { var i = DATES.indexOf(dd || ST.dd); return i > 0 ? DATES[i - 1] : null; }
+  function datesTo(dd) { return DATES.slice(0, DATES.indexOf(dd || ST.dd) + 1); }
+  function tm(dd, id) { var m = SMETA[dd]; if (!m) return null; var x = TMI.get(m.snapshot_id); return x ? x.get(id) || null : null; }
+  function anyDrill() { var d = ST.drill; return !!(d.asset || d.ws || d.pkg || d.act); }
+  function inScope(a) {
+    var d = ST.drill; if (!a) return false;
+    if (d.act) return a.activity_id === d.act;
+    if (d.asset && a.asset !== d.asset) return false;
+    if (d.ws && a.ws !== d.ws) return false;
+    if (d.pkg && a.pkg !== d.pkg) return false;
+    return true;
+  }
+  function idInScope(id) {
+    if (!anyDrill()) return true;
+    var m = DIM.get(id); if (!m) return false;
+    return inScope({ activity_id: id, asset: m.asset_code, ws: m.workstream_code, pkg: m.package_code });
+  }
+  function scopeText() {
+    var d = ST.drill, p = [];
+    if (d.asset) p.push(assetName(d.asset)); if (d.ws) p.push(wsName(d.ws)); if (d.pkg) p.push(pkgName(d.pkg)); if (d.act) p.push(d.act);
+    return p.length ? p.join(' › ') : 'Programme';
+  }
+  function minTF(list) { var m = null; list.forEach(function (a) { if (a.status !== 'TK_Complete' && isNum(a.total_float_d) && (m === null || a.total_float_d < m)) m = a.total_float_d; }); return m; }
+  function decisionsAt(dd) {
+    var t = dn(dd);
+    return (D.decisions || []).filter(function (x) { var r = dn(x.raised_data_date); return r != null && r <= t; }).map(function (x) {
+      var closed = x.closed_on && dn(x.closed_on) != null && dn(x.closed_on) <= t;
+      var o = {}; for (var k in x) o[k] = x[k];
+      o.st = closed ? 'Closed' : 'Open'; o.dtn = dn(x.needed_by) != null ? dn(x.needed_by) - t : null; o.od = o.st === 'Open' && o.dtn != null && o.dtn < 0;
+      return o;
+    });
+  }
+
+  /* ------------------------------------------------------------------ charts */
+  function theme() {
+    var cs = getComputedStyle(document.documentElement), g = function (n) { return cs.getPropertyValue(n).trim(); };
+    return { text: g('--text'), muted: g('--muted'), grid: g('--grid'), surface: g('--surface'), border: g('--border'),
+      series: [g('--s1'), g('--s2'), g('--s3'), g('--s4'), g('--s5')], red: g('--red'), amber: g('--amber'), green: g('--green'), accent: g('--accent') };
+  }
+  var ddPlugin = {
+    id: 'ddline',
+    afterDatasetsDraw: function (c, args, o) {
+      if (!o || o.x == null || !c.scales.x) return;
+      var px = c.scales.x.getPixelForValue(o.x), a = c.chartArea;
+      if (!isFinite(px) || px < a.left - 1 || px > a.right + 1) return;
+      var ctx = c.ctx; ctx.save(); ctx.strokeStyle = o.color; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(px, a.top); ctx.lineTo(px, a.bottom); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = o.color; ctx.font = '11px "Segoe UI", system-ui, Arial'; var right = px > (a.left + a.right) / 2;
+      ctx.textAlign = right ? 'right' : 'left'; ctx.fillText(o.label || '', px + (right ? -5 : 5), a.top + 11); ctx.restore();
+    }
+  };
+  function destroyCharts() { Object.keys(CH).forEach(function (k) { try { CH[k].destroy(); } catch (e) { /* ignore */ } delete CH[k]; }); }
+  function mkChart(id, cfg) {
+    var el = document.getElementById(id); if (!el) return;
+    if (typeof Chart === 'undefined') { el.parentElement.innerHTML = '<p class="muted">The chart library could not be loaded (offline?). The table and summary sentence carry the same information.</p>'; return; }
+    var t = theme();
+    Chart.defaults.font.family = '"Segoe UI", system-ui, -apple-system, Arial, sans-serif';
+    Chart.defaults.font.size = 12; Chart.defaults.color = t.muted; Chart.defaults.borderColor = t.grid;
+    CH[id] = new Chart(el.getContext('2d'), cfg);
+  }
+  function baseOpts(t, o) {
+    o = o || {};
+    var opts = {
+      responsive: true, maintainAspectRatio: false, animation: false,
+      interaction: { mode: o.mode || 'nearest', intersect: false, axis: o.axis || 'x' },
+      layout: { padding: { top: 4, right: 8 } },
+      plugins: {
+        legend: { display: o.legend !== false, position: 'bottom', labels: { color: t.text, usePointStyle: true, boxWidth: 10, boxHeight: 8, padding: 14 } },
+        tooltip: { backgroundColor: t.surface, titleColor: t.text, bodyColor: t.text, borderColor: t.border, borderWidth: 1, padding: 10, usePointStyle: true, boxPadding: 4 },
+        ddline: o.ddline || {}
+      },
+      scales: {
+        x: { ticks: { color: t.muted, maxRotation: 0, autoSkipPadding: 12 }, grid: { color: t.grid, display: o.xgrid !== false }, border: { color: t.border } },
+        y: { ticks: { color: t.muted }, grid: { color: function (c) { return c.tick && c.tick.value === 0 ? t.muted : t.grid; } }, border: { display: false } }
+      }
+    };
+    if (o.xtitle) opts.scales.x.title = { display: true, text: o.xtitle, color: t.muted };
+    if (o.ytitle) opts.scales.y.title = { display: true, text: o.ytitle, color: t.muted };
+    return opts;
+  }
+  function lineDs(label, data, i, t, extra) {
+    var col = t.series[i % 5];
+    var ds = { label: label, data: data, borderColor: col, backgroundColor: col, borderWidth: 2, borderDash: DASH[i % 5], pointStyle: PTS[i % 5],
+      pointRadius: 4, pointHoverRadius: 6, pointBorderColor: t.surface, pointBorderWidth: 1.5, tension: 0, spanGaps: true, fill: false };
+    if (extra) for (var k in extra) ds[k] = extra[k];
+    return ds;
+  }
+
+  /* ------------------------------------------------------------------ header & controls */
+  function renderHeader() {
+    var s = S(), sm = s.sum, m = s.meta;
+    document.getElementById('h-name').textContent = (D.meta.programme && D.meta.programme.name) || 'Programme';
+    document.getElementById('h-dd').textContent = fd(ST.dd) + ' (' + (sm.label || m.label || '') + (m.is_latest ? ', latest' : '') + ')';
+    document.getElementById('h-bl').textContent = (sm.baseline || m.baseline_in_force || '–') + (m.baseline_file ? ' · ' + m.baseline_file : '');
+    var rec = document.getElementById('h-rec');
+    if (sm.reconciled === true) {
+      rec.innerHTML = '<span class="rec-ok">Reconciled ✓</span> to ' + esc(m.source_file || '–') + ' (' + esc((m.sha256 || '').slice(0, 8)) + ')';
+      rec.title = sm.controls_passed + ' of ' + sm.controls_total + ' controls passed; SHA-256 ' + (m.sha256 || '');
+    } else {
+      rec.innerHTML = '<span class="rec-bad">Reconciliation FAILED</span> ' + esc(m.source_file || '') + ' (' + esc(nf(sm.controls_passed)) + '/' + esc(nf(sm.controls_total)) + ' controls)';
+      rec.title = 'One or more reconciliation controls failed: do not use these figures for decisions.';
+    }
+    var dq = document.getElementById('h-dq');
+    dq.textContent = nf(sm.dq_score) + '/100 · ' + (sm.dq_rating || '–'); dq.title = defText('DQ score');
+    var g = D.meta.generated_utc || '';
+    document.getElementById('h-gen').textContent = g ? fd(g) + ' ' + g.slice(11, 16) + ' UTC' : '–';
+  }
+  function renderControls() {
+    var sel = document.getElementById('sel-dd');
+    if (!sel.options.length) {
+      sel.innerHTML = DATES.map(function (d) { var m = SMETA[d] || {}; return '<option value="' + d + '">' + esc((m.label || '') + ' · ' + fd(d) + (m.is_latest ? ' (latest)' : '')) + '</option>'; }).join('');
+    }
+    sel.value = ST.dd;
+    document.getElementById('sel-cmp').value = ST.cmp;
+    var d = ST.drill, crumbs = [['programme', 'Programme']];
+    if (d.asset) crumbs.push(['asset', assetName(d.asset)]);
+    if (d.ws) crumbs.push(['ws', wsName(d.ws)]);
+    if (d.pkg) crumbs.push(['pkg', pkgName(d.pkg)]);
+    if (d.act) crumbs.push(['act', d.act]);
+    document.getElementById('crumbs').innerHTML = crumbs.map(function (c, i) {
+      var last = i === crumbs.length - 1;
+      return '<li><button type="button" class="crumb" data-crumb="' + c[0] + '"' + (last ? ' aria-current="page"' : '') + '>' + esc(c[1]) + '</button></li>';
+    }).join('');
+    var level = !d.asset ? 'asset' : !d.ws ? 'ws' : !d.pkg ? 'pkg' : !d.act ? 'act' : null;
+    var ds = document.getElementById('sel-drill');
+    if (!level) { ds.innerHTML = '<option value="">Activity selected</option>'; ds.disabled = true; }
+    else {
+      ds.disabled = false;
+      var key = { asset: 'asset', ws: 'ws', pkg: 'pkg', act: 'activity_id' }[level], cnt = new Map();
+      S().acts.filter(inScope).forEach(function (a) { var v = a[key]; if (v) cnt.set(v, (cnt.get(v) || 0) + 1); });
+      var nm = { asset: assetName, ws: wsName, pkg: pkgName, act: function (v) { return v + ' · ' + actName(v); } }[level];
+      var opts = Array.from(cnt.keys()).sort().map(function (v) { return '<option value="' + esc(v) + '">' + esc(nm(v) + (level !== 'act' ? ' (' + cnt.get(v) + ')' : '')) + '</option>'; });
+      var lab = { asset: 'Choose an asset…', ws: 'Choose a workstream…', pkg: 'Choose a WBS package…', act: 'Choose an activity…' }[level];
+      ds.innerHTML = '<option value="">' + lab + '</option>' + opts.join('');
+      ds.setAttribute('data-level', level);
+    }
+    var notes = [];
+    if (ST.cmp === 'prev' && !prevDD()) notes.push('S1 is the first update in the series, so "previous period" compares with BL0.');
+    if (ST.cmp === 'BL1' && (SMETA[ST.dd] || {}).baseline_in_force === 'BL0') notes.push('BL1 was approved in July 2026 (CR-003) and was not in force at this data date; BL1 values are shown for reference.');
+    if (anyDrill()) notes.push('Filtered to ' + scopeText() + ': tables and activity-level charts follow the drill-down; programme-level measures (Day 1, S-curve, DQ score) do not.');
+    document.getElementById('ctx-note').textContent = notes.join(' ');
+  }
+
+  /* ------------------------------------------------------------------ tabs */
+  function buildTabs() {
+    var tl = document.getElementById('tablist');
+    tl.innerHTML = TABS.map(function (t, i) {
+      var sel = t[0] === ST.tab;
+      return '<button type="button" class="tab" role="tab" id="tab-' + t[0] + '" aria-controls="p-' + t[0] + '" aria-selected="' + sel + '" tabindex="' + (sel ? 0 : -1) + '" data-tab="' + t[0] + '">' + (i < 7 ? '<span class="n">' + (i + 1) + '</span>' : '') + esc(t[1]) + '</button>';
+    }).join('');
+    document.getElementById('panels').innerHTML = TABS.map(function (t) {
+      return '<section role="tabpanel" id="p-' + t[0] + '" aria-labelledby="tab-' + t[0] + '" tabindex="0"' + (t[0] === ST.tab ? '' : ' hidden') + '></section>';
+    }).join('');
+    tl.addEventListener('keydown', function (e) {
+      var keys = ['ArrowRight', 'ArrowLeft', 'Home', 'End']; if (keys.indexOf(e.key) < 0) return;
+      var ids = TABS.map(function (t) { return t[0]; }), i = ids.indexOf(ST.tab);
+      if (e.key === 'ArrowRight') i = (i + 1) % ids.length; else if (e.key === 'ArrowLeft') i = (i - 1 + ids.length) % ids.length;
+      else if (e.key === 'Home') i = 0; else i = ids.length - 1;
+      e.preventDefault(); selectTab(ids[i]); document.getElementById('tab-' + ids[i]).focus();
+    });
+    tl.addEventListener('click', function (e) { var b = e.target.closest('[data-tab]'); if (b) selectTab(b.getAttribute('data-tab')); });
+  }
+  function selectTab(id) {
+    if (!TABS.some(function (t) { return t[0] === id; })) id = 'exec';
+    ST.tab = id;
+    TABS.forEach(function (t) {
+      var b = document.getElementById('tab-' + t[0]), p = document.getElementById('p-' + t[0]), on = t[0] === id;
+      b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1; p.hidden = !on;
+    });
+    renderTab(); syncHash();
+  }
+  function renderTab() {
+    destroyCharts();
+    var p = document.getElementById('p-' + ST.tab);
+    try { R[ST.tab](p); snapBoxes(p); }
+    catch (e) { console.error('Render failed for tab ' + ST.tab + ': ' + (e && e.stack || e)); p.innerHTML = '<p class="err">This section could not be rendered.</p>'; }
+    window.__DOP_RENDERED = ST.tab + '|' + ST.dd + '|' + ST.cmp;
+  }
+  function renderAll() { renderHeader(); renderControls(); renderTab(); renderExplorer(); if (ST.drawer) renderDrawer(); syncHash(); }
+  function syncHash() {
+    try { history.replaceState(null, '', '#tab=' + ST.tab + '&dd=' + ST.dd + '&cmp=' + ST.cmp); } catch (e) { /* ignore */ }
+  }
+  function readHash() {
+    var h = (location.hash || '').replace(/^#/, ''), o = {};
+    h.split('&').forEach(function (kv) { var p = kv.split('='); if (p[0]) o[decodeURIComponent(p[0])] = decodeURIComponent(p[1] || ''); });
+    if (o.tab && TABS.some(function (t) { return t[0] === o.tab; })) ST.tab = o.tab;
+    if (o.dd && DATES.indexOf(o.dd) >= 0) ST.dd = o.dd;
+    if (o.cmp && CMP[o.cmp]) ST.cmp = o.cmp;
+  }
+
+  var R = {};
+
+  /* ================================================================== 1 Executive summary */
+  R.exec = function (p) {
+    var s = S(), sm = s.sum, nar = s.nar, sw = nar.so_what, pv = prevDD(), ps = pv ? S(pv).sum : null;
+    var d1 = s.by.get(D.meta.day1_id) || {};
+    var tfTone = !isNum(sm.day1_tf_d) ? '' : 'tone-' + ragOf(sm.day1_tf_d);
+    var vt = function (v) { return !isNum(v) ? '' : v > 0 ? 'tone-red' : 'tone-green'; };
+    /* Slip vs previous period comes from the model (at S1 it is measured against BL0, as in P6 practice). */
+    var prevDelta = isNum(d1.slip_vs_prev_d) ? d1.slip_vs_prev_d : (ps ? dn(sm.day1_forecast) - dn(ps.day1_forecast) : null);
+    var fe = sm.float_erosion_d, feNote = 'Float erosion ' + sd(fe, 'wd') + (isNum(fe) && fe !== 0 ? (fe > 0 ? ' (regained)' : ' (lost)') : '');
+    var bl1Note = 'BL1 Day 1 ' + fd(d1.bl1_finish) + ((SMETA[ST.dd] || {}).baseline_in_force === 'BL0' ? ' (BL1 not yet approved)' : '');
+    var tiles = [
+      { k: 'fc', lab: 'Day 1 forecast', m: 'Day 1 forecast', val: fd(sm.day1_forecast), tone: tfTone, note: 'Target ' + fd(D.meta.day1_target) },
+      { k: 'BL0', lab: 'Day 1 vs BL0', m: 'Finish variance vs BL0', val: sd(sm.day1_var_bl0_d, 'cd'), tone: vt(sm.day1_var_bl0_d), note: 'BL0 Day 1 ' + fd(d1.bl0_finish) },
+      { k: 'BL1', lab: 'Day 1 vs BL1', m: 'Finish variance vs BL1', val: sd(sm.day1_var_bl1_d, 'cd'), tone: vt(sm.day1_var_bl1_d), note: bl1Note },
+      { k: 'prev', lab: 'Day 1 vs last period', m: 'Slip vs previous period', val: isNum(prevDelta) ? sd(prevDelta, 'cd') : 'n/a', tone: vt(prevDelta), note: ps ? fd(ps.day1_forecast) + ' at ' + fd(pv) : 'First update: measured against BL0' },
+      { k: 'tf', lab: 'Day 1 total float', m: 'Day 1 total float', val: sd(sm.day1_tf_d, 'wd'), tone: tfTone, note: feNote }
+    ];
+    var stats = '<div class="stats" role="list" aria-label="Schedule health counts">' + [
+      [sm.critical_count, 'critical (TF ≤ 0)', 'Critical'], [sm.near_critical_count, 'near-critical', 'Near-critical'],
+      [sm.negative_float_count, 'negative float', 'Total float'], [sm.longest_path_count, 'on the longest path', 'Longest path'],
+      [sm.complete, 'of ' + nf(sm.activities) + ' complete', 'Duration % complete']
+    ].map(function (x) { return '<div role="listitem"><b>' + esc(nf(x[0])) + '</b><span>' + esc(x[1]) + '</span>' + info(x[2]) + '</div>'; }).join('') + '</div>';
+    var tilesHtml = '<div class="tiles" role="list" aria-label="Day 1 comparisons">' + tiles.map(function (t) {
+      var ref = t.k === ST.cmp;
+      return '<div class="tile' + (ref ? ' is-ref' : '') + '" role="listitem"><div class="lab">' + esc(t.lab) + info(t.m) + (ref ? ' <span class="ref-tag">compare-to</span>' : '') + '</div><div class="val ' + t.tone + '">' + esc(t.val) + '</div><div class="note">' + esc(t.note) + '</div></div>';
+    }).join('') + '</div>';
+
+    /* decisions */
+    var decs = decisionsAt(ST.dd).filter(function (x) { return x.st === 'Open'; }).sort(function (a, b) { return (b.od - a.od) || ((a.dtn || 0) - (b.dtn || 0)); });
+    var reco = (D.scenarios || []).filter(function (x) { return x.recommended; })[0];
+    var asks = decs.length ? decs.map(function (x) {
+      var due = x.od ? pill('red', Math.abs(x.dtn) + ' d overdue') : x.dtn <= 14 ? pill('amber', 'due in ' + x.dtn + ' d') : pill('', 'due in ' + x.dtn + ' d');
+      return '<div class="ask"><div class="q">' + esc(x.decision_id) + ' · ' + esc(x.ask) + '</div><div class="m">Owner: ' + esc(x.owner) + ' · needed by ' + fd(x.needed_by) + ' ' + due + (x.linked_activity ? ' · protects ' + actBtn(x.linked_activity) : '') + '</div></div>';
+    }).join('') : '<p class="empty">No open decisions at this data date.</p>';
+    if (reco && ST.dd === D.meta.latest) {
+      asks += '<div class="reco"><b>Recommended: recovery ' + esc(String(reco.scenario_id).replace(/\+/g, ' + ')) + '</b> (' + esc(reco.decision) + ') moves Day 1 to ' + fd(reco.day1_forecast) + ' with ' + sd(reco.day1_tf_d, 'wd') + ' Day 1 total float; residual risk ' + esc(reco.residual_risk) + '.</div>';
+    }
+    var nOver = decs.filter(function (x) { return x.od; }).length;
+    var askTitle = decs.length ? plural(decs.length, 'decision is', 'decisions are') + ' open' + (nOver ? ', ' + nOver + ' overdue' : '') + '; each one names its owner and the date it is needed by.' : 'No decisions are open at this data date.';
+
+    var hero = '<section class="card hero c8"><p class="eyebrow">Status at ' + fd(ST.dd) + ' · ' + esc(sm.label || '') + ' · baseline in force ' + esc(sm.baseline || '') + '</p>' +
+      '<h2 class="headline">' + esc(nar.headline || ('Day 1 Opening is forecast for ' + fd(sm.day1_forecast) + '.')) + '</h2>' +
+      '<ul class="msgs">' + (nar.messages || []).map(function (m) { return '<li>' + esc(m) + '</li>'; }).join('') + '</ul>' + tilesHtml + stats + '</section>';
+    var askCard = '<section class="card asks c4"><h3>' + esc(askTitle) + '</h3><p class="sub">Open decisions as at the data date, most urgent first.</p>' + asks + '</section>';
+
+    /* RAG matrix */
+    var assets = Object.keys(D.meta.assets || {}), wss = Object.keys(D.meta.workstreams || {});
+    var cell = function (as, ws) {
+      var list = s.acts.filter(function (a) { return (!as || a.asset === as) && (!ws || a.ws === ws); });
+      if (!list.length) return { n: 0 };
+      var m = minTF(list); return { n: list.length, m: m, rag: m === null ? 'done' : ragOf(m) };
+    };
+    var reds = 0, cells = 0, worst = null, cellList = [];
+    var btn = function (as, ws, tot) {
+      var c = cell(as, ws);
+      if (!c.n) return '<td><span class="rc na" title="No activities">·</span></td>';
+      if (!tot && as && ws) { cells++; if (c.rag === 'red') reds++; if (c.m !== null) cellList.push({ as: as, ws: ws, m: c.m }); if (c.m !== null && (!worst || c.m < worst.m)) worst = { as: as, ws: ws, m: c.m }; }
+      var sel = (ST.drill.asset || null) === (as || null) && (ST.drill.ws || null) === (ws || null) && (as || ws) && !ST.drill.pkg && !ST.drill.act;
+      var lab = ragLabel(c.rag), L = c.rag === 'done' ? '✓' : lab.charAt(0);
+      var t = (as ? assetName(as) : 'All assets') + ' · ' + (ws ? wsName(ws) : 'All workstreams') + ': ' + lab + (c.m !== null ? ', minimum total float ' + sd(c.m, 'wd') : '') + ' (' + c.n + ' activities). Select to drill down.';
+      return '<td><button type="button" class="rc ' + c.rag + (sel ? ' sel' : '') + (tot ? ' tot' : '') + '" data-drill-asset="' + (as || '') + '" data-drill-ws="' + (ws || '') + '" title="' + esc(t) + '" aria-label="' + esc(t) + '"><span class="l" aria-hidden="true">' + L + '</span>' + (c.m !== null ? sd(c.m) : '') + '</button></td>';
+    };
+    var rag = '<div class="ragw"><table class="rag"><caption class="sr">RAG by asset and workstream from minimum total float of incomplete activities</caption><thead><tr><th scope="col">Asset</th>' +
+      wss.map(function (w) { return '<th scope="col" title="' + esc(wsName(w)) + '">' + esc(w) + '</th>'; }).join('') + '<th scope="col">All</th></tr></thead><tbody>' +
+      assets.map(function (a) { return '<tr><th scope="row" title="' + esc(assetName(a)) + '">' + esc(a) + '</th>' + wss.map(function (w) { return btn(a, w); }).join('') + btn(a, null, true) + '</tr>'; }).join('') +
+      '<tr><th scope="row">All</th>' + wss.map(function (w) { return btn(null, w, true); }).join('') + btn(null, null, true) + '</tr></tbody></table></div>' +
+      '<div class="keyrow">' + pill('red', 'Red: min TF < 0 wd') + pill('amber', 'Amber: 0 to ' + NC + ' wd') + pill('green', 'Green: > ' + NC + ' wd') + '<span>Values are minimum total float (wd) of incomplete activities; select a cell to drill down.</span></div>';
+    var ties = worst ? cellList.filter(function (x) { return x.m === worst.m; }) : [];
+    var ragSo = worst ? reds + ' of ' + cells + ' asset × workstream cells are red; the weakest ' + (ties.length > 1 ? 'are ' : 'is ') + ties.map(function (x) { return assetName(x.as) + ' ' + wsName(x.ws); }).join(', ') + ' at ' + sd(worst.m, 'wd') + ' minimum total float.' : 'No incomplete activities carry float data.';
+    var ragTitle = reds ? 'Negative float sits in ' + reds + ' of ' + cells + ' asset × workstream cells; the deepest is ' + sd(worst.m, 'wd') + '.' : 'No asset × workstream cell carries negative float.';
+
+    /* risks */
+    var risks = (s.raw.risks || []).slice().sort(function (a, b) { return (b.score - a.score) || ((b.schedule_impact_days || 0) - (a.schedule_impact_days || 0)); }).slice(0, 3);
+    var riskHtml = risks.map(function (r) {
+      return '<div class="ask"><div class="q">' + esc(r.risk_id) + ' · ' + esc(r.title) + '</div><div class="m">' + pill(r.rating === 'High' ? 'red' : r.rating === 'Medium' ? 'amber' : 'green', r.rating + ' ' + r.score) + ' ' + trendCell(r.trend) +
+        ' · Owner: ' + esc(ownerName(r.owner_code)) + ' · schedule impact ' + nf(r.schedule_impact_days) + ' wd · min linked float ' + tfCell(r.min_linked_float_d) + '</div><div class="m">Mitigation: ' + esc(r.mitigation) + ' (' + esc(r.mitigation_owner) + ')</div></div>';
+    }).join('') || '<p class="empty">No risks recorded.</p>';
+    var riskSo = risks.length ? risks[0].risk_id + ' (' + risks[0].title + ') is the highest-scoring risk at ' + risks[0].score + '; its linked activities carry ' + sd(risks[0].min_linked_float_d, 'wd') + ' minimum float.' : '';
+
+    /* two-week headlines */
+    var lb = s.acts.filter(function (a) { return a.lookback_event; }), la = s.acts.filter(function (a) { return a.lookahead; });
+    var lbMiss = lb.filter(function (a) { return a.lookback_achieved === false; });
+    var laCrit = la.filter(function (a) { return a.is_critical || a.is_longest_path; });
+    var two = '<div class="grid" style="margin:0;gap:12px"><div class="c6"><h4 style="margin-top:0">Look-back (last 14 days)</h4><p style="margin:0">' + esc(sw.lookback || (lb.length - lbMiss.length) + ' of ' + lb.length + ' items achieved.') + '</p>' +
+      (lbMiss.length ? '<p class="m muted" style="margin:4px 0 0">Missed: ' + lbMiss.slice(0, 4).map(function (a) { return actBtn(a.activity_id) + ' (' + esc(a.owner) + ')'; }).join(', ') + '</p>' : '') + '</div>' +
+      '<div class="c6"><h4 style="margin-top:0">Look-ahead (next 14 days)</h4><p style="margin:0">' + esc(sw.lookahead || la.length + ' activities due.') + '</p>' +
+      (laCrit.length ? '<p class="muted" style="margin:4px 0 0">Critical: ' + laCrit.slice(0, 4).map(function (a) { return actBtn(a.activity_id) + ' (' + esc(a.owner) + ')'; }).join(', ') + '</p>' : '') + '</div></div>';
+    var laOwners = Array.from(new Set(laCrit.map(function (a) { return a.owner; }))).map(ownerName);
+    var twoSo = laCrit.length ? laOwners.join(' and ') + ' must confirm the ' + plural(laCrit.length, 'critical start or finish', 'critical starts and finishes') + ' due by ' + fdn(dn(ST.dd) + 13) + '; a slip on the longest path moves Day 1 day for day, and the other critical items have no float left.' : 'No critical work falls due in the next fortnight, so the period is a chance to recover float.';
+    var twoTitle = lbMiss.length ? plural(lbMiss.length, 'commitment was', 'commitments were') + ' missed in the last fortnight; ' + plural(laCrit.length, 'critical item falls', 'critical items fall') + ' due in the next.' : 'Every commitment due in the last fortnight was met; ' + plural(laCrit.length, 'critical item falls', 'critical items fall') + ' due in the next.';
+
+    /* S-curve */
+    var refBL = ST.cmp === 'BL0' || ST.cmp === 'BL1' ? ST.cmp : (sm.baseline || 'BL1');
+    var scRow = (D.trends.s_curve || []).filter(function (r) { return r.date === ST.dd; })[0];
+    var scAct = scRow ? scRow.actual : null, scPl = scRow ? scRow['planned_' + refBL.toLowerCase()] : null;
+    var scTitle = isNum(scAct) && isNum(scPl) ? 'Progress is ' + Math.abs(scAct - scPl).toFixed(1) + ' points ' + (scAct < scPl ? 'behind' : 'ahead of') + ' the ' + refBL + ' plan at the data date.' : 'Progress against plan.';
+    var scSo = isNum(scAct) && isNum(scPl) ? 'At ' + fd(ST.dd) + ' the programme is ' + scAct.toFixed(1) + '% complete against ' + scPl.toFixed(1) + '% planned in ' + refBL + ' (' + sd(scAct - scPl, 'pts') + ')' + (ST.dd === D.meta.latest ? '; the forecast curve shows the remaining work as currently scheduled.' : '; the forecast curve belongs to the latest update and is hidden for earlier data dates.') : 'No S-curve point exists for this data date.';
+
+    p.innerHTML = '<h2 class="sr">Executive summary</h2><div class="grid">' + hero + askCard + '</div>' +
+      '<div class="grid">' + card('c7', esc(ragTitle), 'RAG by asset × workstream' + info('Total float') + ' · derived from minimum total float of incomplete activities.', rag, esc(ragSo)) +
+      card('c5', 'The top three risks account for ' + sum(risks.map(function (r) { return r.schedule_impact_days || 0; })) + ' wd of potential schedule impact.', 'Highest risk scores' + info('Risk score') + ' at the data date.', riskHtml, esc(riskSo)) + '</div>' +
+      '<div class="grid">' + card('c5', esc(twoTitle), 'Two-week headlines' + info('Look-ahead item'), two, esc(twoSo)) +
+      card('c7', esc(scTitle), 'Duration-weighted S-curve' + info('Planned % complete') + ': planned (BL0, BL1) vs actual vs forecast.', chartBox('ch-scurve', 'S-curve of planned, actual and forecast percent complete'), esc(scSo)) + '</div>';
+
+    var t = theme(), sc = D.trends.s_curve || [], ddn = dn(ST.dd);
+    var pts = function (k, filt) { return sc.filter(function (r) { return isNum(r[k]) && (!filt || filt(r)); }).map(function (r) { return { x: dn(r.date), y: r[k] }; }); };
+    var dsets = [
+      lineDs('Planned BL0', pts('planned_bl0'), 4, t, { pointRadius: 0, borderWidth: refBL === 'BL0' ? 2.5 : 1.5 }),
+      lineDs('Planned BL1', pts('planned_bl1'), 0, t, { pointRadius: 0, borderDash: [6, 4], borderWidth: refBL === 'BL1' ? 2.5 : 1.5 }),
+      lineDs('Actual', pts('actual', function (r) { return dn(r.date) <= ddn; }), 1, t, { borderDash: [] })
+    ];
+    if (ST.dd === D.meta.latest) dsets.push(lineDs('Forecast', pts('forecast'), 2, t, { pointRadius: 0, borderDash: [2, 3] }));
+    var o = baseOpts(t, { ddline: { x: ddn, color: t.accent, label: 'Data date' }, ytitle: '% complete' });
+    o.scales.x.type = 'linear'; o.scales.x.ticks.callback = function (v) { return fmon(v); }; o.scales.x.ticks.stepSize = 91;
+    o.scales.y.min = 0; o.scales.y.max = 100; o.scales.y.ticks.callback = function (v) { return v + '%'; };
+    o.plugins.tooltip.callbacks = { title: function (it) { return it.length ? fdn(it[0].parsed.x) : ''; }, label: function (c) { return c.dataset.label + ': ' + nf(c.parsed.y, 1) + '%'; } };
+    mkChart('ch-scurve', { type: 'line', data: { datasets: dsets }, options: o });
+  };
+
+  /* ================================================================== 2 Milestones */
+  R.ms = function (p) {
+    var s = S(), c = C(), pv = prevDD(), t = theme(), dates = datesTo();
+    var ms = (s.raw.milestones || []).filter(function (m) { return idInScope(m.activity_id); }).sort(function (a, b) { return (dn(a.forecast_finish) || 0) - (dn(b.forecast_finish) || 0); });
+    var rows = ms.map(function (m) {
+      var pr = pv ? tm(pv, m.activity_id) : null, key = KEY_MS.indexOf(m.activity_id) >= 0;
+      return { cls: key ? 'key' : '', cells: [actCell(m.activity_id), esc(m.owner_code) + '<span class="aname">' + esc(ownerName(m.owner_code)) + '</span>', fd(m.bl0_finish), fd(m.bl1_finish), pr ? fd(pr.forecast_finish) : '–', '<b>' + fd(m.forecast_finish) + '</b>', varCell(m[c.mv]), mvCell(pv ? m.movement_vs_prev_d : null), tfCell(m.total_float_d), statusPill(m.status)] };
+    });
+    var slipped = ms.filter(function (m) { return pv && m.movement_vs_prev_d > 0; }), neg = ms.filter(function (m) { return m.total_float_d < 0; });
+    var late = ms.filter(function (m) { return m[c.mv] > 0; });
+    var worstMs = ms.slice().sort(function (a, b) { return (b[c.mv] || -1e9) - (a[c.mv] || -1e9); })[0];
+    var tblTitle = plural(late.length, 'milestone sits', 'milestones sit') + ' later than ' + c.label + (worstMs && worstMs[c.mv] > 0 ? '; ' + actName(worstMs.activity_id) + ' (' + worstMs.activity_id + ') is furthest out at ' + sd(worstMs[c.mv], 'cd') + '.' : '.');
+    var tblSo = anyDrill() ? slipped.length + ' of ' + ms.length + ' milestones in scope slipped this period; ' + neg.length + ' carry negative float.' : (s.nar.so_what.milestones || '');
+    var head = [{ t: 'Milestone' }, { t: 'Owner' }, { t: 'BL0', cls: 'nw' }, { t: 'BL1', cls: 'nw' }, { t: 'Previous', cls: 'nw' }, { t: 'Current', cls: 'nw' },
+      { t: 'Var vs ' + esc(c.short) + ' (cd)', cls: 'num', title: defText(c.measure) }, { t: 'Movement', cls: 'nw', title: defText('Slip vs previous period') }, { t: 'TF', cls: 'num', title: defText('Total float') }, { t: 'Status' }];
+
+    /* slip charts */
+    var yLabel = ST.cmp === 'prev' ? 'Movement vs previous period (cd)' : 'Variance vs ' + ST.cmp + ' (cd)';
+    var series = function (ids) {
+      return ids.map(function (id, i) { return lineDs(SHORT[id] || id, dates.map(function (d) { var r = tm(d, id); return r && isNum(r[c.mv]) ? r[c.mv] : null; }), i, t); });
+    };
+    var labels = dates.map(function (d) { return (SMETA[d] || {}).label + ' ' + fd(d).slice(0, 6); });
+    var slipSo = function (ids) {
+      var cur = ids.map(function (id) { var r = tm(ST.dd, id); return { id: id, v: r ? r[c.mv] : null }; }).filter(function (x) { return isNum(x.v); });
+      if (!cur.length) return 'No milestone data.';
+      cur.sort(function (a, b) { return b.v - a.v; });
+      /* Second clause: the lead series (Day 1 for gates) or, if that is the worst already / flat, the worst one. */
+      var lead = ids[0] !== cur[0].id && GATES.indexOf(ids[0]) === 0 ? ids[0] : cur[0].id;
+      var first = tm(DATES[0], lead), now = tm(ST.dd, lead);
+      if (ST.cmp === 'prev') return cur[0].v > 0 ? SHORT[cur[0].id] + ' moved most this period (' + sd(cur[0].v, 'cd') + ')' + (lead !== cur[0].id && now ? '; ' + SHORT[lead] + ' moved ' + sd(now.movement_vs_prev_d, 'cd') + '.' : '.') : 'None of these milestones moved later this period' + (cur[cur.length - 1].v < 0 ? '; ' + SHORT[cur[cur.length - 1].id] + ' moved most, ' + Math.abs(cur[cur.length - 1].v) + ' cd earlier.' : '; all held their forecast.');
+      return SHORT[cur[0].id] + ' carries the largest variance vs ' + ST.cmp + ' (' + sd(cur[0].v, 'cd') + ')' + (first && now && dates.length > 1 ? '; ' + (lead === cur[0].id ? 'it' : SHORT[lead]) + ' has moved from ' + sd(first[c.mv], 'cd') + ' at S1 to ' + sd(now[c.mv], 'cd') + ' now.' : '.');
+    };
+    var slipTitle = function (ids, what) {
+      var cur = ids.map(function (id) { var r = tm(ST.dd, id); return { id: id, v: r ? r[c.mv] : null }; }).filter(function (x) { return isNum(x.v); }).sort(function (a, b) { return b.v - a.v; });
+      if (!cur.length) return what + ': no data at this date.';
+      var w = cur[0], nLate = cur.filter(function (x) { return x.v > 0; }).length;
+      if (ST.cmp === 'prev') return w.v > 0 ? what + ': ' + SHORT[w.id] + ' moved most this period, ' + sd(w.v, 'cd') + ' later.' : what + ': none moved later this period.';
+      var lw = what.charAt(0).toLowerCase() + what.slice(1);
+      return nLate ? (nLate === cur.length ? 'All ' + cur.length + ' ' + lw + ' sit' : plural(nLate, lw.replace(/s$/, '') + ' sits', lw + ' sit')) + ' later than ' + ST.cmp + '; ' + SHORT[w.id] + ' is furthest out at ' + sd(w.v, 'cd') + '.' : 'All ' + lw + ' are on or ahead of ' + ST.cmp + '.';
+    };
+
+    /* slippage by owner and workstream */
+    var sc = s.acts.filter(inScope), sl = sc.filter(function (a) { return a[c.v] > 0; });
+    var group = function (key, nameFn) {
+      var m = new Map(); sl.forEach(function (a) { var k = a[key] || 'UNASSIGNED'; var g = m.get(k) || { k: k, n: 0, worst: null }; g.n++; if (!g.worst || a[c.v] > g.worst[c.v]) g.worst = a; m.set(k, g); });
+      return Array.from(m.values()).sort(function (a, b) { return b.n - a.n; }).map(function (g) { g.name = nameFn(g.k); return g; });
+    };
+    var gOwn = group('owner', function (k) { return k; }), gWs = group('ws', function (k) { return k; });
+    var barSo = function (g, nameFn) { return g.length ? nameFn(g[0].k) + ' owns ' + g[0].n + ' of the ' + sl.length + ' activities later than ' + c.label + '; worst is ' + g[0].worst.activity_id + ' at ' + sd(g[0].worst[c.v], 'cd') + '.' : 'No activity in scope is later than ' + c.label + '.'; };
+
+    /* volatility */
+    var vol = ms.map(function (m) {
+      var f = dates.map(function (d) { var r = tm(d, m.activity_id); return r ? dn(r.forecast_finish) : null; }).filter(function (x) { return x != null; });
+      var mv = []; for (var i = 1; i < f.length; i++) mv.push(f[i] - f[i - 1]);
+      var mean = mv.length ? sum(mv) / mv.length : 0, sdv = mv.length ? Math.sqrt(sum(mv.map(function (x) { return (x - mean) * (x - mean); })) / mv.length) : 0;
+      var ch = 0, last = 0; mv.forEach(function (x) { if (!x) return; var g = Math.sign(x); if (last && g !== last) ch++; last = g; });
+      var lvl = ch >= 2 || sdv >= 7 ? 'High' : ch >= 1 || sdv >= 3 ? 'Medium' : 'Low';
+      return { id: m.activity_id, owner: m.owner_code, f: f, sd: sdv, ch: ch, range: f.length ? Math.max.apply(null, f) - Math.min.apply(null, f) : 0, net: f.length ? f[f.length - 1] - f[0] : 0, lvl: lvl };
+    }).sort(function (a, b) { return (b.sd - a.sd) || (b.ch - a.ch); });
+    var spark = function (f) {
+      if (f.length < 2) return '';
+      var lo = Math.min.apply(null, f), hi = Math.max.apply(null, f), w = 90, h = 22, rg = hi - lo || 1;
+      var pts = f.map(function (v, i) { return (i * (w - 4) / (f.length - 1) + 2).toFixed(1) + ',' + (h - 3 - (v - lo) / rg * (h - 6)).toFixed(1); }).join(' ');
+      return '<svg class="spark" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" aria-hidden="true"><polyline fill="none" stroke="var(--s1)" stroke-width="1.5" points="' + pts + '"/></svg>';
+    };
+    var volRows = vol.slice(0, 15).map(function (v) {
+      return [actCell(v.id), esc(v.owner), spark(v.f), nf(v.sd, 1), String(v.ch), sd(v.range, 'cd').replace(/^\+/, ''), varCell(v.net), pill(v.lvl === 'High' ? 'red' : v.lvl === 'Medium' ? 'amber' : 'green', v.lvl)];
+    });
+    var hv = vol.filter(function (v) { return v.lvl === 'High'; });
+    var volSo = dates.length < 3 ? 'Volatility needs at least three updates; select a later data date for a meaningful reading.' : (vol[0] ? actName(vol[0].id) + ' (' + vol[0].id + ') is the least stable forecast (std dev ' + nf(vol[0].sd, 1) + ' cd per update, ' + plural(vol[0].ch, 'direction change') + '); ' + plural(hv.length, 'milestone') + ' rate High.' : '');
+
+    p.innerHTML = '<h2 class="sr">Milestones and slippage trend</h2><div class="grid">' +
+      card('c12', esc(tblTitle), 'Milestone outlook · ' + esc(scopeText()) + ' · variance vs ' + esc(c.label) + info(c.measure) + ' · key milestones marked with an accent bar.', table(head, rows, { label: 'Milestone outlook', max: 420 }), esc(tblSo)) + '</div>' +
+      '<div class="grid">' + card('c6', esc(slipTitle(GATES, 'Programme gate milestones')), esc(yLabel) + ' across the data dates up to ' + fd(ST.dd) + '.', chartBox('ch-slip-g', 'Programme gate slip chart'), esc(slipSo(GATES))) +
+      card('c6', esc(slipTitle(ASSET_READY, 'Asset Day 1 ready milestones')), esc(yLabel) + ' across the data dates up to ' + fd(ST.dd) + '.', chartBox('ch-slip-a', 'Asset Day 1 ready slip chart'), esc(slipSo(ASSET_READY))) + '</div>' +
+      '<div class="grid">' + card('c6', esc(gOwn.length ? gOwn[0].k + ' holds the most activities forecast later than ' + c.label + '.' : 'No slippage by owner.'), 'Activities later than ' + esc(c.label) + ' by owner · ' + esc(scopeText()) + '.', chartBox('ch-own', 'Slipped activities by owner'), esc(barSo(gOwn, ownerName))) +
+      card('c6', esc(gWs.length ? wsName(gWs[0].k) + ' holds the most activities forecast later than ' + c.label + '.' : 'No slippage by workstream.'), 'Activities later than ' + esc(c.label) + ' by workstream · ' + esc(scopeText()) + '.', chartBox('ch-ws', 'Slipped activities by workstream'), esc(barSo(gWs, wsName))) + '</div>' +
+      '<div class="grid">' + card('c12', esc(hv.length ? plural(hv.length, 'milestone forecast is', 'milestone forecasts are') + ' volatile enough to need a confidence check before reporting upwards.' : 'Milestone forecasts are stable across the updates.'), 'Forecast volatility up to ' + fd(ST.dd) + ': standard deviation of period-on-period forecast movement and count of direction changes (later ↔ earlier); top 15.',
+        table([{ t: 'Milestone' }, { t: 'Owner' }, { t: 'Forecast trend' }, { t: 'Std dev (cd)', cls: 'num' }, { t: 'Direction changes', cls: 'num' }, { t: 'Range (cd)', cls: 'num' }, { t: 'Net since S1 (cd)', cls: 'num' }, { t: 'Volatility' }], volRows, { label: 'Forecast volatility', max: 380 }), esc(volSo)) + '</div>';
+
+    var o1 = baseOpts(t, { ytitle: 'cd' }); var o2 = baseOpts(t, { ytitle: 'cd' });
+    [o1, o2].forEach(function (o) { o.plugins.tooltip.callbacks = { label: function (x) { return x.dataset.label + ': ' + sd(x.parsed.y, 'cd'); } }; });
+    mkChart('ch-slip-g', { type: 'line', data: { labels: labels, datasets: series(GATES) }, options: o1 });
+    mkChart('ch-slip-a', { type: 'line', data: { labels: labels, datasets: series(ASSET_READY) }, options: o2 });
+    var bar = function (id, g, nameFn) {
+      var o = baseOpts(t, { legend: false, axis: 'y', mode: 'nearest' }); o.indexAxis = 'y';
+      o.scales.x.ticks.precision = 0; o.scales.x.title = { display: true, text: 'Activities later than ' + c.label, color: t.muted }; o.scales.y.grid = { display: false };
+      o.plugins.tooltip.callbacks = { title: function (it) { return it.length ? nameFn(g[it[0].dataIndex].k) : ''; }, label: function (x) { var r = g[x.dataIndex]; return r.n + ' activities; worst ' + r.worst.activity_id + ' ' + sd(r.worst[c.v], 'cd'); } };
+      mkChart(id, { type: 'bar', data: { labels: g.map(function (x) { return x.k; }), datasets: [{ label: 'Activities later than ' + c.label, data: g.map(function (x) { return x.n; }), backgroundColor: t.series[0], borderRadius: 4, borderSkipped: 'start', maxBarThickness: 18 }] }, options: o });
+    };
+    bar('ch-own', gOwn, ownerName); bar('ch-ws', gWs, wsName);
+  };
+
+  /* ================================================================== 3 Critical path */
+  R.cp = function (p) {
+    var s = S(), c = C(), t = theme(), sw = s.nar.so_what, ddn = dn(ST.dd);
+    var lp = s.acts.filter(function (a) { return a.is_longest_path; }).sort(function (a, b) { return ((dn(a.start) || 0) - (dn(b.start) || 0)) || ((dn(a.finish) || 0) - (dn(b.finish) || 0)); });
+    var g = '<p class="empty">No longest-path activities flagged.</p>';
+    if (lp.length) {
+      var lo = ddn, hi = ddn;
+      lp.forEach(function (a) { var st = dn(a.start), f = dn(a.finish); if (st != null) lo = Math.min(lo, st); if (f != null) hi = Math.max(hi, f); });
+      var d0 = new Date(lo * 864e5), d1 = new Date(hi * 864e5);
+      var start = Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth(), 1) / 864e5, end = Date.UTC(d1.getUTCFullYear(), d1.getUTCMonth() + 1, 1) / 864e5, span = end - start;
+      var pc = function (n) { return ((n - start) / span * 100); };
+      var ticks = [], y = d0.getUTCFullYear(), mo = d0.getUTCMonth(), nMonths = 0, tmp;
+      while ((tmp = Date.UTC(y, mo, 1) / 864e5) < end) { ticks.push(tmp); mo++; if (mo > 11) { mo = 0; y++; } nMonths++; }
+      var step = nMonths > 18 ? 3 : nMonths > 10 ? 2 : 1;
+      var tickHtml = ticks.map(function (tk, i) { return i % step ? '' : '<span class="g-tick" style="left:' + pc(tk).toFixed(3) + '%">' + fmon(tk) + '</span>'; }).join('');
+      var rows = lp.map(function (a) {
+        var st = dn(a.start), f = dn(a.finish), tone = a.status === 'TK_Complete' ? 'cmp' : (ragOf(a.total_float_d) === 'green' ? '' : ragOf(a.total_float_d) || '');
+        var tip = a.activity_id + ' ' + a.name + ': ' + fd(a.start) + ' to ' + fd(a.finish) + ', TF ' + sd(a.total_float_d, 'wd') + ', ' + (STATUS[a.status] || '');
+        var bar;
+        if (a.ms || st === f) bar = '<span class="g-ms ' + tone + '" style="left:' + pc(f).toFixed(3) + '%" title="' + esc(tip) + '"></span>';
+        else bar = '<span class="g-bar ' + tone + (a.atype === 'TT_LOE' ? ' loe' : '') + '" style="left:' + pc(st).toFixed(3) + '%;width:' + Math.max(0.3, pc(f + 1) - pc(st)).toFixed(3) + '%" title="' + esc(tip) + '">' + (a.status === 'TK_Active' && isNum(a.pct_duration) ? '<span class="g-done" style="width:' + Math.min(100, a.pct_duration) + '%"></span>' : '') + '</span>';
+        // a level-of-effort activity on the driving path is a schedule defect (check U07), not an oversight: tag it
+        var loeTag = a.atype === 'TT_LOE' ? '<button type="button" class="loe-tag" data-goto-check="U07" title="Level of effort on the driving path: a defect detected by check U07. Opens the check on the Schedule quality tab.">LOE · U07</button>' : '';
+        return '<div class="g-row' + (anyDrill() && !inScope(a) ? ' dim' : '') + '"><div class="g-lab">' + actBtn(a.activity_id) + '<span title="' + esc(a.name) + '">' + esc(a.name) + '</span>' + loeTag + '</div><div class="g-track">' + bar + '</div><div class="g-tf">' + tfCell(a.total_float_d) + '</div></div>';
+      }).join('');
+      var ddFrac = (ddn - start) / span;
+      g = '<div class="gw" tabindex="0" role="region" aria-label="Longest path Gantt chart"><div class="gantt" role="img" aria-label="Gantt chart of ' + lp.length + ' longest-path activities from ' + fdn(start) + ' to ' + fdn(end) + '"><div class="g-axis"><div>Activity</div><div class="g-ticks">' + tickHtml + '</div><div style="text-align:right">TF</div></div>' + rows +
+        '<span class="g-ddl" style="left:calc(var(--gl) + (100% - var(--gl) - var(--gt)) * ' + ddFrac.toFixed(4) + ')" title="Data date ' + fd(ST.dd) + '"></span></div></div>' +
+        '<div class="gkey"><span><b style="background:var(--red)"></b>Negative float</span><span><b style="background:var(--amber)"></b>0 to ' + NC + ' wd</span><span><b style="background:var(--s1)"></b>> ' + NC + ' wd</span><span><b style="border:1.5px dashed var(--s5)"></b>Level of effort</span><span><b style="background:var(--s5)"></b>Complete</span><span><b style="border-left:2px dashed var(--accent);width:2px"></b>Data date</span></div>';
+    }
+    var lpAssets = Array.from(new Set(lp.filter(function (a) { return a.asset !== 'PRG'; }).map(function (a) { return assetName(a.asset); })));
+    var lpNeg = lp.filter(function (a) { return a.total_float_d < 0; }).length;
+    var lpTitle = 'The longest path to Day 1 runs through ' + (lpAssets.join(' and ') || 'programme integration') + ', with ' + plural(lpNeg, 'activity', 'activities') + ' on negative float.';
+    var lpLoe = lp.filter(function (a) { return a.atype === 'TT_LOE'; });
+    var lpSo = (sw.critical_path || (lp.length + ' activities on the longest path.')) + (anyDrill() ? ' Activities outside ' + scopeText() + ' are dimmed.' : '') +
+      (lpLoe.length ? ' ' + lpLoe.map(function (a) { return a.activity_id; }).join(', ') + ' is level of effort on the driving path: tagged LOE · U07, a defect the quality checks detect, to be unlinked by its owner.' : '');
+
+    /* near-critical */
+    var near = s.acts.filter(function (a) { return inScope(a) && a.status !== 'TK_Complete' && isNum(a.total_float_d) && a.total_float_d <= NC && !a.is_longest_path; }).sort(function (a, b) { return a.total_float_d - b.total_float_d; });
+    var nearRows = near.map(function (a) { return [actCell(a.activity_id), esc(a.owner), fd(a.finish), tfCell(a.total_float_d), varCell(a[c.v]), a.total_float_d <= 0 ? pill('red', 'Critical') : pill('amber', 'Near-critical')]; });
+    var nNeg = near.filter(function (a) { return a.total_float_d < 0; }).length;
+    var nearTitle = plural(near.length, 'activity sits', 'activities sit') + ' within ' + NC + ' wd of the critical path without being on it; ' + nNeg + ' already carry negative float.';
+
+    /* float erosion */
+    var tr = (D.trends.summary || []).filter(function (r) { return dn(r.data_date) <= ddn; });
+    var fFirst = tr[0], fNow = tr[tr.length - 1], fWorst = tr.slice().sort(function (a, b) { return a.day1_tf_d - b.day1_tf_d; })[0];
+    var feSo = fFirst && fNow ? 'Day 1 total float has moved from ' + sd(fFirst.day1_tf_d, 'wd') + ' at ' + fd(fFirst.data_date) + ' to ' + sd(fNow.day1_tf_d, 'wd') + ' now' + (fWorst && fWorst !== fNow ? ', after a low of ' + sd(fWorst.day1_tf_d, 'wd') + ' on ' + fd(fWorst.data_date) : '') + '; the worst activity float is ' + sd(fNow.min_float_d, 'wd') + '.' : '';
+    var feTitle = fNow && fNow.day1_tf_d < 0 ? 'Day 1 float is negative: the programme has lost ' + Math.abs(fNow.day1_tf_d - fFirst.day1_tf_d) + ' wd of float since S1.' : 'Day 1 float remains positive at the data date.';
+
+    /* look-back / look-ahead */
+    var pvS = prevDD() ? S(prevDD()) : null;
+    var lb = s.acts.filter(function (a) { return a.lookback_event && inScope(a); }).sort(function (a, b) { return (a.lookback_achieved === b.lookback_achieved ? 0 : a.lookback_achieved ? 1 : -1); });
+    var lbRows = lb.map(function (a) {
+      var pa = pvS ? pvS.by.get(a.activity_id) : null, planned = pa ? (a.lookback_event === 'start' ? pa.start : pa.finish) : null, act = a.lookback_event === 'start' ? a.actual_start : a.actual_finish;
+      return { cls: a.lookback_achieved === false ? 'hl' : '', cells: [actCell(a.activity_id), esc(a.owner), esc(a.lookback_event === 'start' ? 'Start' : 'Finish'), fd(planned), fd(act), a.lookback_achieved ? pill('green', 'Achieved') : pill('red', 'Missed')] };
+    });
+    var lbMiss = lb.filter(function (a) { return a.lookback_achieved === false; });
+    var lbSo = anyDrill() ? (lb.length - lbMiss.length) + ' of ' + lb.length + ' items in scope were achieved.' : (s.nar.so_what.lookback || '');
+    var la = s.acts.filter(function (a) { return a.lookahead && inScope(a); }).map(function (a) {
+      var dt = a.lookahead_start ? a.start : a.finish; return { a: a, dt: dt };
+    }).sort(function (x, y) { return (dn(x.dt) || 0) - (dn(y.dt) || 0); });
+    var laRows = la.map(function (x) {
+      var a = x.a, ev = a.lookahead_start && a.lookahead_finish ? 'Start & finish' : a.lookahead_start ? 'Start' : 'Finish';
+      var fl = (a.is_longest_path ? pill('red', 'Longest path') + ' ' : '') + (a.is_critical && !a.is_longest_path ? pill('red', 'Critical') : '') + (!a.is_critical && a.is_near_critical ? pill('amber', 'Near-critical') : '');
+      return { cls: a.is_critical || a.is_longest_path ? 'hl' : '', cells: [actCell(a.activity_id), esc(a.owner), ev, fd(a.lookahead_start ? a.start : null), fd(a.lookahead_finish ? a.finish : null), tfCell(a.total_float_d), fl || '–'] };
+    });
+    var laCrit = la.filter(function (x) { return x.a.is_critical || x.a.is_longest_path; }).length;
+    var laSo = anyDrill() ? la.length + ' activities in scope start or finish in the next 14 days; ' + laCrit + ' are critical or on the longest path.' : (s.nar.so_what.lookahead || '');
+
+    p.innerHTML = '<h2 class="sr">Critical path and look-back / look-ahead</h2><div class="grid">' +
+      card('c12', esc(lpTitle), 'Longest path' + info('Longest path') + ' to Day 1 (driving relationships, P6 convention) · ' + lp.length + ' activities · ordered by start.', g, esc(lpSo)) + '</div>' +
+      '<div class="grid">' + card('c7', esc(nearTitle), 'Critical and near-critical' + info('Near-critical') + ' activities off the longest path · ' + esc(scopeText()) + ' · sorted by total float.', table([{ t: 'Activity' }, { t: 'Owner' }, { t: 'Finish', cls: 'nw' }, { t: 'TF', cls: 'num', title: defText('Total float') }, { t: 'Var vs ' + esc(c.short), cls: 'num' }, { t: 'Flag' }], nearRows, { label: 'Near-critical activities', max: 360 }),
+        esc(near.length ? 'Lowest float off the longest path: ' + near[0].activity_id + ' (' + near[0].name + ') at ' + sd(near[0].total_float_d, 'wd') + ', owner ' + ownerName(near[0].owner) + '.' : 'Nothing near-critical in scope.')) +
+      card('c5', esc(feTitle), 'Float erosion' + info('Float erosion') + ': Day 1 total float and minimum activity float (wd) by data date.', chartBox('ch-float', 'Float erosion trend'), esc(feSo)) + '</div>' +
+      '<div class="grid">' + card('c6', esc(lbMiss.length ? plural(lbMiss.length, 'item', 'items') + ' due in the last 14 days ' + (lbMiss.length === 1 ? 'was' : 'were') + ' missed; owners must re-forecast.' : 'All look-back items due in the last 14 days were achieved.'), 'Look-back' + info('Look-back item') + ': what the previous update forecast for the 14 days before ' + fd(ST.dd) + '.', table([{ t: 'Activity' }, { t: 'Owner' }, { t: 'Event' }, { t: 'Planned', cls: 'nw' }, { t: 'Actual', cls: 'nw' }, { t: 'Result' }], lbRows, { label: 'Look-back', max: 360, empty: 'No look-back items in scope.' }), esc(lbSo)) +
+        card('c6', esc(laCrit ? plural(laCrit, 'critical item starts or finishes', 'critical items start or finish') + ' in the next 14 days and need named owner attention.' : 'No critical items fall due in the next 14 days.'), 'Look-ahead' + info('Look-ahead item') + ': forecast starts and finishes in the 14 days from ' + fd(ST.dd) + '; critical rows highlighted.', table([{ t: 'Activity' }, { t: 'Owner' }, { t: 'Event' }, { t: 'Start', cls: 'nw' }, { t: 'Finish', cls: 'nw' }, { t: 'TF', cls: 'num' }, { t: 'Flag' }], laRows, { label: 'Look-ahead', max: 360, empty: 'No look-ahead items in scope.' }), esc(laSo)) + '</div>';
+
+    /* Narrow screens: the Gantt scrolls inside its frame (labels stay pinned); open it at the data date. */
+    var gw = p.querySelector('.gw'), gd = p.querySelector('.g-ddl');
+    if (gw && gd && gw.scrollWidth > gw.clientWidth + 4) {
+      var lab = p.querySelector('.g-axis > div:first-child');
+      gw.scrollLeft = Math.max(0, gd.offsetLeft - (lab ? lab.offsetWidth : 0) - 24);
+    }
+    var o = baseOpts(t, { ytitle: 'Working days' });
+    o.plugins.tooltip.callbacks = { label: function (x) { return x.dataset.label + ': ' + sd(x.parsed.y, 'wd'); } };
+    mkChart('ch-float', { type: 'line', data: { labels: tr.map(function (r) { return r.label + ' ' + fd(r.data_date).slice(0, 6); }), datasets: [
+      lineDs('Day 1 total float', tr.map(function (r) { return r.day1_tf_d; }), 0, t),
+      lineDs('Minimum activity float', tr.map(function (r) { return r.min_float_d; }), 2, t)
+    ] }, options: o });
+  };
+
+  /* ================================================================== 4 Interfaces & readiness */
+  R['if'] = function (p) {
+    var s = S(), d = ST.drill;
+    var all = s.raw.interfaces || [];
+    var pkgOf = function (id) { var m = DIM.get(id); return m ? m.package_code : null; };
+    var side = function (i, w) { return (!d.asset || i[w + '_asset'] === d.asset) && (!d.ws || i[w + '_ws'] === d.ws) && (!d.pkg || pkgOf(i[w + '_id']) === d.pkg); };
+    var inSc = function (i) { if (!anyDrill()) return true; if (d.act) return i.giver_id === d.act || i.receiver_id === d.act; return side(i, 'giver') || side(i, 'receiver'); };
+    var ifs = all.filter(inSc);
+    var dim = ST.ifDim, gk = dim === 'asset' ? 'giver_asset' : 'giver_ws', rk = dim === 'asset' ? 'receiver_asset' : 'receiver_ws', nm = dim === 'asset' ? assetName : wsName;
+    var gv = Array.from(new Set(ifs.map(function (i) { return i[gk]; }))).sort(), rv = Array.from(new Set(ifs.map(function (i) { return i[rk]; }))).sort();
+    var rank = { 'Late': 3, 'At risk': 2, 'On track': 1, 'Complete': 0 };
+    var mx = '<div class="ragw"><table class="rag"><caption class="sr">Interface matrix, giver rows and receiver columns</caption><thead><tr><th scope="col">Giver ↓ / Receiver →</th>' + rv.map(function (r) { return '<th scope="col" title="' + esc(nm(r)) + '">' + esc(r) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      gv.map(function (g) {
+        return '<tr><th scope="row" title="' + esc(nm(g)) + '">' + esc(g) + '</th>' + rv.map(function (r) {
+          var list = ifs.filter(function (i) { return i[gk] === g && i[rk] === r; });
+          if (!list.length) return '<td><span class="rc na">·</span></td>';
+          var w = list.reduce(function (m, i) { return rank[i.status] > rank[m] ? i.status : m; }, 'Complete');
+          var nl = list.filter(function (i) { return i.status === 'Late'; }).length, na = list.filter(function (i) { return i.status === 'At risk'; }).length;
+          var tone = w === 'Late' ? 'red' : w === 'At risk' ? 'amber' : w === 'On track' ? 'green' : 'done';
+          var sel = ST.ifCell && ST.ifCell.g === g && ST.ifCell.r === r && ST.ifCell.dim === dim;
+          var tip = nm(g) + ' → ' + nm(r) + ': ' + list.length + ' interfaces, ' + nl + ' late, ' + na + ' at risk. Select to filter the list.';
+          return '<td><button type="button" class="rc ' + tone + (sel ? ' sel' : '') + '" data-if-g="' + esc(g) + '" data-if-r="' + esc(r) + '" title="' + esc(tip) + '" aria-label="' + esc(tip) + '"><span class="l" aria-hidden="true">' + (tone === 'done' ? '✓' : ragLabel(tone).charAt(0)) + '</span>' + list.length + (nl ? ' · ' + nl + ' late' : '') + '</button></td>';
+        }).join('') + '</tr>';
+      }).join('') + '</tbody></table></div><div class="keyrow">' + pill('red', 'Late') + pill('amber', 'At risk') + pill('green', 'On track') + '<span>Cell = count of interfaces (worst status colours the cell); select a cell to filter the list.</span></div>';
+    var listed = ifs.filter(function (i) { return !ST.ifCell || ST.ifCell.dim !== dim || (i[gk] === ST.ifCell.g && i[rk] === ST.ifCell.r); }).sort(function (a, b) { return (b.gap_days || -1e9) - (a.gap_days || -1e9); });
+    var ifRows = listed.map(function (i) {
+      var tone = i.status === 'Late' ? 'red' : i.status === 'At risk' ? 'amber' : i.status === 'On track' ? 'green' : '';
+      return { cls: i.status === 'Late' ? 'hl' : '', cells: [esc(i.interface_id), esc(i.description), varCell(i.gap_days), pill(tone, i.status), fd(i.need_by), fd(i.giver_forecast), actBtn(i.giver_id) + '<span class="aname">' + esc(i.giver_asset + ' · ' + i.giver_ws + ' · ' + i.giver_owner) + '</span>', actBtn(i.receiver_id) + '<span class="aname">' + esc(i.receiver_asset + ' · ' + i.receiver_ws + ' · ' + i.receiver_owner) + '</span>', tfCell(i.giver_tf_d)] };
+    });
+    var nLate = ifs.filter(function (i) { return i.status === 'Late'; }), worstIf = nLate.slice().sort(function (a, b) { return b.gap_days - a.gap_days; })[0];
+    var ifTitle = nLate.length ? plural(nLate.length, 'interface is', 'interfaces are') + ' late against the receiver’s need date' + (worstIf ? '; the worst is ' + worstIf.interface_id + ' at ' + sd(worstIf.gap_days, 'cd') + '.' : '.') : 'No interface is late against the receiver’s need date.';
+    var ifSo = anyDrill() ? nLate.length + ' of ' + ifs.length + ' interfaces touching ' + scopeText() + ' are late.' : (s.nar.so_what.interfaces || '') + (worstIf ? ' Giver owner ' + ownerName(worstIf.giver_owner) + ' must confirm a recovery date for ' + worstIf.interface_id + '.' : '');
+
+    /* readiness chain */
+    var rd = (s.raw.readiness || []).filter(function (r) { return !d.asset || r.asset_code === d.asset; });
+    var assets = Array.from(new Set(rd.map(function (r) { return r.asset_code; })));
+    var worstAsset = null;
+    var chains = assets.map(function (a) {
+      var st = rd.filter(function (r) { return r.asset_code === a; });
+      var cc = st.filter(function (r) { return r.stage === 'Construction complete'; })[0], d1 = st.filter(function (r) { return r.stage === 'Day 1 ready'; })[0];
+      var gapSpan = cc && d1 ? dn(d1.forecast) - dn(cc.forecast) : null;
+      if (d1 && (!worstAsset || d1.gap_d > worstAsset.gap)) worstAsset = { a: a, gap: d1.gap_d, span: gapSpan, d1: d1 };
+      return '<div class="chain-asset"><h4>' + esc(assetName(a)) + '<span>Construction complete → Day 1 ready: ' + (gapSpan != null ? gapSpan + ' cd' : '–') + (d1 ? ' · Day 1 ready gap ' + sd(d1.gap_d, 'cd') : '') + '</span></h4><ol class="chain">' + st.map(function (r) {
+        var tone = r.status === 'TK_Complete' ? '' : r.gap_d > 0 ? 'red' : r.gap_d >= -10 ? 'amber' : 'green';
+        return '<li class="stg ' + tone + '"><span class="nm">' + esc(r.stage) + '</span><span class="dt">' + actBtn(r.activity_id, fd(r.forecast)) + '</span><span class="mt">Need-by ' + fd(r.need_by) + '</span><span class="mt">Gap ' + varCell(r.gap_d) + ' · TF ' + tfCell(r.total_float_d) + '</span><span class="sp">' + (isNum(r.span_from_prev_d) ? sd(r.span_from_prev_d, 'cd') + ' after previous stage' : 'First stage') + (isNum(r.var_bl_d) && r.var_bl_d !== 0 ? ' · ' + sd(r.var_bl_d, 'cd') + ' vs baseline' : '') + '</span></li>';
+      }).join('') + '</ol></div>';
+    }).join('');
+    var rdTitle = worstAsset ? assetName(worstAsset.a) + ' is the readiness constraint: Day 1 ready is ' + (worstAsset.gap > 0 ? sd(worstAsset.gap, 'cd') + ' beyond' : Math.abs(worstAsset.gap) + ' cd inside') + ' its need-by date.' : 'Readiness chain.';
+    var rdSo = anyDrill() && worstAsset ? assetName(worstAsset.a) + ': Day 1 ready ' + fd(worstAsset.d1.forecast) + ' vs need-by ' + fd(worstAsset.d1.need_by) + ' (' + sd(worstAsset.gap, 'cd') + '); construction complete to ready to operate takes ' + worstAsset.span + ' cd.' : (s.nar.so_what.readiness || '');
+
+    p.innerHTML = '<h2 class="sr">Interfaces and readiness gap</h2><div class="grid">' +
+      card('c5', esc(ifTitle), 'Interface matrix' + info('Interface gap') + ' by ' + (dim === 'asset' ? 'asset' : 'workstream') + ' · <label class="ctl" style="display:inline-flex">View <select id="if-dim"><option value="asset"' + (dim === 'asset' ? ' selected' : '') + '>Asset</option><option value="ws"' + (dim === 'ws' ? ' selected' : '') + '>Workstream</option></select></label>' + (ST.ifCell ? ' <button type="button" class="btn" id="if-clear">Clear cell filter</button>' : ''), mx, esc(ifSo)) +
+      card('c7', esc(listed.length + ' interfaces listed, sorted by gap; positive gap means the giver delivers after the receiver needs it.'), 'Interface list · ' + esc(ST.ifCell ? nm(ST.ifCell.g) + ' → ' + nm(ST.ifCell.r) : scopeText()) + '.',
+        table([{ t: 'ID', cls: 'nw' }, { t: 'Interface', cls: 'wide' }, { t: 'Gap', cls: 'num', title: defText('Interface gap') }, { t: 'Status' }, { t: 'Need-by', cls: 'nw' }, { t: 'Giver forecast', cls: 'nw' }, { t: 'Giver' }, { t: 'Receiver' }, { t: 'Giver TF', cls: 'num' }], ifRows, { label: 'Interface list', max: 420 }),
+        esc(worstIf ? worstIf.interface_id + ' (' + worstIf.description + ') is ' + sd(worstIf.gap_days, 'cd') + ' late; giver ' + ownerName(worstIf.giver_owner) + '.' : 'No late interfaces in the list.')) + '</div>' +
+      '<div class="grid">' + card('c12', esc(rdTitle), 'Readiness chain per asset' + info('Readiness gap') + ': forecast date, need-by (late finish that still protects Day 1) and gap; positive gap = threatens Day 1. The span from construction complete to Day 1 ready exposes the ready-to-operate gap.', chains || '<p class="empty">No readiness data in scope.</p>', esc(rdSo)) + '</div>';
+  };
+
+  /* ================================================================== 5 Risks, decisions & recovery */
+  R.risk = function (p) {
+    var s = S(), t = theme();
+    var risks = (s.raw.risks || []).filter(function (r) { return !anyDrill() || String(r.linked_activities || '').split(';').some(function (id) { return id && idInScope(id); }); }).sort(function (a, b) { return b.score - a.score; });
+    var rRows = risks.map(function (r) {
+      var links = String(r.linked_activities || '').split(';').filter(Boolean).map(function (id) { var a = s.by.get(id); return '<span class="chip">' + actBtn(id) + ' ' + tfCell(a ? a.total_float_d : null) + '</span>'; }).join('');
+      return [esc(r.risk_id), '<b>' + esc(r.title) + '</b>', esc(r.owner_code) + '<span class="aname">' + esc(ownerName(r.owner_code)) + '</span>', nf(r.probability) + '×' + nf(r.impact), '<b>' + nf(r.score) + '</b>', pill(r.rating === 'High' ? 'red' : r.rating === 'Medium' ? 'amber' : 'green', r.rating), trendCell(r.trend), esc(r.mitigation) + '<span class="aname">' + esc(r.mitigation_owner) + '</span>', nf(r.schedule_impact_days), '<div class="chips">' + links + '</div>'];
+    });
+    var nHigh = risks.filter(function (r) { return r.rating === 'High'; }).length, rising = risks.filter(function (r) { return r.trend > 0; });
+    var rTitle = plural(nHigh, 'risk is', 'risks are') + ' rated High; ' + plural(rising.length, 'score rose', 'scores rose') + ' this period.';
+    var top = risks[0];
+    var rSo = top ? top.risk_id + ' (' + top.title + ') scores ' + top.score + ' with ' + sd(top.min_linked_float_d, 'wd') + ' minimum float on its linked activities; mitigation owner ' + top.mitigation_owner + '.' : 'No risks in scope.';
+
+    var decs = decisionsAt(ST.dd).sort(function (a, b) { return (a.st === b.st ? 0 : a.st === 'Open' ? -1 : 1) || (b.od - a.od) || ((dn(a.needed_by) || 0) - (dn(b.needed_by) || 0)); });
+    var dRows = decs.map(function (x) {
+      return { cls: x.od ? 'hl' : '', cells: [esc(x.decision_id), esc(x.ask), esc(x.owner), fd(x.raised_data_date), fd(x.needed_by), x.st === 'Open' ? pill('accent', 'Open') : pill('', 'Closed'), fd(x.closed_on), x.st === 'Open' ? (x.od ? pill('red', Math.abs(x.dtn) + ' d overdue') : x.dtn + ' d') : '–', x.linked_activity ? actBtn(x.linked_activity) : '–', esc(x.st === 'Closed' ? x.outcome : '') || '–'] };
+    });
+    var open = decs.filter(function (x) { return x.st === 'Open'; }), od = open.filter(function (x) { return x.od; });
+    var dTitle = plural(open.length, 'decision is', 'decisions are') + ' open at ' + fd(ST.dd) + (od.length ? ' and ' + od.map(function (x) { return x.decision_id; }).join(', ') + ' ' + (od.length === 1 ? 'is' : 'are') + ' overdue.' : '.');
+    var dSo = open.length ? 'Next decision due: ' + open.filter(function (x) { return !x.od; }).concat(od).map(function (x) { return x.decision_id + ' (' + x.owner + ', ' + fd(x.needed_by) + ')'; })[0] + (od.length ? '; ' + od[0].decision_id + ' needs closing now (' + od[0].owner + ').' : '.') : 'No decisions open.';
+
+    var sc = D.scenarios || [], reco = sc.filter(function (x) { return x.recommended; })[0], base = sc.filter(function (x) { return x.scenario_id === 'BASE'; })[0];
+    var scRows = sc.map(function (x) {
+      return { cls: x.recommended ? 'hl' : '', cells: ['<b>' + esc(x.scenario_id) + '</b>' + (x.recommended ? ' ' + pill('accent', 'Recommended') : ''), esc(x.name) + (x.description ? '<span class="aname">' + esc(x.description) + '</span>' : ''), esc(x.owner || '–'), fd(x.day1_forecast), isNum(x.day1_impact_days) && x.day1_impact_days !== 0 ? nf(Math.abs(x.day1_impact_days)) + ' wd ' + (x.day1_impact_days > 0 ? 'earlier' : 'later') : '–', tfCell(x.day1_tf_d), sd(x.float_gain_d, 'wd'), nf(x.neg_float_count), nf(x.near_critical_count), pill(x.residual_risk === 'High' ? 'red' : x.residual_risk === 'Medium' ? 'amber' : 'green', x.residual_risk || '–'), esc(x.decision || '–'), esc(x.cost || '–')] };
+    });
+    var scTitle = reco ? 'Recovery ' + reco.scenario_id + ' is recommended: it returns Day 1 to ' + fd(reco.day1_forecast) + ' with ' + sd(reco.day1_tf_d, 'wd') + ' float, subject to ' + reco.decision + '.' : 'Recovery scenarios.';
+    var scNote = ST.dd !== D.meta.latest ? ' Scenarios were modelled on the latest update (' + fd(D.meta.latest) + ') and do not change with the data date.' : '';
+    var scSo = reco && base ? reco.scenario_id + ' gains ' + sd(reco.float_gain_d, 'wd') + ' of Day 1 float and cuts negative-float activities from ' + base.neg_float_count + ' to ' + reco.neg_float_count + ', but near-critical activities rise to ' + reco.near_critical_count + '; A + B + C adds only ' + sd(((sc.filter(function (x) { return x.scenario_id === 'A+B+C'; })[0] || {}).float_gain_d || 0) - reco.float_gain_d, 'wd') + ' more for extra cost.' : '';
+
+    var recoPanel = reco ? '<div class="reco-panel"><h4>Recommended: recovery ' + esc(String(reco.scenario_id).replace(/\+/g, ' + ')) + '</h4><p style="margin:0">' + esc(reco.description) + '</p><dl>' +
+      '<dt>Day 1 forecast</dt><dd>' + fd(reco.day1_forecast) + ' (base ' + fd(base ? base.day1_forecast : null) + ')</dd>' +
+      '<dt>Day 1 total float</dt><dd>' + sd(reco.day1_tf_d, 'wd') + ' (gain ' + sd(reco.float_gain_d, 'wd') + ')</dd>' +
+      '<dt>Negative-float activities</dt><dd>' + nf(base ? base.neg_float_count : null) + ' → ' + nf(reco.neg_float_count) + '</dd>' +
+      '<dt>Near-critical activities</dt><dd>' + nf(base ? base.near_critical_count : null) + ' → ' + nf(reco.near_critical_count) + '</dd>' +
+      '<dt>Owners</dt><dd>' + esc(reco.owner) + '</dd><dt>Decisions</dt><dd>' + esc(reco.decision) + '</dd><dt>Cost</dt><dd>' + esc(reco.cost) + '</dd><dt>Residual risk</dt><dd>' + esc(reco.residual_risk) + '</dd></dl></div>' : '<p class="empty">No recommended scenario.</p>';
+    var ch = (D.changes || []).filter(function (x) { return dn(x.raised_data_date) != null && dn(x.raised_data_date) <= dn(ST.dd); });
+    var chRows = ch.map(function (x) { return [esc(x.change_id), esc(x.title), esc(x.change_type), fd(x.raised_data_date), esc(x.approver), fd(x.approval_date || null), pill(x.status === 'Approved' ? 'green' : 'amber', x.status), esc(x.baseline_effect), x.day1_impact_days != null ? sd(x.day1_impact_days, 'wd') : '–']; });
+
+    p.innerHTML = '<h2 class="sr">Risks, decisions and recovery</h2><div class="grid">' +
+      card('c12', esc(scTitle), 'Recovery scenarios rescheduled by the CPM engine' + info('Scenario Day 1 impact') + '.' + esc(scNote), '<div class="grid" style="margin:0 0 14px"><div class="c6">' + chartBox('ch-scen', 'Day 1 total float by recovery scenario') + '<p class="legend-note">Bars show Day 1 total float (wd) per scenario; the recommended option is in the accent colour, the current forecast in grey.</p></div><div class="c6">' + recoPanel + '</div></div>' +
+        table([{ t: 'Option' }, { t: 'Scenario', cls: 'wide' }, { t: 'Owner' }, { t: 'Day 1 forecast', cls: 'nw' }, { t: 'Day 1 impact', cls: 'num', title: defText('Scenario Day 1 impact') }, { t: 'Day 1 TF', cls: 'num' }, { t: 'Float gain', cls: 'num', title: defText('Float gain') }, { t: 'Neg. float', cls: 'num' }, { t: 'Near-crit.', cls: 'num' }, { t: 'Residual risk' }, { t: 'Decision', cls: 'nw' }, { t: 'Cost' }], scRows, { label: 'Recovery scenarios', max: 420 }), esc(scSo)) + '</div>' +
+      '<div class="grid">' + card('c12', esc(rTitle), 'Risk register at ' + fd(ST.dd) + info('Risk score') + ' · ' + esc(scopeText()) + ' · trend = score change since the previous period; linked activities show current total float.',
+        table([{ t: 'ID', cls: 'nw' }, { t: 'Risk', cls: 'wide' }, { t: 'Owner' }, { t: 'P×I', cls: 'nw' }, { t: 'Score', cls: 'num' }, { t: 'Rating' }, { t: 'Trend', cls: 'nw' }, { t: 'Mitigation' }, { t: 'Impact (wd)', cls: 'num' }, { t: 'Linked activities (TF)' }], rRows, { label: 'Risk register', max: 460 }), esc(rSo)) + '</div>' +
+      '<div class="grid">' + card('c7', esc(dTitle), 'Decision log as at the data date (status reconstructed from raised and closed dates).', table([{ t: 'ID', cls: 'nw' }, { t: 'Ask', cls: 'wide' }, { t: 'Owner' }, { t: 'Raised', cls: 'nw' }, { t: 'Needed by', cls: 'nw' }, { t: 'Status' }, { t: 'Closed', cls: 'nw' }, { t: 'Days to need', cls: 'nw' }, { t: 'Protects' }, { t: 'Outcome' }], dRows, { label: 'Decision log', max: 420 }), esc(dSo)) +
+      card('c5', esc(ch.length ? plural(ch.length, 'change record', 'change records') + ' shape the baseline story; BL1 came from ' + ((ch.filter(function (x) { return /BL1/.test(x.baseline_effect || ''); })[0] || {}).change_id || 'CR-003') + '.' : 'No change records yet.'), 'Change and baseline log.', table([{ t: 'ID', cls: 'nw' }, { t: 'Change', cls: 'wide' }, { t: 'Type' }, { t: 'Raised', cls: 'nw' }, { t: 'Approver' }, { t: 'Approved', cls: 'nw' }, { t: 'Status' }, { t: 'Baseline effect' }, { t: 'Day 1 impact', cls: 'num' }], chRows, { label: 'Change log', max: 420 }),
+        esc(ch.length ? 'The latest change, ' + ch[ch.length - 1].change_id + ', is ' + ch[ch.length - 1].status.toLowerCase() + ': ' + ch[ch.length - 1].baseline_effect + '.' : '')) + '</div>';
+
+    var o = baseOpts(t, { legend: false, axis: 'y' }); o.indexAxis = 'y';
+    o.scales.x.title = { display: true, text: 'Day 1 total float (wd)', color: t.muted }; o.scales.y.grid = { display: false };
+    o.scales.x.grid = { color: function (c) { return c.tick && c.tick.value === 0 ? t.muted : t.grid; } };
+    o.plugins.tooltip.callbacks = { title: function (it) { return it.length ? sc[it[0].dataIndex].name : ''; }, label: function (x) { var r = sc[x.dataIndex]; return ['Day 1 ' + fd(r.day1_forecast) + ', TF ' + sd(r.day1_tf_d, 'wd'), 'Float gain ' + sd(r.float_gain_d, 'wd') + '; residual risk ' + r.residual_risk]; } };
+    mkChart('ch-scen', { type: 'bar', data: { labels: sc.map(function (x) { return x.scenario_id + (x.recommended ? ' ★' : ''); }), datasets: [{ label: 'Day 1 total float', data: sc.map(function (x) { return x.day1_tf_d; }), backgroundColor: sc.map(function (x) { return x.recommended ? t.series[1] : x.scenario_id === 'BASE' ? t.series[4] : t.series[0]; }), borderRadius: 4, borderSkipped: false, maxBarThickness: 22, minBarLength: 3 }] }, options: o });
+  };
+
+  /* ================================================================== 6 Schedule quality */
+  function fmtVal(c) {
+    if (c.kind === 'na') return '–';
+    if (c.kind === 'pass') return c.value === 1 || c.value === true ? 'Yes' : c.value === 0 || c.value === false ? 'No' : nf(c.value);
+    if (c.kind === 'pct_max' || c.kind === 'pct_min') return isNum(c.value) ? Number(c.value).toFixed(1) + '%' : '–';
+    if (c.kind === 'ratio_min') return nf(c.value, 3);
+    return nf(c.value);
+  }
+  function fmtThr(c) {
+    if (c.kind === 'na') return '–'; if (c.kind === 'pass') return 'Pass';
+    if (c.kind === 'pct_max') return '≤ ' + c.threshold + '%'; if (c.kind === 'pct_min') return '≥ ' + c.threshold + '%';
+    if (c.kind === 'ratio_min') return '≥ ' + c.threshold; if (c.kind === 'count_max') return '≤ ' + c.threshold;
+    return nf(c.threshold);
+  }
+  function offInScope(o) { if (!anyDrill()) return true; var m = /^(.+?)->(.+?):/.exec(o); return m ? idInScope(m[1]) || idInScope(m[2]) : idInScope(o); }
+  function offHtml(o) { var m = /^(.+?)->(.+?):(\w+)$/.exec(o); if (m) return '<span class="chip">' + actBtn(m[1]) + ' → ' + actBtn(m[2]) + ' <span class="muted">' + esc(m[3]) + '</span></span>'; return '<span class="chip">' + actBtn(o) + ' <span class="muted">' + esc(actName(o)) + '</span></span>'; }
+  function offOwners(offs) {
+    var m = new Map();
+    offs.forEach(function (o) { var r = /^(.+?)->/.exec(o), d = DIM.get(r ? r[1] : o), k = d && d.owner_code; if (k) m.set(k, (m.get(k) || 0) + 1); });
+    var top = Array.from(m.entries()).sort(function (a, b) { return b[1] - a[1]; }).slice(0, 3);
+    return top.length ? top.map(function (x) { return x[0] + ' (' + x[1] + ')'; }).join(', ') + (m.size > 3 ? ' and ' + (m.size - 3) + ' other owners' : '') : 'Activity owners';
+  }
+  R.dq = function (p) {
+    var s = S(), sm = s.sum, t = theme(), dc = s.raw.dcma || [];
+    if (!ST.dqCheck || !dc.some(function (c) { return c.check_id === ST.dqCheck; })) { var f = dc.filter(function (c) { return c.passed === false; })[0]; ST.dqCheck = f ? f.check_id : (dc[0] || {}).check_id; }
+    var dcma = dc.filter(function (c) { return c.group === 'DCMA'; }), upd = dc.filter(function (c) { return c.group !== 'DCMA'; });
+    var passD = dcma.filter(function (c) { return c.passed === true; }).length, applD = dcma.filter(function (c) { return c.passed !== null; }).length;
+    // failing checks that cost points; weight-0 checks (informational, or counted under another check) are named apart,
+    // the same split as the PowerPoint pack
+    var failAll = dc.filter(function (c) { return c.passed === false && c.weight; }).sort(function (a, b) { return ((b.weight || 0) - (b.score || 0)) - ((a.weight || 0) - (a.score || 0)); });
+    var failInfo = dc.filter(function (c) { return c.passed === false && !c.weight; });
+    var rowsOf = function (list) {
+      return list.map(function (c) {
+        var res = c.passed === true ? pill('green', 'Pass') : c.passed === false ? pill('red', 'Fail') : pill('', 'n/a');
+        var n = (c.offenders || []).filter(offInScope).length;
+        return { cls: 'clickable' + (c.check_id === ST.dqCheck ? ' sel' : ''), attr: ' data-check="' + esc(c.check_id) + '" tabindex="0" role="button" aria-pressed="' + (c.check_id === ST.dqCheck) + '" title="' + esc(c.definition + (c.playbook ? ' · Playbook: ' + c.playbook : '')) + '"',
+          cells: ['<b>' + esc(c.check_id) + '</b>', esc(c.check_name), fmtVal(c), fmtThr(c), res,
+            c.kind === 'na' ? '–' : nf(c.count) + (anyDrill() ? ' <span class="muted">(' + n + ' in scope)</span>' : ''),
+            c.kind === 'na' ? '–' : nf(c.score, 1) + ' / ' + nf(c.weight)] };
+      });
+    };
+    var hd = [{ t: 'ID', cls: 'nw' }, { t: 'Check' }, { t: 'Value', cls: 'num' }, { t: 'Threshold', cls: 'nw' }, { t: 'Result' }, { t: 'Count', cls: 'num' }, { t: 'Score', cls: 'nw' }];
+    var cur = dc.filter(function (c) { return c.check_id === ST.dqCheck; })[0];
+    var offs = cur ? (cur.offenders || []).filter(offInScope) : [];
+    var offPanel = cur ? '<h4 style="margin-top:0">' + esc(cur.check_id + ' ' + cur.check_name) + ': ' + plural(offs.length, 'offender') + (anyDrill() ? ' in ' + esc(scopeText()) : '') + '</h4><p class="muted" style="margin:0 0 8px">' + esc(cur.definition) + (cur.playbook ? ' Playbook: <a href="' + REPO + '/blob/main/governance/SCHEDULE_OWNER_PLAYBOOK.md#' + esc(cur.playbook) + '" target="_blank" rel="noopener">' + esc(cur.playbook) + '</a>.' : '') + '</p>' +
+      (offs.length ? '<div class="chips" style="max-height:300px;overflow:auto">' + offs.map(offHtml).join('') + '</div>' : '<p class="empty">No offending items' + (anyDrill() ? ' in scope' : '') + '.</p>') : '';
+    var tr = (D.trends.summary || []).filter(function (r) { return dn(r.data_date) <= dn(ST.dd); });
+    var pvs = tr.length > 1 ? tr[tr.length - 2] : null;
+    /* Built here rather than taken from the narrative so CPLI/BEI keep three decimals (0.949 must not read as 0.95). */
+    var idxBad = ['cpli', 'bei'].filter(function (k) { return isNum(sm[k]) && sm[k] < 0.95; }).map(function (k) { return k.toUpperCase(); });
+    var dqSo = 'DQ ' + nf(sm.dq_score) + '/100 (' + (sm.dq_rating || '–') + '); CPLI ' + nf(sm.cpli, 3) + ' and BEI ' + nf(sm.bei, 3) + ' against a 0.95 target' + (idxBad.length ? ', so ' + idxBad.join(' and ') + (idxBad.length > 1 ? ' are' : ' is') + ' below target.' : '.') + (pvs ?' Change since the previous update: ' + sd(Math.round((sm.dq_score - pvs.dq_score) * 10) / 10, 'pts') + '.' : '');
+    var os = (s.raw.owner_scorecard || []).slice().sort(function (a, b) { return a.owner_dq - b.owner_dq; });
+    var osRows = os.map(function (o) { var tone = o.owner_dq < 70 ? 'red' : o.owner_dq < 85 ? 'amber' : 'green'; return [esc(o.owner_code) + '<span class="aname">' + esc(ownerName(o.owner_code)) + '</span>', nf(o.activities), nf(o.incomplete), nf(o.flagged), pill(tone, nf(o.owner_dq, 1) + '%'), nf(o.update_issues), nf(o.logic_issues)]; });
+    var tiles = [['DQ score', nf(sm.dq_score) + '/100', sm.dq_rating, 'DQ score'], ['DCMA pass count', passD + ' of ' + applD, 'applicable DCMA checks passing', 'DCMA pass count'], ['CPLI', nf(sm.cpli, 3), 'target ≥ 0.95', 'CPLI'], ['BEI', nf(sm.bei, 3), 'target ≥ 0.95', 'BEI'], ['Failed checks', String(failAll.length), failInfo.length ? '+ ' + failInfo.length + ' with weight 0 · of ' + dc.length : 'of ' + dc.length + ' DCMA and update checks', 'DQ score']];
+    var tilesHtml = '<div class="tiles">' + tiles.map(function (x) { var bad = (x[0] === 'CPLI' || x[0] === 'BEI') && sm[x[0].toLowerCase()] < 0.95; return '<div class="tile"><div class="lab">' + esc(x[0]) + info(x[3]) + '</div><div class="val ' + (bad ? 'tone-red' : '') + '">' + esc(x[1]) + '</div><div class="note">' + esc(x[2]) + '</div></div>'; }).join('') + '</div>';
+    var dqTitle = 'Schedule quality is ' + (sm.dq_rating || '').toLowerCase() + ' at ' + nf(sm.dq_score) + '/100: ' + plural(failAll.length, 'check fails', 'checks fail') + (failAll.length ? ', led by ' + failAll.slice(0, 3).map(function (c) { return c.check_name.toLowerCase(); }).join(', ') : '') + (failInfo.length ? ' (' + failInfo.map(function (c) { return c.check_id; }).join(', ') + ' also fail' + (failInfo.length === 1 ? 's' : '') + ' with weight 0)' : '') + '.';
+    var worstOwner = os[0];
+
+    p.innerHTML = '<h2 class="sr">Schedule quality (DCMA)</h2>' + tilesHtml + '<div class="grid">' +
+      card('c7', esc(dqTitle), 'DCMA 14-point assessment and update-discipline checks at ' + fd(ST.dd) + '. Select a check to list its offenders.',
+        '<h4 style="margin-top:0">DCMA 14-point</h4>' + table(hd, rowsOf(dcma), { label: 'DCMA checks', free: true, id: 't-dcma' }) + '<h4>Update discipline</h4>' + table(hd, rowsOf(upd), { label: 'Update discipline checks', free: true, id: 't-upd' }),
+        esc(failAll.length ? 'Fixing ' + failAll.slice().sort(function (a, b) { return (b.weight - b.score) - (a.weight - a.score); })[0].check_name.toLowerCase() + ' recovers the most score (' + nf(Math.max.apply(null, failAll.map(function (c) { return c.weight - c.score; })), 1) + ' weighted points).' : 'All checks pass.')) +
+      '<div class="c5" style="display:grid;gap:16px;align-content:start">' + card('', esc(cur ? plural(offs.length, 'item fails', 'items fail') + ' ' + cur.check_id + ' (' + cur.check_name + ').' : 'Select a check.'), 'Offenders · select an activity to open its detail.', '<div id="dq-off">' + offPanel + '</div>', esc(cur && offs.length ? offOwners(offs) + ' should correct these items before the next update; the playbook entry gives the fix.' : 'Nothing to correct for this check.')) +
+      card('', esc(pvs && sm.dq_score < pvs.dq_score ? 'Data quality fell ' + nf(Math.round((pvs.dq_score - sm.dq_score) * 10) / 10) + ' points since the previous update.' : 'Data quality held or improved since the previous update.'), 'DQ score trend' + info('DQ score') + ' with Good (85) and Fair (70) thresholds.', chartBox('ch-dq', 'DQ score trend'), esc(dqSo)) + '</div></div>' +
+      '<div class="grid">' + card('c12', esc(worstOwner ? ownerName(worstOwner.owner_code) + ' has the weakest owner DQ at ' + nf(worstOwner.owner_dq, 1) + '% of activities free of flags.' : 'Owner scorecard.'), 'Owner scorecard' + info('Owner DQ') + ' at ' + fd(ST.dd) + ', weakest first.', table([{ t: 'Owner' }, { t: 'Activities', cls: 'num' }, { t: 'Incomplete', cls: 'num' }, { t: 'Flagged', cls: 'num' }, { t: 'Owner DQ', title: defText('Owner DQ') }, { t: 'Update issues', cls: 'num' }, { t: 'Logic issues', cls: 'num' }], osRows, { label: 'Owner scorecard', free: true }),
+        esc(worstOwner ? worstOwner.owner_code + ' carries ' + worstOwner.flagged + ' flagged activities (' + worstOwner.logic_issues + ' logic, ' + worstOwner.update_issues + ' update issues); the Programme Controls Manager should agree a fix list at the next schedule review.' : '')) + '</div>';
+
+    var o = baseOpts(t, { ytitle: 'Points' }); o.scales.y.suggestedMin = 50; o.scales.y.suggestedMax = 100;
+    o.plugins.tooltip.callbacks = { label: function (x) { return x.dataset.label + ': ' + nf(x.parsed.y, 1); } };
+    var labels = tr.map(function (r) { return r.label + ' ' + fd(r.data_date).slice(0, 6); });
+    mkChart('ch-dq', { type: 'line', data: { labels: labels, datasets: [
+      lineDs('DQ score', tr.map(function (r) { return r.dq_score; }), 0, t),
+      lineDs('Good (85)', tr.map(function () { return 85; }), 1, t, { pointRadius: 0, borderWidth: 1, borderDash: [6, 4] }),
+      lineDs('Fair (70)', tr.map(function () { return 70; }), 2, t, { pointRadius: 0, borderWidth: 1, borderDash: [2, 3] })
+    ] }, options: o });
+  };
+
+  /* ================================================================== 7 Reconciliation & lineage */
+  R.recon = function (p) {
+    var s = S(), sm = s.sum, m = s.meta, rc = s.raw.reconciliation || [];
+    var cnt = function (f) { return s.acts.filter(f).length; };
+    var page = function (r) {
+      var nm = r.control || '', mm;
+      if (nm === 'Activity count') return s.acts.length;
+      if ((mm = /^Activities by status - (\w+)/.exec(nm))) return cnt(function (a) { return a.status === mm[1]; });
+      if ((mm = /^Activities by asset - (\w+)/.exec(nm))) return cnt(function (a) { return a.asset === mm[1]; });
+      if ((mm = /^Activities by workstream - (\w+)/.exec(nm))) return cnt(function (a) { return a.ws === mm[1]; });
+      if (nm === 'Relationship count') return s.rels.length;
+      if (nm === 'Milestone count') return cnt(function (a) { return a.ms; });
+      if (nm === 'Day 1 early finish') return (s.by.get(D.meta.day1_id) || {}).finish;
+      if (nm === 'Day 1 late finish') return (s.by.get(D.meta.day1_id) || {}).late_finish;
+      if ((mm = /^Key milestone finish - (.+)$/.exec(nm))) return (s.by.get(mm[1]) || {}).finish;
+      if (nm === 'Data date') return ST.dd;
+      if (nm === 'Baseline reference') return sm.baseline;
+      if (nm === 'Source file SHA-256') return m.sha256;
+      return undefined;
+    };
+    var nMis = 0, nChk = 0;
+    var rows = rc.map(function (r) {
+      var pv = page(r), pc;
+      if (pv === undefined) pc = '<span class="muted">not recomputed</span>';
+      else { nChk++; var ok = String(pv) === String(r.dashboard_value); if (!ok) nMis++; pc = ok ? pill('green', '✓ ' + String(pv).slice(0, 12)) : pill('red', '≠ ' + String(pv).slice(0, 12)); }
+      var sv = function (v) { var x = v == null ? '–' : String(v); return x.length > 16 ? '<span title="' + esc(x) + '">' + esc(x.slice(0, 12)) + '…</span>' : esc(x); };
+      return { cls: r.passed ? '' : 'hl', cells: [esc(r.control_id), esc(r.control), sv(r.source_value), sv(r.model_value), sv(r.dashboard_value), r.delta == null ? '–' : esc(r.delta), r.passed ? pill('green', 'Pass') : pill('red', 'Fail'), pc] };
+    });
+    window.__DOP_RECON_MISMATCH = nMis;
+    var nPass = rc.filter(function (r) { return r.passed; }).length;
+    var rTitle = nPass === rc.length ? 'All ' + rc.length + ' controls reconcile: the source XER, the model and this dashboard agree for ' + fd(ST.dd) + '.' : (rc.length - nPass) + ' of ' + rc.length + ' controls fail: these figures must not be used until the gate passes.';
+    var rSo = 'The gate checks ' + rc.length + ' controls (counts, Day 1 and key milestone dates, remaining duration, % complete, data date, baseline and file hash); this page independently recomputed ' + nChk + ' of them in the browser with ' + (nMis ? nMis + ' mismatches.' : 'no mismatches.');
+    var lin = (D.lineage || []).slice();
+    var linHtml = '<ol class="lin">' + lin.map(function (l) {
+      var gate = /reconciliation/i.test(l.step);
+      return '<li' + (gate ? ' class="gate' + (sm.reconciled === false ? ' fail' : '') + '"' : '') + '><b>' + esc(l.step) + (gate ? (sm.reconciled === false ? ' ✗' : ' ✓') : '') + '</b><span class="d">' + esc(l.detail) + '</span></li>';
+    }).join('') + '<li><b>Consumers</b><span class="d">This web dashboard, the Power BI model (star schema CSV) and the PowerPoint monthly pack and fortnightly flash</span></li></ol>';
+    var steps = '<ol class="steps">' +
+      '<li>At each cut-off the planners status the P6 programme to the data date and export one XER per update (<code>DOP_UPD_&lt;data date&gt;.xer</code>), plus the approved baselines (<code>DOP_BL0.xer</code>, <code>DOP_BL1.xer</code>), into <code>data/xer/</code>.</li>' +
+      '<li>Run <code>python -m dop pipeline</code> (or <code>run_all.ps1</code>): the generic parser reads every %T table, the CPM engine re-schedules and the quality checks run.</li>' +
+      '<li>The star schema is written to <code>output/csv/</code> and the controls workbook to <code>output/xlsx/</code>.</li>' +
+      '<li>The reconciliation gate compares source XER, model and dashboard JSON; any failed control stops the run with a non-zero exit code and nothing is published.</li>' +
+      '<li>On a pass, <code>docs/data/dashboard.json</code> is refreshed, the Power BI dataset is refreshed from the CSV folder and the PowerPoint packs are regenerated.</li>' +
+      '<li>The Programme Controls Manager reviews the DQ score and owner scorecard before issue; owners correct flagged items before the next update.</li></ol>';
+    p.innerHTML = '<h2 class="sr">Reconciliation and lineage</h2><div class="tiles">' +
+      '<div class="tile"><div class="lab">Reconciliation status' + info('Reconciliation status') + '</div><div class="val ' + (sm.reconciled ? 'tone-green' : 'tone-red') + '">' + (sm.reconciled ? 'Passed' : 'FAILED') + '</div><div class="note">' + nf(sm.controls_passed) + ' of ' + nf(sm.controls_total) + ' controls</div></div>' +
+      '<div class="tile"><div class="lab">Source file</div><div class="val" style="font-size:15px">' + esc(m.source_file || '–') + '</div><div class="note" title="' + esc(m.sha256 || '') + '">SHA-256 ' + esc((m.sha256 || '').slice(0, 16)) + '…</div></div>' +
+      '<div class="tile"><div class="lab">Baseline file</div><div class="val" style="font-size:15px">' + esc(m.baseline_file || '–') + '</div><div class="note" title="' + esc(m.baseline_sha256 || '') + '">SHA-256 ' + esc((m.baseline_sha256 || '').slice(0, 16)) + '…</div></div>' +
+      '<div class="tile"><div class="lab">Cut-off check</div><div class="val" style="font-size:15px">' + fd(m.cutoff_expected) + '</div><div class="note">Expected cut-off vs data date ' + fd(ST.dd) + '</div></div>' +
+      '<div class="tile"><div class="lab">Browser recompute</div><div class="val ' + (nMis ? 'tone-red' : 'tone-green') + '">' + (nChk - nMis) + ' / ' + nChk + '</div><div class="note">controls re-derived on this page</div></div></div>' +
+      '<div class="grid">' + card('c12', esc(rTitle), 'Every control: source XER vs model vs dashboard JSON, delta and result; the last column is recomputed by this page from the JSON it rendered.',
+        table([{ t: 'ID', cls: 'nw' }, { t: 'Control' }, { t: 'Source (XER)', cls: 'num' }, { t: 'Model', cls: 'num' }, { t: 'Dashboard', cls: 'num' }, { t: 'Delta', cls: 'num' }, { t: 'Result' }, { t: 'Page check' }], rows, { label: 'Reconciliation controls', max: 520 }), esc(rSo)) + '</div>' +
+      '<div class="grid">' + card('c12', 'Every published number traces back to a hashed XER file through one gated pipeline.', 'Data lineage from P6 export to the three reporting channels.', linHtml, 'If the reconciliation gate fails, the header turns red and nothing downstream should be issued.') + '</div>' +
+      '<div class="grid">' + card('c12', 'The monthly refresh takes one command once the XER files are in place.', 'Refresh process.', steps, 'The refresh is repeatable and auditable, so the report can be reproduced for any data date.') + '</div>';
+  };
+
+  /* ================================================================== About */
+  R.about = function (p) {
+    var blob = function (path) { return REPO + '/blob/main/' + path; };
+    var gov = (D.governance_docs || []).map(function (g) { return '<li><a href="' + esc(blob(g.path)) + '" target="_blank" rel="noopener">' + esc(g.title) + '</a> <span class="muted">(' + esc(g.path) + ')</span></li>'; }).join('');
+    var dl = D.meta.latest;
+    var files = [['Monthly report pack (PowerPoint)', 'downloads/DOP_monthly_pack_' + dl + '.pptx'], ['Fortnightly flash report (PowerPoint)', 'downloads/DOP_fortnightly_flash_' + dl + '.pptx'], ['Controls workbook (Excel)', 'downloads/DOP_controls_' + dl + '.xlsx'], ['Dashboard data (JSON)', 'data/dashboard.json']];
+    var cal = (D.meta.calendars || []).map(function (c) { return esc(c.calendar_name) + ' (' + c.hours_per_day + ' h/day)'; }).join('; ');
+    p.innerHTML = '<h2 class="sr">About and method</h2><div class="grid">' +
+      card('c7 prose', 'This dashboard is a working demonstration built on fictional data.', 'Transparency note.',
+        '<p><b>' + esc(D.meta.disclaimer || '') + '</b></p>' +
+        '<p>The Destination Opening Programme, its assets, owners and figures are invented. Owners are organisation roles, not people. Six monthly updates (28-May-2026 to 29-Oct-2026) and two baselines (BL0, and BL1 approved through CR-003) tell one storyline: arena MEP delays erode float, BL1 resets the baseline in July, T&amp;C compresses and operator access slips in August, an arena fire-strategy change drives negative float in September, and recovery is partial in October.</p>' +
+        '<h4>Primavera P6 XER format</h4><p>Each schedule file is a genuine P6 XER text export: tab-delimited <code>%T</code> / <code>%F</code> / <code>%R</code> blocks for PROJECT, CALENDAR, PROJWBS, ACTVTYPE, ACTVCODE, TASK, TASKPRED and TASKACTV, with P6 field names and hour-based durations. The author does not have a Primavera P6 licence; the files were written by the project’s own XER writer and are read back by a generic parser, exactly as a real export would be.</p>' +
+        '<h4>Custom CPM engine conventions (P6 behaviour)</h4><ul>' +
+        '<li>Forward and backward pass from the <b>data date</b>; no remaining work is scheduled before it.</li>' +
+        '<li><b>Retained logic</b> for out-of-sequence progress.</li>' +
+        '<li><b>Lags are applied on the successor’s calendar</b>; FS, SS, FF and SF relationships supported.</li>' +
+        '<li><b>Total float = late finish − early finish</b> in the activity calendar, reported in working days (8 h/day). Calendars: ' + cal + '.</li>' +
+        '<li><b>Longest path</b> follows driving relationships into Day 1 and is reported separately from <b>critical</b> (total float ≤ 0); near-critical is 0 &lt; TF ≤ ' + NC + ' wd.</li>' +
+        '<li>Day 1 carries a Finish-On-or-Before target of ' + fd(D.meta.day1_target) + ', so Day 1 total float is negative when the forecast is late.</li></ul>' +
+        '<p>Full design: <a href="' + esc(blob('DESIGN.md')) + '" target="_blank" rel="noopener">DESIGN.md</a>. The planning decisions behind it, including the lag-calendar choice (A03): <a href="' + esc(blob('DESIGN_DECISIONS.md')) + '" target="_blank" rel="noopener">DESIGN_DECISIONS.md</a>.</p>' +
+        '<h4>Running it on real P6 exports</h4><p>Replace the files in <code>data/xer/</code> with real exports named <code>DOP_UPD_&lt;YYYY-MM-DD&gt;.xer</code> and <code>DOP_BL0.xer</code> / <code>DOP_BL1.xer</code>, code activities with the same activity-code types (asset, workstream, package, owner) or map yours to them, and run <code>python -m dop pipeline</code>. The reconciliation gate then proves the published figures equal the export before anything is released.</p>' +
+        '<h4>Units and conventions</h4><p>wd = working days (floats and durations); cd = calendar days (variances and gaps); positive variance = later than the reference. RAG: red = minimum total float &lt; 0, amber = 0 to ' + NC + ' wd, green otherwise.</p>', 'Treat every number here as illustrative; the method, controls and reporting design are the point.') +
+      '<div class="c5" style="display:grid;gap:16px;align-content:start">' +
+      card('prose', 'Downloads are produced by the same pipeline run.', 'Files for the ' + fd(dl) + ' data date.', '<ul>' + files.map(function (f) { return '<li><a href="' + esc(f[1]) + '" download>' + esc(f[0]) + '</a> <span class="muted">(' + esc(f[1].split('/').pop()) + ')</span></li>'; }).join('') + '</ul>', 'Each pack is generated from the reconciled JSON, so it shows the same numbers as this page.') +
+      card('prose', 'Design and governance documents set the rules the schedule is tested against.', 'Opens on GitHub.', '<ul>' + gov + '</ul><p><a href="' + REPO + '" target="_blank" rel="noopener">Source repository</a> · <a href="' + SITE + '">Published dashboard</a></p>', 'Owners, thresholds and the reporting calendar come from these documents, not from the dashboard.') +
+      card('prose', 'Definitions behind every measure are embedded in the data.', 'Data dictionary (' + (D.definitions || []).length + ' measures); hover any “i” icon for the same text.', '<div class="tw" style="max-height:300px" tabindex="0" role="region" aria-label="Definitions"><table class="t"><thead><tr><th>Measure</th><th>Definition</th><th>Unit</th></tr></thead><tbody>' + (D.definitions || []).map(function (d) { return '<tr><td class="nw"><b>' + esc(d.measure) + '</b></td><td>' + esc(d.definition) + '</td><td class="nw">' + esc(d.unit) + '</td></tr>'; }).join('') + '</tbody></table></div>', 'One definition per measure is shared by the dashboard, Power BI and the PowerPoint packs.') +
+      '</div></div>';
+  };
+
+  /* ------------------------------------------------------------------ explorer */
+  var XCOLS = [['activity_id', 'ID'], ['name', 'Activity'], ['asset', 'Asset'], ['ws', 'WS'], ['owner', 'Owner'], ['status', 'Status'], ['start', 'Start'], ['finish', 'Finish'], ['ref', 'Ref. finish'], ['var', 'Var (cd)'], ['total_float_d', 'TF (wd)'], ['flags', 'Flags']];
+  function xVal(a, k) {
+    if (k === 'ref') return a[C().f]; if (k === 'var') return a[C().v];
+    if (k === 'flags') return (a.is_longest_path ? 4 : 0) + (a.is_critical ? 2 : 0) + (a.is_near_critical ? 1 : 0);
+    return a[k];
+  }
+  function renderExplorer() {
+    var s = S(), q = ST.q.trim().toLowerCase();
+    var list = s.acts.filter(inScope);
+    document.getElementById('x-sum').textContent = '· ' + list.length + ' activities in ' + scopeText() + ' · search, sort and open the detail of any activity';
+    if (q) list = list.filter(function (a) { return (a.activity_id + ' ' + a.name + ' ' + (a.owner || '') + ' ' + ownerName(a.owner)).toLowerCase().indexOf(q) >= 0; });
+    var k = ST.sort.key, dir = ST.sort.dir, dateK = ['start', 'finish', 'ref'].indexOf(k) >= 0;
+    list = list.slice().sort(function (a, b) {
+      var x = xVal(a, k), y = xVal(b, k);
+      if (dateK) { x = dn(x); y = dn(y); }
+      var xn = x == null || x === '', yn = y == null || y === '';
+      if (xn && yn) return 0; if (xn) return 1; if (yn) return -1;
+      return (x < y ? -1 : x > y ? 1 : 0) * dir;
+    });
+    document.getElementById('x-count').textContent = list.length + ' shown';
+    var th = XCOLS.map(function (c) {
+      var srt = c[0] === k ? (dir > 0 ? 'ascending' : 'descending') : 'none';
+      var title = c[0] === 'var' ? defText(C().measure) : c[0] === 'total_float_d' ? defText('Total float') : '';
+      return '<th scope="col" aria-sort="' + srt + '"' + (title ? ' title="' + esc(title) + '"' : '') + '><button type="button" data-sort="' + c[0] + '">' + (c[0] === 'ref' ? 'Finish ' + esc(C().short) : c[0] === 'var' ? 'Var vs ' + esc(C().short) + ' (cd)' : esc(c[1])) + '</button></th>';
+    }).join('');
+    var rows = list.map(function (a) {
+      var fl = (a.is_longest_path ? pill('red', 'LP') : '') + (a.is_critical ? pill('red', 'Crit') : '') + (a.is_near_critical ? pill('amber', 'NC') : '');
+      return '<tr><td>' + actBtn(a.activity_id) + '</td><td style="min-width:200px">' + esc(a.name) + '</td><td>' + esc(a.asset) + '</td><td>' + esc(a.ws) + '</td><td>' + esc(a.owner) + '</td><td class="nw">' + esc(STATUS[a.status] || a.status) + '</td><td class="nw">' + fd(a.start) + '</td><td class="nw">' + fd(a.finish) + '</td><td class="nw">' + fd(a[C().f]) + '</td><td class="num">' + varCell(a[C().v]) + '</td><td class="num">' + tfCell(a.total_float_d) + '</td><td><span class="chips">' + (fl || '–') + '</span></td></tr>';
+    }).join('') || '<tr><td colspan="12" class="empty">No activities match.</td></tr>';
+    document.getElementById('x-table').innerHTML = '<div class="tw" style="max-height:520px" tabindex="0" role="region" aria-label="Activity table"><table class="t" id="x-t"><thead><tr>' + th + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+  }
+
+  /* ------------------------------------------------------------------ drawer */
+  function openDrawer(id, opener) {
+    ST.drawer = id; ST.opener = opener || document.activeElement;
+    renderDrawer();
+    document.getElementById('backdrop').hidden = false;
+    var dr = document.getElementById('drawer'); dr.hidden = false; dr.scrollTop = 0;
+    var cb = document.getElementById('dr-close'); if (cb) cb.focus();
+  }
+  function closeDrawer() {
+    ST.drawer = null; document.getElementById('drawer').hidden = true; document.getElementById('backdrop').hidden = true;
+    if (ST.opener && document.body.contains(ST.opener)) { try { ST.opener.focus(); } catch (e) { /* ignore */ } }
+  }
+  function renderDrawer() {
+    var id = ST.drawer, s = S(), a = s.by.get(id), m = DIM.get(id) || {}, dr = document.getElementById('drawer'), c = C();
+    var kv = function (pairs) { return '<dl class="kv">' + pairs.map(function (x) { return '<div><dt>' + esc(x[0]) + (x[2] ? info(x[2]) : '') + '</dt><dd>' + (x[1] == null || x[1] === '' ? '–' : x[1]) + '</dd></div>'; }).join('') + '</dl>'; };
+    var html = '<div class="dhead"><div><p class="eyebrow" style="color:var(--muted)">' + esc(id) + ' · ' + esc(m.wbs_path || '') + '</p><h2 id="dr-title">' + esc(m.activity_name || id) + '</h2></div><button type="button" class="btn" id="dr-close" aria-label="Close activity detail">Close ✕</button></div>';
+    if (!a) html += '<p class="empty">This activity is not in the ' + fd(ST.dd) + ' update' + (m.first_snapshot_id ? ' (first appears in snapshot ' + esc(m.first_snapshot_id) + ')' : '') + '.</p>';
+    else {
+      var cal = (D.meta.calendars || []).filter(function (x) { return x.calendar_id === m.calendar_id; })[0];
+      var flags = String(a.dq_flags || '').split(',').filter(Boolean).map(function (f) { var ck = (D.meta.checks || []).filter(function (x) { return x.check_id === f; })[0]; return '<span class="chip" title="' + esc(ck ? ck.definition : '') + '">' + esc(f) + (ck ? ' ' + esc(ck.check_name) : '') + '</span>'; }).join('');
+      html += '<p style="margin:8px 0 0;display:flex;gap:6px;flex-wrap:wrap">' + statusPill(a.status) + (a.is_longest_path ? pill('red', 'Longest path') : '') + (a.is_critical ? pill('red', 'Critical') : '') + (a.is_near_critical ? pill('amber', 'Near-critical') : '') + '</p>';
+      html += '<h3>Dates and float at ' + fd(ST.dd) + '</h3>' + kv([
+        ['Start' + (a.actual_start ? ' (actual)' : ''), fd(a.start)], ['Finish' + (a.actual_finish ? ' (actual)' : ''), fd(a.finish)],
+        ['BL0 start / finish', fd(a.bl0_start) + ' / ' + fd(a.bl0_finish)], ['BL1 start / finish', fd(a.bl1_start) + ' / ' + fd(a.bl1_finish)],
+        ['Var vs BL0', varCell(a.var_finish_bl0_d), 'Finish variance vs BL0'], ['Var vs BL1', varCell(a.var_finish_bl1_d), 'Finish variance vs BL1'],
+        ['Slip vs previous', varCell(a.slip_vs_prev_d), 'Slip vs previous period'], ['Previous finish', fd(a.prev_finish)],
+        ['Late start / finish', fd(a.late_start) + ' / ' + fd(a.late_finish)], ['Total float', tfCell(a.total_float_d), 'Total float'],
+        ['Free float', isNum(a.free_float_d) ? sd(a.free_float_d, 'wd') : '–', 'Free float'], ['Duration orig. / rem.', nf(a.orig_dur_d) + ' / ' + nf(a.rem_dur_d) + ' wd'],
+        ['% complete (duration / physical)', nf(a.pct_duration) + '% / ' + nf(a.pct_physical) + '%', 'Duration % complete'], ['Constraint', a.constraint_type ? esc(a.constraint_type) + ' ' + fd(a.constraint_date) : 'None']
+      ]);
+      html += '<h3>Codes</h3>' + kv([
+        ['Asset', esc(assetName(m.asset_code))], ['Workstream', esc(wsName(m.workstream_code))], ['WBS package', esc(pkgName(m.package_code))], ['Owner', esc(ownerName(m.owner_code)) + ' (' + esc(m.owner_code) + ')'],
+        ['Phase', esc(m.phase)], ['Activity type', esc(m.activity_type)], ['Calendar', esc(cal ? cal.calendar_name : m.calendar_id)], ['Interface role', esc(m.interface_role)],
+        ['Readiness gate', esc(m.readiness_gate || '–')], ['In BL0 / BL1', (m.in_bl0 ? 'Yes' : 'No') + ' / ' + (m.in_bl1 ? 'Yes' : 'No')]
+      ]);
+      if (flags) html += '<h3>Quality flags</h3><div class="chips">' + flags + '</div>';
+      var relT = function (list, k) {
+        if (!list || !list.length) return '<p class="empty">None.</p>';
+        return table([{ t: k === 'pred' ? 'Predecessor' : 'Successor' }, { t: 'Type' }, { t: 'Lag', cls: 'num' }, { t: 'Driving' }, { t: 'TF', cls: 'num' }], list.map(function (r) { var o = s.by.get(r[k]); return [actCell(r[k]), esc(r.type), sd(r.lag_d, 'wd').replace('±0 wd', '0'), r.driving ? pill('accent', 'Driving') : '–', tfCell(o ? o.total_float_d : null)]; }), { label: k === 'pred' ? 'Predecessors' : 'Successors', max: 260 });
+      };
+      html += '<h3>Predecessors (' + ((s.P.get(id) || []).length) + ')</h3>' + relT(s.P.get(id), 'pred') + '<h3>Successors (' + ((s.Su.get(id) || []).length) + ')</h3>' + relT(s.Su.get(id), 'succ');
+    }
+    var hist = DATES.map(function (d) { var x = S(d).by.get(id); return { d: d, a: x }; });
+    var tfs = hist.filter(function (h) { return h.a && isNum(h.a.total_float_d); });
+    var sp = '';
+    if (tfs.length > 1) {
+      var vals = tfs.map(function (h) { return h.a.total_float_d; }).concat([0]), lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals), w = 260, hgt = 54, rg = hi - lo || 1;
+      var X = function (i) { return 8 + i * (w - 16) / (DATES.length - 1); }, Y = function (v) { return hgt - 8 - (v - lo) / rg * (hgt - 16); };
+      var ptsArr = hist.map(function (h, i) { return h.a && isNum(h.a.total_float_d) ? [X(i), Y(h.a.total_float_d)] : null; }).filter(Boolean);
+      sp = '<svg width="' + w + '" height="' + hgt + '" viewBox="0 0 ' + w + ' ' + hgt + '" role="img" aria-label="Total float across the six updates" style="max-width:100%"><line x1="4" x2="' + (w - 4) + '" y1="' + Y(0).toFixed(1) + '" y2="' + Y(0).toFixed(1) + '" stroke="var(--muted)" stroke-dasharray="3 3" stroke-width="1"/><polyline fill="none" stroke="var(--s1)" stroke-width="2" points="' + ptsArr.map(function (q) { return q[0].toFixed(1) + ',' + q[1].toFixed(1); }).join(' ') + '"/>' + ptsArr.map(function (q) { return '<circle cx="' + q[0].toFixed(1) + '" cy="' + q[1].toFixed(1) + '" r="3.5" fill="var(--s1)" stroke="var(--surface)" stroke-width="1.5"/>'; }).join('') + '</svg><p class="legend-note">Total float (wd) by update; dashed line = zero float.</p>';
+    }
+    html += '<h3>History across the six updates</h3>' + sp + table([{ t: 'Update' }, { t: 'Status' }, { t: 'Finish', cls: 'nw' }, { t: 'Var vs ' + esc(c.short), cls: 'num' }, { t: 'TF', cls: 'num' }, { t: 'LP' }], hist.map(function (h) {
+      var x = h.a; return { cls: h.d === ST.dd ? 'sel' : '', cells: [esc((SMETA[h.d] || {}).label) + ' ' + fd(h.d), x ? esc(STATUS[x.status] || x.status) : '<span class="muted">not in update</span>', x ? fd(x.finish) : '–', x ? varCell(x[c.v]) : '–', x ? tfCell(x.total_float_d) : '–', x && x.is_longest_path ? 'Yes' : '–'] };
+    }), { label: 'Activity history', free: true });
+    dr.innerHTML = html;
+    document.getElementById('dr-close').addEventListener('click', closeDrawer);
+  }
+
+  /* ------------------------------------------------------------------ theme */
+  function storedTheme() { try { var v = localStorage.getItem('dop-theme'); return v === 'light' || v === 'dark' ? v : null; } catch (e) { return null; } }
+  function effTheme() { var a = document.documentElement.getAttribute('data-theme'); if (a) return a; return window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+  function themeBtn() { var b = document.getElementById('theme-btn'), dk = effTheme() === 'dark'; b.textContent = dk ? 'Light mode' : 'Dark mode'; b.setAttribute('aria-pressed', String(dk)); b.title = 'Switch to ' + (dk ? 'light' : 'dark') + ' mode'; }
+  function toggleTheme() {
+    var next = effTheme() === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('dop-theme', next); } catch (e) { /* storage blocked: theme lasts for this visit */ }
+    themeBtn(); if (D) renderTab();
+  }
+
+  /* ------------------------------------------------------------------ events */
+  function setDrill(d) { ST.drill = { asset: d.asset || null, ws: d.ws || null, pkg: d.pkg || null, act: d.act || null }; ST.ifCell = null; }
+  function wire() {
+    document.getElementById('sel-dd').addEventListener('change', function (e) { ST.dd = e.target.value; renderAll(); });
+    document.getElementById('sel-cmp').addEventListener('change', function (e) { ST.cmp = e.target.value; renderAll(); });
+    document.getElementById('sel-drill').addEventListener('change', function (e) {
+      var v = e.target.value, lvl = e.target.getAttribute('data-level'); if (!v || !lvl) return;
+      var d = ST.drill; var nd = { asset: d.asset, ws: d.ws, pkg: d.pkg, act: d.act }; nd[lvl] = v; setDrill(nd);
+      renderAll(); if (lvl === 'act') openDrawer(v, e.target); else document.getElementById('explorer').open = true;
+    });
+    document.getElementById('crumbs').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-crumb]'); if (!b) return; var k = b.getAttribute('data-crumb'), d = ST.drill;
+      if (k === 'programme') setDrill({}); else if (k === 'asset') setDrill({ asset: d.asset }); else if (k === 'ws') setDrill({ asset: d.asset, ws: d.ws }); else if (k === 'pkg') setDrill({ asset: d.asset, ws: d.ws, pkg: d.pkg }); else return;
+      renderAll();
+    });
+    document.getElementById('theme-btn').addEventListener('click', toggleTheme);
+    document.getElementById('x-q').addEventListener('input', function (e) { ST.q = e.target.value; renderExplorer(); });
+    document.getElementById('backdrop').addEventListener('click', closeDrawer);
+    document.addEventListener('click', function (e) {
+      var t = e.target;
+      var a = t.closest('[data-act]'); if (a) { e.preventDefault(); openDrawer(a.getAttribute('data-act'), a); return; }
+      var r = t.closest('[data-drill-asset]');
+      if (r) { setDrill({ asset: r.getAttribute('data-drill-asset'), ws: r.getAttribute('data-drill-ws') }); renderAll(); document.getElementById('explorer').open = true; return; }
+      var sb = t.closest('[data-sort]');
+      if (sb) { var k = sb.getAttribute('data-sort'); if (ST.sort.key === k) ST.sort.dir *= -1; else ST.sort = { key: k, dir: 1 }; renderExplorer(); var nb = document.querySelector('[data-sort="' + k + '"]'); if (nb) nb.focus(); return; }
+      var ic = t.closest('[data-if-g]');
+      if (ic) { var g = ic.getAttribute('data-if-g'), rr = ic.getAttribute('data-if-r'); ST.ifCell = ST.ifCell && ST.ifCell.g === g && ST.ifCell.r === rr ? null : { g: g, r: rr, dim: ST.ifDim }; renderTab(); return; }
+      if (t.closest('#if-clear')) { ST.ifCell = null; renderTab(); return; }
+      var gc = t.closest('[data-goto-check]');
+      if (gc) { ST.dqCheck = gc.getAttribute('data-goto-check'); selectTab('dq'); var gk = document.querySelector('[data-check="' + ST.dqCheck + '"]'); if (gk) { gk.scrollIntoView({ block: 'center' }); gk.focus(); } return; }
+      var ck = t.closest('[data-check]');
+      if (ck) { ST.dqCheck = ck.getAttribute('data-check'); renderTab(); var nc = document.querySelector('[data-check="' + ST.dqCheck + '"]'); if (nc) nc.focus(); return; }
+    });
+    document.addEventListener('change', function (e) { if (e.target && e.target.id === 'if-dim') { ST.ifDim = e.target.value; ST.ifCell = null; renderTab(); } });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && ST.drawer) { closeDrawer(); return; }
+      var ck = e.target && e.target.closest && e.target.closest('[data-check]');
+      if (ck && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); ck.click(); return; }
+      if (e.key === 'Tab' && ST.drawer) {
+        var f = Array.prototype.slice.call(document.getElementById('drawer').querySelectorAll('button, [href], [tabindex="0"], select, input')).filter(function (x) { return x.offsetParent !== null; });
+        if (!f.length) return; var first = f[0], last = f[f.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    });
+    if (window.matchMedia) { var mq = matchMedia('(prefers-color-scheme: dark)'); var h = function () { themeBtn(); if (!storedTheme() && D) renderTab(); }; if (mq.addEventListener) mq.addEventListener('change', h); }
+    var rz; window.addEventListener('resize', function () { clearTimeout(rz); rz = setTimeout(function () { if (D) snapBoxes(document.getElementById('p-' + ST.tab)); }, 150); });
+    window.addEventListener('beforeprint', function () { if (D) { var cur = document.documentElement.getAttribute('data-theme'); ST.printTheme = cur; document.documentElement.setAttribute('data-theme', 'light'); renderTab(); } });
+    window.addEventListener('afterprint', function () { if (D) { if (ST.printTheme) document.documentElement.setAttribute('data-theme', ST.printTheme); else document.documentElement.removeAttribute('data-theme'); renderTab(); } });
+  }
+
+  /* ------------------------------------------------------------------ boot */
+  function boot(json) {
+    D = json; NC = isNum(D.meta.near_critical_days) ? D.meta.near_critical_days : 10;
+    cols(D.activities).forEach(function (a) { DIM.set(a.activity_id, a); });
+    (D.definitions || []).forEach(function (d) { DEFS.set(d.measure, d); });
+    (D.meta.snapshots || []).forEach(function (m) { SMETA[m.data_date] = m; });
+    DATES = (D.meta.snapshots || []).map(function (m) { return m.data_date; }).filter(function (d) { return D.snapshots && D.snapshots[d]; }).sort();
+    (D.trends && D.trends.milestones || []).forEach(function (r) { if (!TMI.has(r.snapshot_id)) TMI.set(r.snapshot_id, new Map()); TMI.get(r.snapshot_id).set(r.activity_id, r); });
+    if (!D.trends) D.trends = { summary: [], s_curve: [], milestones: [] };
+    ST.dd = DATES.indexOf(D.meta.latest) >= 0 ? D.meta.latest : DATES[DATES.length - 1];
+    var lm = SMETA[ST.dd] || {}; ST.cmp = lm.baseline_in_force === 'BL0' ? 'BL0' : 'BL1';
+    readHash();
+    if (typeof Chart !== 'undefined') Chart.register(ddPlugin);
+    buildTabs();
+    document.getElementById('foot').innerHTML = esc(D.meta.disclaimer || '') + ' · Engine: ' + esc(D.meta.engine || '') + ' · Schema ' + esc(D.schema_version || '') + ' · <a href="' + REPO + '" target="_blank" rel="noopener">Source repository</a>';
+    themeBtn(); renderHeader(); renderControls(); renderExplorer(); selectTab(ST.tab);
+    window.__DOP_READY = true;
+  }
+  wire(); themeBtn();
+  fetch('data/dashboard.json', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(boot).catch(function (e) {
+    document.getElementById('panels').innerHTML = '<p class="err">The dashboard data could not be loaded (' + esc(e.message || e) + '). Serve the docs/ folder over HTTP, for example <code>python -m http.server -d docs</code>.</p>';
+    window.__DOP_READY = 'error';
+  });
+})();
+</script>
+</body>
+</html>

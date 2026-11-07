@@ -1,0 +1,61 @@
+snapshot_id,risk_id,title,owner_code,probability,impact,score,rating,trend,linked_activities,mitigation,mitigation_owner,schedule_impact_days,min_linked_float_d
+20260528,R-01,Arena MEP plant delivery and second-fix productivity,MEP,3,4,12,Medium,0,DAR-CON-1105;DAR-CON-1131;DAR-CON-1132,Second MEP crew and extended shifts; weekly productivity tracking,MEP Package Manager,15,14.0
+20260625,R-01,Arena MEP plant delivery and second-fix productivity,MEP,4,4,16,High,4,DAR-CON-1105;DAR-CON-1131;DAR-CON-1132,Second MEP crew and extended shifts; weekly productivity tracking,MEP Package Manager,15,15.0
+20260730,R-01,Arena MEP plant delivery and second-fix productivity,MEP,4,4,16,High,0,DAR-CON-1105;DAR-CON-1131;DAR-CON-1132,Second MEP crew and extended shifts; weekly productivity tracking,MEP Package Manager,15,14.0
+20260827,R-01,Arena MEP plant delivery and second-fix productivity,MEP,4,5,20,High,4,DAR-CON-1105;DAR-CON-1131;DAR-CON-1132,Second MEP crew and extended shifts; weekly productivity tracking,MEP Package Manager,15,10.0
+20260924,R-01,Arena MEP plant delivery and second-fix productivity,MEP,4,5,20,High,0,DAR-CON-1105;DAR-CON-1131;DAR-CON-1132,Second MEP crew and extended shifts; weekly productivity tracking,MEP Package Manager,15,-9.0
+20261029,R-01,Arena MEP plant delivery and second-fix productivity,MEP,4,4,16,High,-4,DAR-CON-1105;DAR-CON-1131;DAR-CON-1132,Second MEP crew and extended shifts; weekly productivity tracking,MEP Package Manager,15,-7.0
+20260528,R-02,North-loop permanent power energisation window,MEP,2,3,6,Low,0,PEW-TNC-2030;PEW-TNC-M031,Escalate slot to utility; temporary generator plan for pre-commissioning,Programme Director,10,32.0
+20260625,R-02,North-loop permanent power energisation window,MEP,2,3,6,Low,0,PEW-TNC-2030;PEW-TNC-M031,Escalate slot to utility; temporary generator plan for pre-commissioning,Programme Director,10,32.0
+20260730,R-02,North-loop permanent power energisation window,MEP,3,3,9,Medium,3,PEW-TNC-2030;PEW-TNC-M031,Escalate slot to utility; temporary generator plan for pre-commissioning,Programme Director,10,32.0
+20260827,R-02,North-loop permanent power energisation window,MEP,4,4,16,High,7,PEW-TNC-2030;PEW-TNC-M031,Escalate slot to utility; temporary generator plan for pre-commissioning,Programme Director,10,-13.0
+20260924,R-02,North-loop permanent power energisation window,MEP,4,4,16,High,0,PEW-TNC-2030;PEW-TNC-M031,Escalate slot to utility; temporary generator plan for pre-commissioning,Programme Director,10,-13.0
+20261029,R-02,North-loop permanent power energisation window,MEP,3,4,12,Medium,-4,PEW-TNC-2030;PEW-TNC-M031,Escalate slot to utility; temporary generator plan for pre-commissioning,Programme Director,10,-13.0
+20260528,R-03,Authority fire-strategy approval for the arena,AAT,2,3,6,Low,0,DAR-CON-1250;DAR-HOV-3110;DAR-HOV-M130,Pre-submission meetings; early witness testing,Approvals Manager,20,10.0
+20260625,R-03,Authority fire-strategy approval for the arena,AAT,3,3,9,Medium,3,DAR-CON-1250;DAR-HOV-3110;DAR-HOV-M130,Pre-submission meetings; early witness testing,Approvals Manager,20,11.0
+20260730,R-03,Authority fire-strategy approval for the arena,AAT,3,3,9,Medium,0,DAR-CON-1250;DAR-HOV-3110;DAR-HOV-M130,Pre-submission meetings; early witness testing,Approvals Manager,20,8.0
+20260827,R-03,Authority fire-strategy approval for the arena,AAT,3,4,12,Medium,3,DAR-CON-1250;DAR-HOV-3110;DAR-HOV-M130,Pre-submission meetings; early witness testing,Approvals Manager,20,8.0
+20260924,R-03,Authority fire-strategy approval for the arena,AAT,5,5,25,High,13,DAR-CON-1250;DAR-HOV-3110;DAR-HOV-M130,Pre-submission meetings; early witness testing,Approvals Manager,20,-9.0
+20261029,R-03,Authority fire-strategy approval for the arena,AAT,4,5,20,High,-5,DAR-CON-1250;DAR-HOV-3110;DAR-HOV-M130,Pre-submission meetings; early witness testing,Approvals Manager,20,-4.0
+20260528,R-04,Operator access to the arena restricted until fire sign-off,SSY,2,2,4,Low,0,DAR-OPM-M120;DAR-OPM-4130,Phased handover with early access to completed zones (Recovery B),Head of Security & Safety,12,14.0
+20260625,R-04,Operator access to the arena restricted until fire sign-off,SSY,2,2,4,Low,0,DAR-OPM-M120;DAR-OPM-4130,Phased handover with early access to completed zones (Recovery B),Head of Security & Safety,12,15.0
+20260730,R-04,Operator access to the arena restricted until fire sign-off,SSY,2,3,6,Low,2,DAR-OPM-M120;DAR-OPM-4130,Phased handover with early access to completed zones (Recovery B),Head of Security & Safety,12,10.0
+20260827,R-04,Operator access to the arena restricted until fire sign-off,SSY,4,4,16,High,10,DAR-OPM-M120;DAR-OPM-4130,Phased handover with early access to completed zones (Recovery B),Head of Security & Safety,12,6.0
+20260924,R-04,Operator access to the arena restricted until fire sign-off,SSY,4,4,16,High,0,DAR-OPM-M120;DAR-OPM-4130,Phased handover with early access to completed zones (Recovery B),Head of Security & Safety,12,-12.0
+20261029,R-04,Operator access to the arena restricted until fire sign-off,SSY,4,4,16,High,0,DAR-OPM-M120;DAR-OPM-4130,Phased handover with early access to completed zones (Recovery B),Head of Security & Safety,12,-6.0
+20260528,R-05,Ride certification capacity of the third-party body,ICA,3,3,9,Medium,0,MTP-TNC-2145;MTP-TNC-M220,Book certifier slots now; split certification by ride,Lead Commissioning Manager,8,26.0
+20260625,R-05,Ride certification capacity of the third-party body,ICA,3,4,12,Medium,3,MTP-TNC-2145;MTP-TNC-M220,Book certifier slots now; split certification by ride,Lead Commissioning Manager,8,26.0
+20260730,R-05,Ride certification capacity of the third-party body,ICA,3,4,12,Medium,0,MTP-TNC-2145;MTP-TNC-M220,Book certifier slots now; split certification by ride,Lead Commissioning Manager,8,26.0
+20260827,R-05,Ride certification capacity of the third-party body,ICA,3,4,12,Medium,0,MTP-TNC-2145;MTP-TNC-M220,Book certifier slots now; split certification by ride,Lead Commissioning Manager,8,26.0
+20260924,R-05,Ride certification capacity of the third-party body,ICA,3,4,12,Medium,0,MTP-TNC-2145;MTP-TNC-M220,Book certifier slots now; split certification by ride,Lead Commissioning Manager,8,26.0
+20261029,R-05,Ride certification capacity of the third-party body,ICA,3,3,9,Medium,-3,MTP-TNC-2145;MTP-TNC-M220,Book certifier slots now; split certification by ride,Lead Commissioning Manager,8,26.0
+20260528,R-06,Front-line recruitment pipeline,OPR,3,3,9,Medium,0,PRG-OPM-4010;MTP-OPM-4015;DAR-OPM-4015,"Early offers, retention bonus, agency standby",Operator Readiness Lead,6,31.0
+20260625,R-06,Front-line recruitment pipeline,OPR,3,3,9,Medium,0,PRG-OPM-4010;MTP-OPM-4015;DAR-OPM-4015,"Early offers, retention bonus, agency standby",Operator Readiness Lead,6,31.0
+20260730,R-06,Front-line recruitment pipeline,OPR,3,4,12,Medium,3,PRG-OPM-4010;MTP-OPM-4015;DAR-OPM-4015,"Early offers, retention bonus, agency standby",Operator Readiness Lead,6,31.0
+20260827,R-06,Front-line recruitment pipeline,OPR,3,4,12,Medium,0,PRG-OPM-4010;MTP-OPM-4015;DAR-OPM-4015,"Early offers, retention bonus, agency standby",Operator Readiness Lead,6,31.0
+20260924,R-06,Front-line recruitment pipeline,OPR,3,3,9,Medium,-3,PRG-OPM-4010;MTP-OPM-4015;DAR-OPM-4015,"Early offers, retention bonus, agency standby",Operator Readiness Lead,6,31.0
+20261029,R-06,Front-line recruitment pipeline,OPR,3,3,9,Medium,0,PRG-OPM-4010;MTP-OPM-4015;DAR-OPM-4015,"Early offers, retention bonus, agency standby",Operator Readiness Lead,6,31.0
+20260528,R-07,Transit operating certificate timing,AAT,2,4,8,Medium,0,PEW-HOV-3030;PEW-TNC-M071,Agree evidence pack with authority; bus-bridge contingency,Approvals Manager,5,24.0
+20260625,R-07,Transit operating certificate timing,AAT,2,4,8,Medium,0,PEW-HOV-3030;PEW-TNC-M071,Agree evidence pack with authority; bus-bridge contingency,Approvals Manager,5,24.0
+20260730,R-07,Transit operating certificate timing,AAT,2,4,8,Medium,0,PEW-HOV-3030;PEW-TNC-M071,Agree evidence pack with authority; bus-bridge contingency,Approvals Manager,5,24.0
+20260827,R-07,Transit operating certificate timing,AAT,3,4,12,Medium,4,PEW-HOV-3030;PEW-TNC-M071,Agree evidence pack with authority; bus-bridge contingency,Approvals Manager,5,24.0
+20260924,R-07,Transit operating certificate timing,AAT,3,4,12,Medium,0,PEW-HOV-3030;PEW-TNC-M071,Agree evidence pack with authority; bus-bridge contingency,Approvals Manager,5,24.0
+20261029,R-07,Transit operating certificate timing,AAT,3,4,12,Medium,0,PEW-HOV-3030;PEW-TNC-M071,Agree evidence pack with authority; bus-bridge contingency,Approvals Manager,5,24.0
+20260528,R-08,Mandatory Finish on boulevard inspection masks slippage,PMO,2,2,4,Low,0,PBR-HOV-3110,Remove the hard constraint; replace with a target milestone and report float,Programme Controls Manager,0,0.0
+20260625,R-08,Mandatory Finish on boulevard inspection masks slippage,PMO,2,2,4,Low,0,PBR-HOV-3110,Remove the hard constraint; replace with a target milestone and report float,Programme Controls Manager,0,0.0
+20260730,R-08,Mandatory Finish on boulevard inspection masks slippage,PMO,2,3,6,Low,2,PBR-HOV-3110,Remove the hard constraint; replace with a target milestone and report float,Programme Controls Manager,0,0.0
+20260827,R-08,Mandatory Finish on boulevard inspection masks slippage,PMO,2,3,6,Low,0,PBR-HOV-3110,Remove the hard constraint; replace with a target milestone and report float,Programme Controls Manager,0,0.0
+20260924,R-08,Mandatory Finish on boulevard inspection masks slippage,PMO,3,3,9,Medium,3,PBR-HOV-3110,Remove the hard constraint; replace with a target milestone and report float,Programme Controls Manager,0,0.0
+20261029,R-08,Mandatory Finish on boulevard inspection masks slippage,PMO,3,3,9,Medium,0,PBR-HOV-3110,Remove the hard constraint; replace with a target milestone and report float,Programme Controls Manager,0,0.0
+20260528,R-09,Commissioning resource clash across assets in Q2 2027,ICA,3,3,9,Medium,0,MTP-TNC-2140;DAR-TNC-2210;LWP-TNC-2210,Resource-levelled ICA plan; second witness team,Lead Commissioning Manager,7,0.0
+20260625,R-09,Commissioning resource clash across assets in Q2 2027,ICA,3,3,9,Medium,0,MTP-TNC-2140;DAR-TNC-2210;LWP-TNC-2210,Resource-levelled ICA plan; second witness team,Lead Commissioning Manager,7,0.0
+20260730,R-09,Commissioning resource clash across assets in Q2 2027,ICA,3,4,12,Medium,3,MTP-TNC-2140;DAR-TNC-2210;LWP-TNC-2210,Resource-levelled ICA plan; second witness team,Lead Commissioning Manager,7,12.0
+20260827,R-09,Commissioning resource clash across assets in Q2 2027,ICA,3,4,12,Medium,0,MTP-TNC-2140;DAR-TNC-2210;LWP-TNC-2210,Resource-levelled ICA plan; second witness team,Lead Commissioning Manager,7,12.0
+20260924,R-09,Commissioning resource clash across assets in Q2 2027,ICA,4,4,16,High,4,MTP-TNC-2140;DAR-TNC-2210;LWP-TNC-2210,Resource-levelled ICA plan; second witness team,Lead Commissioning Manager,7,-10.0
+20261029,R-09,Commissioning resource clash across assets in Q2 2027,ICA,4,4,16,High,0,MTP-TNC-2140;DAR-TNC-2210;LWP-TNC-2210,Resource-levelled ICA plan; second witness team,Lead Commissioning Manager,7,-4.0
+20260528,R-10,"Ticketing, CRM and IT integration readiness",OPR,2,3,6,Low,0,PRG-OTE-5010;DAR-OTE-5030,Integration test lab from Q1 2027; vendor single point of accountability,Operator Readiness Lead,4,29.0
+20260625,R-10,"Ticketing, CRM and IT integration readiness",OPR,2,3,6,Low,0,PRG-OTE-5010;DAR-OTE-5030,Integration test lab from Q1 2027; vendor single point of accountability,Operator Readiness Lead,4,29.0
+20260730,R-10,"Ticketing, CRM and IT integration readiness",OPR,2,3,6,Low,0,PRG-OTE-5010;DAR-OTE-5030,Integration test lab from Q1 2027; vendor single point of accountability,Operator Readiness Lead,4,23.0
+20260827,R-10,"Ticketing, CRM and IT integration readiness",OPR,3,3,9,Medium,3,PRG-OTE-5010;DAR-OTE-5030,Integration test lab from Q1 2027; vendor single point of accountability,Operator Readiness Lead,4,19.0
+20260924,R-10,"Ticketing, CRM and IT integration readiness",OPR,3,3,9,Medium,0,PRG-OTE-5010;DAR-OTE-5030,Integration test lab from Q1 2027; vendor single point of accountability,Operator Readiness Lead,4,1.0
+20261029,R-10,"Ticketing, CRM and IT integration readiness",OPR,3,3,9,Medium,0,PRG-OTE-5010;DAR-OTE-5030,Integration test lab from Q1 2027; vendor single point of accountability,Operator Readiness Lead,4,8.0

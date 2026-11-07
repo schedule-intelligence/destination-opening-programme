@@ -1,0 +1,888 @@
+// =====================================================================================================
+// DOP Schedule Intelligence - Power BI measures
+// -----------------------------------------------------------------------------------------------------
+// Model: the star schema in output/csv (22 tables) loaded as described in POWERBI.md.
+// Every measure lives on the empty measure table '_Measures'. Measure names follow DATA_DICTIONARY.md.
+// Units: floats and durations in WORKING days; variances and gaps in CALENDAR days (positive = later).
+//
+// How to use: open Power BI Desktop > DAX query view, paste this whole file, Run, then choose
+// "Update model: Add new measures". The EVALUATE query at the end then reproduces
+// fact_snapshot_summary and the reconciliation result for every data date (see POWERBI.md section 11).
+//
+// Prerequisites in the model (POWERBI.md section 4):
+//   '_Measures'                 empty table that hosts the measures
+//   'Near-critical threshold'   what-if parameter, GENERATESERIES ( 0, 30, 1 ), default 10
+//
+// "Selected data date" = SELECTEDVALUE of the data-date slicer (dim_snapshot). With the single-select
+// slicer that is the chosen update; on a trend axis it is the update of each point; with no selection
+// (or several) it falls back to the latest update in the filter context.
+// All data are fictional; schedules come from a CPM engine that follows Primavera P6 conventions and
+// are exported in P6 XER format.
+// =====================================================================================================
+
+DEFINE
+
+    // -------------------------------------------------------------------------------------------------
+    // 1. Context: selected data date, previous update, baseline in force
+    // -------------------------------------------------------------------------------------------------
+    // One update selected on the data-date slicer -> that update; none or several -> the latest in context
+    MEASURE '_Measures'[Selected snapshot id] =
+        SELECTEDVALUE ( dim_snapshot[snapshot_id], MAX ( dim_snapshot[snapshot_id] ) )
+
+    MEASURE '_Measures'[Previous snapshot id] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE (
+                MAX ( dim_snapshot[snapshot_id] ),
+                REMOVEFILTERS ( dim_snapshot ),
+                dim_snapshot[snapshot_id] < _sid
+            )
+
+    MEASURE '_Measures'[Data date] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE ( MAX ( dim_snapshot[data_date] ), dim_snapshot[snapshot_id] = _sid )
+
+    MEASURE '_Measures'[Previous data date] =
+        VAR _prev = [Previous snapshot id]
+        RETURN
+            CALCULATE (
+                MAX ( dim_snapshot[data_date] ),
+                REMOVEFILTERS ( dim_snapshot ),
+                dim_snapshot[snapshot_id] = _prev
+            )
+
+    MEASURE '_Measures'[Baseline in force] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE ( SELECTEDVALUE ( dim_snapshot[baseline_in_force] ), dim_snapshot[snapshot_id] = _sid )
+
+    MEASURE '_Measures'[Source file] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE ( SELECTEDVALUE ( dim_snapshot[source_file] ), dim_snapshot[snapshot_id] = _sid )
+
+    // -------------------------------------------------------------------------------------------------
+    // 2. Day 1 headline (programme level: read from fact_snapshot_summary, so asset, owner and
+    //    activity filters never change the Day 1 answer)
+    // -------------------------------------------------------------------------------------------------
+    MEASURE '_Measures'[Day 1 target] =
+        DATE ( 2027, 10, 14 )
+
+    MEASURE '_Measures'[Day 1 forecast] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE ( MAX ( fact_snapshot_summary[day1_forecast] ), dim_snapshot[snapshot_id] = _sid )
+
+    MEASURE '_Measures'[Day 1 total float] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE ( SUM ( fact_snapshot_summary[day1_tf_d] ), dim_snapshot[snapshot_id] = _sid )
+
+    MEASURE '_Measures'[Day 1 variance vs BL0] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE ( SUM ( fact_snapshot_summary[day1_var_bl0_d] ), dim_snapshot[snapshot_id] = _sid )
+
+    MEASURE '_Measures'[Day 1 variance vs BL1] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE ( SUM ( fact_snapshot_summary[day1_var_bl1_d] ), dim_snapshot[snapshot_id] = _sid )
+
+    MEASURE '_Measures'[Day 1 movement vs previous period] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE ( SUM ( fact_snapshot_summary[day1_movement_d] ), dim_snapshot[snapshot_id] = _sid )
+
+    // Float erosion: change in Day 1 total float since the previous update (negative = float lost).
+    // The first update has no previous update, so the pipeline value (vs BL0) is used.
+    MEASURE '_Measures'[Float erosion] =
+        VAR _sid = [Selected snapshot id]
+        VAR _prev = [Previous snapshot id]
+        VAR _tf =
+            CALCULATE (
+                SUM ( fact_snapshot_summary[day1_tf_d] ),
+                REMOVEFILTERS ( dim_snapshot ),
+                dim_snapshot[snapshot_id] = _sid
+            )
+        VAR _tfPrev =
+            CALCULATE (
+                SUM ( fact_snapshot_summary[day1_tf_d] ),
+                REMOVEFILTERS ( dim_snapshot ),
+                dim_snapshot[snapshot_id] = _prev
+            )
+        VAR _first =
+            CALCULATE (
+                SUM ( fact_snapshot_summary[float_erosion_d] ),
+                REMOVEFILTERS ( dim_snapshot ),
+                dim_snapshot[snapshot_id] = _sid
+            )
+        RETURN
+            IF ( ISBLANK ( _prev ), _first, _tf - _tfPrev )
+
+    // RAG colour for the Day 1 card (conditional formatting > Field value)
+    MEASURE '_Measures'[Day 1 RAG colour] =
+        VAR _tf = [Day 1 total float]
+        RETURN
+            SWITCH (
+                TRUE (),
+                ISBLANK ( _tf ), "#64748B",
+                _tf < 0, "#C0392B",
+                _tf <= [Near-critical threshold (d)], "#D68910",
+                "#1E8449"
+            )
+
+    // -------------------------------------------------------------------------------------------------
+    // 3. Progress (duration-weighted over normal tasks: LOE and milestones excluded)
+    // -------------------------------------------------------------------------------------------------
+    MEASURE '_Measures'[Planned % complete] =
+        VAR _sid = [Selected snapshot id]
+        VAR _t =
+            CALCULATETABLE (
+                fact_activity_snapshot,
+                dim_snapshot[snapshot_id] = _sid,
+                dim_activity[activity_type] = "TT_Task",
+                fact_activity_snapshot[orig_dur_d] > 0
+            )
+        VAR _num = SUMX ( _t, fact_activity_snapshot[orig_dur_d] * fact_activity_snapshot[planned_pct_bl] )
+        VAR _den = SUMX ( _t, fact_activity_snapshot[orig_dur_d] )
+        RETURN
+            DIVIDE ( _num, _den ) / 100
+
+    MEASURE '_Measures'[Weighted % complete (actual)] =
+        VAR _sid = [Selected snapshot id]
+        VAR _t =
+            CALCULATETABLE (
+                fact_activity_snapshot,
+                dim_snapshot[snapshot_id] = _sid,
+                dim_activity[activity_type] = "TT_Task",
+                fact_activity_snapshot[orig_dur_d] > 0
+            )
+        VAR _num = SUMX ( _t, fact_activity_snapshot[orig_dur_d] * fact_activity_snapshot[pct_duration] )
+        VAR _den = SUMX ( _t, fact_activity_snapshot[orig_dur_d] )
+        RETURN
+            DIVIDE ( _num, _den ) / 100
+
+    // Percentage points; negative = behind plan
+    MEASURE '_Measures'[Progress variance (pts)] =
+        ( [Weighted % complete (actual)] - [Planned % complete] ) * 100
+
+    MEASURE '_Measures'[Activities] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE ( COUNTROWS ( fact_activity_snapshot ), dim_snapshot[snapshot_id] = _sid )
+
+    MEASURE '_Measures'[Activities complete] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE (
+                COUNTROWS ( fact_activity_snapshot ),
+                dim_snapshot[snapshot_id] = _sid,
+                fact_activity_snapshot[status] = "TK_Complete"
+            )
+
+    MEASURE '_Measures'[Activities in progress] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE (
+                COUNTROWS ( fact_activity_snapshot ),
+                dim_snapshot[snapshot_id] = _sid,
+                fact_activity_snapshot[status] = "TK_Active"
+            )
+
+    MEASURE '_Measures'[Activities not started] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE (
+                COUNTROWS ( fact_activity_snapshot ),
+                dim_snapshot[snapshot_id] = _sid,
+                fact_activity_snapshot[status] = "TK_NotStart"
+            )
+
+    // -------------------------------------------------------------------------------------------------
+    // 4. Finish variance and slippage (activity grain). On one activity the value is returned; on a
+    //    group (asset, workstream, package) the worst, that is the latest, value is returned.
+    // -------------------------------------------------------------------------------------------------
+    MEASURE '_Measures'[Forecast finish] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE ( MAX ( fact_activity_snapshot[finish] ), dim_snapshot[snapshot_id] = _sid )
+
+    MEASURE '_Measures'[Finish variance vs BL0] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE ( MAX ( fact_activity_snapshot[var_finish_bl0_d] ), dim_snapshot[snapshot_id] = _sid )
+
+    MEASURE '_Measures'[Finish variance vs BL1] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE ( MAX ( fact_activity_snapshot[var_finish_bl1_d] ), dim_snapshot[snapshot_id] = _sid )
+
+    MEASURE '_Measures'[Finish variance vs baseline in force] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE ( MAX ( fact_activity_snapshot[var_finish_bl_d] ), dim_snapshot[snapshot_id] = _sid )
+
+    MEASURE '_Measures'[Slip vs previous period] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE ( MAX ( fact_activity_snapshot[slip_vs_prev_d] ), dim_snapshot[snapshot_id] = _sid )
+
+    MEASURE '_Measures'[Activities slipped vs previous period] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE (
+                COUNTROWS ( fact_activity_snapshot ),
+                dim_snapshot[snapshot_id] = _sid,
+                fact_activity_snapshot[slip_vs_prev_d] > 0
+            ) + 0
+
+    // -------------------------------------------------------------------------------------------------
+    // 5. Milestones (fact_milestone_trend: one row per milestone per update)
+    // -------------------------------------------------------------------------------------------------
+    MEASURE '_Measures'[Milestone forecast finish] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE ( MAX ( fact_milestone_trend[forecast_finish] ), dim_snapshot[snapshot_id] = _sid )
+
+    MEASURE '_Measures'[Milestone variance vs BL0] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE ( MAX ( fact_milestone_trend[var_bl0_d] ), dim_snapshot[snapshot_id] = _sid )
+
+    MEASURE '_Measures'[Milestone variance vs BL1] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE ( MAX ( fact_milestone_trend[var_bl1_d] ), dim_snapshot[snapshot_id] = _sid )
+
+    MEASURE '_Measures'[Milestone movement vs previous period] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE ( MAX ( fact_milestone_trend[movement_vs_prev_d] ), dim_snapshot[snapshot_id] = _sid )
+
+    MEASURE '_Measures'[Milestones slipped vs previous period] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE (
+                COUNTROWS ( fact_milestone_trend ),
+                dim_snapshot[snapshot_id] = _sid,
+                fact_milestone_trend[movement_vs_prev_d] > 0
+            ) + 0
+
+    MEASURE '_Measures'[Milestones later than baseline in force] =
+        VAR _sid = [Selected snapshot id]
+        VAR _bl = [Baseline in force]
+        RETURN
+            COUNTROWS (
+                FILTER (
+                    CALCULATETABLE ( fact_milestone_trend, dim_snapshot[snapshot_id] = _sid ),
+                    IF (
+                        _bl = "BL1",
+                        fact_milestone_trend[var_bl1_d],
+                        fact_milestone_trend[var_bl0_d]
+                    ) > 0
+                )
+            ) + 0
+
+    // -------------------------------------------------------------------------------------------------
+    // 6. Float and criticality (incomplete activities; critical = TF <= 0, P6 convention)
+    // -------------------------------------------------------------------------------------------------
+    MEASURE '_Measures'[Near-critical threshold (d)] =
+        SELECTEDVALUE ( 'Near-critical threshold'[Near-critical threshold], 10 )
+
+    // Matches fact_snapshot_summary[critical_count] and control R12 (LOE excluded, as the pipeline counts it)
+    MEASURE '_Measures'[Critical count] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE (
+                COUNTROWS ( fact_activity_snapshot ),
+                dim_snapshot[snapshot_id] = _sid,
+                fact_activity_snapshot[status] <> "TK_Complete",
+                dim_activity[activity_type] <> "TT_LOE",
+                fact_activity_snapshot[is_critical] = TRUE ()
+            ) + 0
+
+    // Matches reconciliation control R12 (LOE excluded, as in the source XER count)
+    MEASURE '_Measures'[Critical count (excl. LOE)] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE (
+                COUNTROWS ( fact_activity_snapshot ),
+                dim_snapshot[snapshot_id] = _sid,
+                fact_activity_snapshot[status] <> "TK_Complete",
+                fact_activity_snapshot[is_critical] = TRUE (),
+                dim_activity[activity_type] <> "TT_LOE"
+            ) + 0
+
+    // What-if: 0 < TF <= threshold. At the default of 10 it equals fact_snapshot_summary[near_critical_count].
+    MEASURE '_Measures'[Near-critical count] =
+        VAR _sid = [Selected snapshot id]
+        VAR _thr = [Near-critical threshold (d)]
+        RETURN
+            CALCULATE (
+                COUNTROWS ( fact_activity_snapshot ),
+                dim_snapshot[snapshot_id] = _sid,
+                fact_activity_snapshot[status] <> "TK_Complete",
+                dim_activity[activity_type] <> "TT_LOE",
+                fact_activity_snapshot[total_float_d] > 0,
+                fact_activity_snapshot[total_float_d] <= _thr
+            ) + 0
+
+    MEASURE '_Measures'[Negative float count] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE (
+                COUNTROWS ( fact_activity_snapshot ),
+                dim_snapshot[snapshot_id] = _sid,
+                fact_activity_snapshot[status] <> "TK_Complete",
+                dim_activity[activity_type] <> "TT_LOE",
+                fact_activity_snapshot[total_float_d] < 0
+            ) + 0
+
+    MEASURE '_Measures'[Longest path count] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE (
+                COUNTROWS ( fact_activity_snapshot ),
+                dim_snapshot[snapshot_id] = _sid,
+                fact_activity_snapshot[is_longest_path] = TRUE ()
+            ) + 0
+
+    MEASURE '_Measures'[Total float (min)] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE (
+                MIN ( fact_activity_snapshot[total_float_d] ),
+                dim_snapshot[snapshot_id] = _sid,
+                fact_activity_snapshot[status] <> "TK_Complete",
+                dim_activity[activity_type] <> "TT_LOE"
+            )
+
+    MEASURE '_Measures'[Total float (average)] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE (
+                AVERAGE ( fact_activity_snapshot[total_float_d] ),
+                dim_snapshot[snapshot_id] = _sid,
+                fact_activity_snapshot[status] <> "TK_Complete",
+                dim_activity[activity_type] <> "TT_LOE"
+            )
+
+    // Row-level flag for tables and conditional formatting: 2 = critical, 1 = near-critical, 0 = other
+    MEASURE '_Measures'[Criticality band] =
+        VAR _sid = [Selected snapshot id]
+        VAR _thr = [Near-critical threshold (d)]
+        VAR _tf =
+            CALCULATE (
+                MIN ( fact_activity_snapshot[total_float_d] ),
+                dim_snapshot[snapshot_id] = _sid,
+                fact_activity_snapshot[status] <> "TK_Complete"
+            )
+        RETURN
+            SWITCH ( TRUE (), ISBLANK ( _tf ), BLANK (), _tf <= 0, 2, _tf <= _thr, 1, 0 )
+
+    // -------------------------------------------------------------------------------------------------
+    // 7. Look-back and look-ahead (14 calendar days either side of the selected data date)
+    //    The pipeline stores the flags per update; the recomputed measure derives the look-ahead from
+    //    the dates and the selected data date, and must equal the stored count.
+    // -------------------------------------------------------------------------------------------------
+    MEASURE '_Measures'[Look window (days)] =
+        14
+
+    MEASURE '_Measures'[Look-ahead items] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE (
+                COUNTROWS ( fact_activity_snapshot ),
+                dim_snapshot[snapshot_id] = _sid,
+                fact_activity_snapshot[lookahead] = TRUE ()
+            ) + 0
+
+    MEASURE '_Measures'[Look-ahead items (recomputed)] =
+        VAR _sid = [Selected snapshot id]
+        VAR _dd = [Data date]
+        VAR _end = _dd + [Look window (days)]
+        RETURN
+            COUNTROWS (
+                FILTER (
+                    CALCULATETABLE ( fact_activity_snapshot, dim_snapshot[snapshot_id] = _sid ),
+                    ( fact_activity_snapshot[status] = "TK_NotStart"
+                        && fact_activity_snapshot[start] >= _dd
+                        && fact_activity_snapshot[start] < _end )
+                        || ( fact_activity_snapshot[status] <> "TK_Complete"
+                            && fact_activity_snapshot[finish] >= _dd
+                            && fact_activity_snapshot[finish] < _end )
+                )
+            ) + 0
+
+    MEASURE '_Measures'[Look-ahead critical items] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE (
+                COUNTROWS ( fact_activity_snapshot ),
+                dim_snapshot[snapshot_id] = _sid,
+                fact_activity_snapshot[lookahead] = TRUE (),
+                fact_activity_snapshot[is_critical] = TRUE ()
+            ) + 0
+
+    // Visual-level filter for the look-ahead table: keep rows where the value is 1
+    MEASURE '_Measures'[Look-ahead item (flag)] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            IF (
+                CALCULATE (
+                    COUNTROWS ( fact_activity_snapshot ),
+                    dim_snapshot[snapshot_id] = _sid,
+                    fact_activity_snapshot[lookahead] = TRUE ()
+                ) > 0,
+                1,
+                0
+            )
+
+    MEASURE '_Measures'[Look-back items] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE (
+                COUNTROWS ( fact_activity_snapshot ),
+                dim_snapshot[snapshot_id] = _sid,
+                NOT ISBLANK ( fact_activity_snapshot[lookback_event] )
+            ) + 0
+
+    MEASURE '_Measures'[Look-back achieved] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE (
+                COUNTROWS ( fact_activity_snapshot ),
+                dim_snapshot[snapshot_id] = _sid,
+                fact_activity_snapshot[lookback_achieved] = TRUE ()
+            ) + 0
+
+    // Strict equality (==) so that blank (not a look-back item) is not counted as missed
+    MEASURE '_Measures'[Look-back missed] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE (
+                COUNTROWS ( fact_activity_snapshot ),
+                dim_snapshot[snapshot_id] = _sid,
+                fact_activity_snapshot[lookback_achieved] == FALSE ()
+            ) + 0
+
+    MEASURE '_Measures'[Look-back hit rate] =
+        DIVIDE ( [Look-back achieved], [Look-back items] )
+
+    MEASURE '_Measures'[Look-back item (flag)] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            IF (
+                CALCULATE (
+                    COUNTROWS ( fact_activity_snapshot ),
+                    dim_snapshot[snapshot_id] = _sid,
+                    NOT ISBLANK ( fact_activity_snapshot[lookback_event] )
+                ) > 0,
+                1,
+                0
+            )
+
+    // -------------------------------------------------------------------------------------------------
+    // 8. Schedule quality: DQ score, DCMA, BEI, CPLI, owner DQ
+    // -------------------------------------------------------------------------------------------------
+    MEASURE '_Measures'[DQ score] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE (
+                DIVIDE ( SUM ( fact_dcma_check[score] ), SUM ( fact_dcma_check[weight] ) ) * 100,
+                dim_snapshot[snapshot_id] = _sid
+            )
+
+    MEASURE '_Measures'[DQ rating] =
+        VAR _s = ROUND ( [DQ score], 1 )
+        RETURN
+            SWITCH ( TRUE (), ISBLANK ( _s ), BLANK (), _s >= 85, "Good", _s >= 70, "Fair", "Poor" )
+
+    MEASURE '_Measures'[DQ score movement] =
+        VAR _prev = [Previous snapshot id]
+        VAR _now = [DQ score]
+        VAR _before =
+            CALCULATE (
+                DIVIDE ( SUM ( fact_dcma_check[score] ), SUM ( fact_dcma_check[weight] ) ) * 100,
+                REMOVEFILTERS ( dim_snapshot ),
+                dim_snapshot[snapshot_id] = _prev
+            )
+        RETURN
+            IF ( ISBLANK ( _prev ), BLANK (), _now - _before )
+
+    MEASURE '_Measures'[DCMA pass count] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE (
+                COUNTROWS ( fact_dcma_check ),
+                dim_snapshot[snapshot_id] = _sid,
+                fact_dcma_check[group] = "DCMA",
+                fact_dcma_check[passed] = TRUE ()
+            ) + 0
+
+    // D10 (resources) is not applicable: passed is blank, so it is excluded here
+    MEASURE '_Measures'[DCMA applicable checks] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE (
+                COUNTROWS ( fact_dcma_check ),
+                dim_snapshot[snapshot_id] = _sid,
+                fact_dcma_check[group] = "DCMA",
+                NOT ISBLANK ( fact_dcma_check[passed] )
+            ) + 0
+
+    MEASURE '_Measures'[Update discipline pass count] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE (
+                COUNTROWS ( fact_dcma_check ),
+                dim_snapshot[snapshot_id] = _sid,
+                fact_dcma_check[group] = "Update discipline",
+                fact_dcma_check[passed] = TRUE ()
+            ) + 0
+
+    MEASURE '_Measures'[DCMA offenders] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE ( COUNTROWS ( fact_dcma_offender ), dim_snapshot[snapshot_id] = _sid ) + 0
+
+    // BEI = tasks completed / tasks due by the data date in the baseline in force (DCMA D14, LOE excluded).
+    // Baseline finishes fall at the end of the working day, so a baseline finish on the data date is not yet due.
+    MEASURE '_Measures'[BEI tasks completed] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE (
+                COUNTROWS ( fact_activity_snapshot ),
+                dim_snapshot[snapshot_id] = _sid,
+                dim_activity[activity_type] <> "TT_LOE",
+                fact_activity_snapshot[status] = "TK_Complete"
+            ) + 0
+
+    // NOT ISBLANK is required: in DAX a blank date compares as earlier than any date
+    MEASURE '_Measures'[BEI tasks due] =
+        VAR _sid = [Selected snapshot id]
+        VAR _dd = [Data date]
+        RETURN
+            CALCULATE (
+                COUNTROWS ( fact_activity_snapshot ),
+                dim_snapshot[snapshot_id] = _sid,
+                dim_activity[activity_type] <> "TT_LOE",
+                NOT ISBLANK ( fact_activity_snapshot[bl_finish] ),
+                fact_activity_snapshot[bl_finish] < _dd
+            ) + 0
+
+    MEASURE '_Measures'[BEI] =
+        DIVIDE ( [BEI tasks completed], [BEI tasks due] )
+
+    // CPLI = (critical path length + Day 1 total float) / critical path length (DCMA D13). It is read from the
+    // pipeline because the critical path length is working time on the Day 1 calendar, which the model does not hold.
+    MEASURE '_Measures'[CPLI] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE ( SUM ( fact_snapshot_summary[cpli] ), dim_snapshot[snapshot_id] = _sid )
+
+    // Owner DQ = 1 - flagged / activities, per owner (fact_owner_scorecard)
+    MEASURE '_Measures'[Owner DQ] =
+        VAR _sid = [Selected snapshot id]
+        VAR _share =
+            CALCULATE (
+                DIVIDE ( SUM ( fact_owner_scorecard[flagged] ), SUM ( fact_owner_scorecard[activities] ) ),
+                dim_snapshot[snapshot_id] = _sid
+            )
+        RETURN
+            IF ( ISBLANK ( _share ), BLANK (), 1 - _share )
+
+    // -------------------------------------------------------------------------------------------------
+    // 9. Interfaces and readiness gap (calendar days; positive = late)
+    // -------------------------------------------------------------------------------------------------
+    MEASURE '_Measures'[Interfaces late] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE (
+                COUNTROWS ( fact_interface ),
+                dim_snapshot[snapshot_id] = _sid,
+                fact_interface[status] = "Late"
+            ) + 0
+
+    MEASURE '_Measures'[Interfaces at risk] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE (
+                COUNTROWS ( fact_interface ),
+                dim_snapshot[snapshot_id] = _sid,
+                fact_interface[status] = "At risk"
+            ) + 0
+
+    MEASURE '_Measures'[Interface gap (max)] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE (
+                MAX ( fact_interface[gap_days] ),
+                dim_snapshot[snapshot_id] = _sid,
+                fact_interface[status] <> "Complete"
+            )
+
+    MEASURE '_Measures'[Readiness gap] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE ( MAX ( fact_readiness[gap_d] ), dim_snapshot[snapshot_id] = _sid )
+
+    MEASURE '_Measures'[Readiness stages late] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE (
+                COUNTROWS ( fact_readiness ),
+                dim_snapshot[snapshot_id] = _sid,
+                fact_readiness[gap_d] > 0
+            ) + 0
+
+    // -------------------------------------------------------------------------------------------------
+    // 10. Risks, decisions and recovery (decisions and scenarios relate to the latest update)
+    // -------------------------------------------------------------------------------------------------
+    MEASURE '_Measures'[High risks] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE (
+                COUNTROWS ( fact_risk ),
+                dim_snapshot[snapshot_id] = _sid,
+                fact_risk[rating] = "High"
+            ) + 0
+
+    MEASURE '_Measures'[Risk score (max)] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE ( MAX ( fact_risk[score] ), dim_snapshot[snapshot_id] = _sid )
+
+    MEASURE '_Measures'[Open decisions] =
+        CALCULATE ( COUNTROWS ( fact_decision ), fact_decision[status] = "Open" ) + 0
+
+    MEASURE '_Measures'[Overdue decisions] =
+        CALCULATE (
+            COUNTROWS ( fact_decision ),
+            fact_decision[status] = "Open",
+            fact_decision[overdue] = TRUE ()
+        ) + 0
+
+    MEASURE '_Measures'[Next decision needed by] =
+        CALCULATE (
+            MIN ( fact_decision[needed_by] ),
+            fact_decision[status] = "Open",
+            fact_decision[overdue] == FALSE ()
+        )
+
+    MEASURE '_Measures'[Recommended scenario] =
+        CALCULATE ( SELECTEDVALUE ( fact_scenario[scenario_id] ), fact_scenario[recommended] = TRUE () )
+
+    MEASURE '_Measures'[Recommended scenario Day 1 total float] =
+        CALCULATE ( SUM ( fact_scenario[day1_tf_d] ), fact_scenario[recommended] = TRUE () )
+
+    MEASURE '_Measures'[Float gain] =
+        CALCULATE ( SUM ( fact_scenario[float_gain_d] ), fact_scenario[recommended] = TRUE () )
+
+    MEASURE '_Measures'[Scenario Day 1 impact] =
+        SUM ( fact_scenario[day1_impact_days] )
+
+    // -------------------------------------------------------------------------------------------------
+    // 11. Reconciliation (source XER = model = dashboard JSON, per data date)
+    // -------------------------------------------------------------------------------------------------
+    MEASURE '_Measures'[Controls total] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE ( COUNTROWS ( fact_reconciliation ), dim_snapshot[snapshot_id] = _sid ) + 0
+
+    MEASURE '_Measures'[Controls passed] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE (
+                COUNTROWS ( fact_reconciliation ),
+                dim_snapshot[snapshot_id] = _sid,
+                fact_reconciliation[passed] = TRUE ()
+            ) + 0
+
+    MEASURE '_Measures'[Reconciliation status] =
+        VAR _n = [Controls total]
+        RETURN
+            IF ( _n > 0 && [Controls passed] = _n, "Reconciled", "Not reconciled" )
+
+    MEASURE '_Measures'[Reconciliation colour] =
+        IF ( [Reconciliation status] = "Reconciled", "#1E8449", "#C0392B" )
+
+    // -------------------------------------------------------------------------------------------------
+    // 12. Baseline compare on the date axis (inactive relationships activated with USERELATIONSHIP)
+    //     Count of activity finishes per period: forecast (active, finish) vs BL0 / BL1 finish dates
+    // -------------------------------------------------------------------------------------------------
+    MEASURE '_Measures'[Finishes (forecast)] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE ( COUNTROWS ( fact_activity_snapshot ), dim_snapshot[snapshot_id] = _sid )
+
+    MEASURE '_Measures'[Finishes (BL0)] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE (
+                COUNTROWS ( fact_activity_snapshot ),
+                dim_snapshot[snapshot_id] = _sid,
+                USERELATIONSHIP ( fact_activity_snapshot[bl0_finish], dim_date[date] )
+            )
+
+    MEASURE '_Measures'[Finishes (BL1)] =
+        VAR _sid = [Selected snapshot id]
+        RETURN
+            CALCULATE (
+                COUNTROWS ( fact_activity_snapshot ),
+                dim_snapshot[snapshot_id] = _sid,
+                USERELATIONSHIP ( fact_activity_snapshot[bl1_finish], dim_date[date] )
+            )
+
+    MEASURE '_Measures'[Milestone finishes (forecast)] =
+        CALCULATE ( [Finishes (forecast)], dim_activity[is_milestone] = TRUE () )
+
+    MEASURE '_Measures'[Milestone finishes (BL0)] =
+        CALCULATE ( [Finishes (BL0)], dim_activity[is_milestone] = TRUE () )
+
+    MEASURE '_Measures'[Milestone finishes (BL1)] =
+        CALCULATE ( [Finishes (BL1)], dim_activity[is_milestone] = TRUE () )
+
+    // -------------------------------------------------------------------------------------------------
+    // 13. Action titles and provenance (answer-first text for page titles; British date format)
+    // -------------------------------------------------------------------------------------------------
+    MEASURE '_Measures'[Provenance line] =
+        "Data date " & FORMAT ( [Data date], "dd-mmm-yyyy" )
+            & " | Baseline " & [Baseline in force]
+            & " | " & [Reconciliation status] & " " & [Controls passed] & "/" & [Controls total]
+            & " | " & [Source file]
+            & " | DQ " & FORMAT ( [DQ score], "0" )
+
+    MEASURE '_Measures'[Title - Executive summary] =
+        VAR _tf = [Day 1 total float]
+        VAR _pos =
+            IF (
+                _tf < 0,
+                FORMAT ( -_tf, "0" ) & " working days beyond",
+                FORMAT ( _tf, "0" ) & " working days inside"
+            )
+        VAR _rec = [Recommended scenario]
+        VAR _dec =
+            SUBSTITUTE (
+                CALCULATE ( SELECTEDVALUE ( fact_scenario[decision] ), fact_scenario[recommended] = TRUE () ),
+                ", ",
+                " and "
+            )
+        RETURN
+            "Day 1 is forecast for " & FORMAT ( [Day 1 forecast], "dd-mmm-yyyy" ) & ", " & _pos & " the "
+                & FORMAT ( [Day 1 target], "dd-mmm-yyyy" ) & " target; recovery " & _rec
+                & " brings Day 1 total float to " & FORMAT ( [Recommended scenario Day 1 total float], "+0;-0;0" )
+                & " working days if " & _dec & " are approved."
+
+    MEASURE '_Measures'[Title - Milestones] =
+        VAR _m = [Day 1 movement vs previous period]
+        VAR _move =
+            SWITCH (
+                TRUE (),
+                ISBLANK ( _m ), "has no previous update",
+                _m < 0, "moved " & FORMAT ( -_m, "0" ) & " calendar days earlier",
+                _m > 0, "slipped " & FORMAT ( _m, "0" ) & " calendar days",
+                "did not move"
+            )
+        RETURN
+            FORMAT ( [Milestones later than baseline in force], "0" ) & " milestones are later than "
+                & [Baseline in force] & "; the Day 1 forecast " & _move & " since the previous update."
+
+    MEASURE '_Measures'[Title - Critical path] =
+        FORMAT ( [Critical count], "0" ) & " activities are critical and " & FORMAT ( [Near-critical count], "0" )
+            & " near-critical (total float of " & [Near-critical threshold (d)] & " working days or less); "
+            & FORMAT ( [Look-ahead critical items], "0" ) & " critical activities start or finish in the next "
+            & [Look window (days)] & " days."
+
+    MEASURE '_Measures'[Title - Interfaces and readiness] =
+        FORMAT ( [Interfaces late], "0" ) & " interfaces are late and " & FORMAT ( [Interfaces at risk], "0" )
+            & " at risk; the worst readiness stage is " & FORMAT ( [Readiness gap], "+0;-0;0" )
+            & " calendar days against the date that protects Day 1."
+
+    // Names every open decision with its owner and date, so the ask is explicit in the title
+    MEASURE '_Measures'[Title - Decisions] =
+        VAR _openTbl = FILTER ( fact_decision, fact_decision[status] = "Open" && fact_decision[overdue] == FALSE () )
+        VAR _lateTbl = FILTER ( fact_decision, fact_decision[status] = "Open" && fact_decision[overdue] = TRUE () )
+        VAR _open =
+            CONCATENATEX (
+                _openTbl,
+                fact_decision[decision_id] & " (" & fact_decision[owner] & ") by "
+                    & FORMAT ( fact_decision[needed_by], "dd-mmm-yyyy" ),
+                ", ",
+                fact_decision[needed_by], ASC
+            )
+        VAR _late =
+            CONCATENATEX (
+                _lateTbl,
+                fact_decision[decision_id] & " (" & fact_decision[owner] & ", needed by "
+                    & FORMAT ( fact_decision[needed_by], "dd-mmm-yyyy" ) & ")",
+                ", ",
+                fact_decision[needed_by], ASC
+            )
+        VAR _n = COUNTROWS ( _openTbl ) + 0
+        VAR _l = COUNTROWS ( _lateTbl ) + 0
+        RETURN
+            FORMAT ( _n, "0" ) & IF ( _n = 1, " decision is", " decisions are" ) & " needed"
+                & IF ( _n > 0, ": " & _open, "" )
+                & IF ( _l > 0, "; " & _late & IF ( _l = 1, " is", " are" ) & " overdue.", "; none is overdue." )
+
+    MEASURE '_Measures'[Title - Schedule quality] =
+        VAR _mv = [DQ score movement]
+        RETURN
+            "DQ score is " & FORMAT ( [DQ score], "0.0" ) & " (" & [DQ rating] & ")"
+                & IF ( ISBLANK ( _mv ), "", ", " & FORMAT ( _mv, "+0.0;-0.0;0.0" ) & " points since the previous update" )
+                & "; " & FORMAT ( [DCMA pass count], "0" ) & " of " & FORMAT ( [DCMA applicable checks], "0" )
+                & " applicable DCMA checks pass."
+
+    MEASURE '_Measures'[Title - Reconciliation] =
+        IF (
+            [Reconciliation status] = "Reconciled",
+            "All " & FORMAT ( [Controls total], "0" ) & " controls agree between the source XER, the model and the dashboard for "
+                & FORMAT ( [Data date], "dd-mmm-yyyy" ) & ".",
+            FORMAT ( [Controls total] - [Controls passed], "0" ) & " of " & FORMAT ( [Controls total], "0" )
+                & " controls fail for " & FORMAT ( [Data date], "dd-mmm-yyyy" ) & ": do not publish this update."
+        )
+
+// -----------------------------------------------------------------------------------------------------
+// Validation query: one row per data date. Compare with output/csv/fact_snapshot_summary.csv and the
+// expected values in POWERBI.md section 11. Delete or ignore this part once the measures are in the model.
+// -----------------------------------------------------------------------------------------------------
+EVALUATE
+SUMMARIZECOLUMNS (
+    dim_snapshot[label],
+    dim_snapshot[data_date],
+    "Baseline in force", [Baseline in force],
+    "Day 1 forecast", [Day 1 forecast],
+    "Day 1 total float", [Day 1 total float],
+    "Float erosion", [Float erosion],
+    "Critical count", [Critical count],
+    "Critical count (excl. LOE)", [Critical count (excl. LOE)],
+    "Near-critical count", [Near-critical count],
+    "Total float (min)", [Total float (min)],
+    "Total float (average)", [Total float (average)],
+    "Weighted % complete (actual)", [Weighted % complete (actual)],
+    "Planned % complete", [Planned % complete],
+    "Look-ahead items", [Look-ahead items],
+    "Look-ahead items (recomputed)", [Look-ahead items (recomputed)],
+    "DQ score", [DQ score],
+    "DCMA pass count", [DCMA pass count],
+    "BEI", [BEI],
+    "BEI in fact_snapshot_summary", SUM ( fact_snapshot_summary[bei] ),
+    "CPLI", [CPLI],
+    "Controls passed", [Controls passed],
+    "Controls total", [Controls total]
+)
+ORDER BY dim_snapshot[data_date]
+
+// -----------------------------------------------------------------------------------------------------
+// Row-level security (not a measure: Modeling > Manage roles > role "Owner" > table dim_owner)
+//   [owner_code]
+//       IN CALCULATETABLE (
+//           VALUES ( security_owner_map[owner_code] ),
+//           security_owner_map[user_upn] = USERPRINCIPALNAME ()
+//       )
+//   and on table security_owner_map:  [user_upn] = USERPRINCIPALNAME ()
+// security_owner_map is a governed mapping file (user_upn, owner_code) kept outside this repository and
+// outside CsvFolder (POWERBI.md section 9). Add a role "Programme" with no filter for programme-level viewers.
+// -----------------------------------------------------------------------------------------------------
