@@ -87,8 +87,9 @@ The same reconciled CSVs load into a Power BI project, `powerbi/DOP.pbip`. It ha
 tables, 26 relationships, 119 DAX measures and 2 DAX functions, and seven report pages that mirror the dashboard tabs, plus a
 critical-path Gantt page, a drill-through page for any activity and a float tooltip page. `python -m dop pbip` generates the project, and `scripts/check_pbip.py` validates it offline
 against Microsoft's published schemas. It was also opened, refreshed and checked page by page in Power BI Desktop
-(October 2026 release). For the latest update it shows the dashboard's numbers: Day 1 on 21-Oct-2027, total float
-−7 working days, 39 critical activities, a DQ score of 75.3 and 40 of 40 controls passing.
+(October 2026 release), then published to the Power BI service and packaged as an app, where every page, bookmark
+and toggle was checked again in reading view. For the latest update it shows the dashboard's numbers: Day 1 on
+21-Oct-2027, total float −7 working days, 39 critical activities, a DQ score of 75.3 and 40 of 40 controls passing.
 
 | Executive summary | Critical path and look-ahead |
 |---|---|
