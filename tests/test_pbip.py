@@ -7,7 +7,8 @@ import shutil
 
 import pytest
 
-from dop.pbip import PROJECT, build_files, write_project
+from dop import tmdl
+from dop.pbip import PROJECT, build_files, build_model, parse_functions, parse_measures, read_tables, write_project
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 _spec = importlib.util.spec_from_file_location("check_pbip", ROOT / "scripts" / "check_pbip.py")
@@ -29,10 +30,21 @@ def _json(path: pathlib.Path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _model(out: pathlib.Path) -> dict:
+    """The semantic model of a generated project, read back from its TMDL definition folder."""
+    return tmdl.read_model(out / "DOP.SemanticModel" / "definition")["model"]
+
+
+def _dax(obj: dict) -> str:
+    """A measure's or function's expression as one string (TMDL keeps several lines as a list)."""
+    return "\n".join(obj["expression"]) if isinstance(obj["expression"], list) else obj["expression"]
+
+
 def test_committed_project_passes_all_checks():
     problems, _, stats = check_pbip.run_checks(ROOT / "powerbi", ROOT)
     assert not problems, "\n".join(problems[:25])
-    assert stats["measures"] == 120 and stats["relationships"] == 26 and stats["pages"] == 10
+    assert stats["measures"] == 119 and stats["functions"] == 2 and stats["relationships"] == 26
+    assert stats["pages"] == 10
 
 
 def test_generated_project_passes_all_checks_without_warnings(generated):
@@ -40,9 +52,30 @@ def test_generated_project_passes_all_checks_without_warnings(generated):
     problems, warnings, stats = check_pbip.run_checks(out, ROOT)
     assert not problems, "\n".join(problems[:25])
     assert not warnings, "\n".join(warnings[:25])
-    assert stats["validated"] == summary["files"] - 3           # all but model.bim, the theme copy and the background
-    # + threshold, measures, Compare against, Trend KPI, Update axis, Risk grid
-    assert summary["csv_tables"] == 22 and summary["tables"] == 28
+    # every JSON file is schema-checked: all but the TMDL model files, the theme copy and the background
+    assert stats["validated"] == summary["files"] - stats["tmdl_files"] - 2
+    # + threshold, measures, Compare against, Update axis, Risk grid
+    assert summary["csv_tables"] == 22 and summary["tables"] == 27 and summary["functions"] == 2
+
+
+def test_semantic_model_is_tmdl_at_compatibility_1702(generated):
+    out = generated[0]
+    model_dir = out / "DOP.SemanticModel"
+    assert not (model_dir / "model.bim").exists()
+    database = (model_dir / "definition" / "database.tmdl").read_text(encoding="utf-8")
+    assert database.startswith("database DOP\n\tcompatibilityLevel: 1702\n")
+    model_file = (model_dir / "definition" / "model.tmdl").read_text(encoding="utf-8")
+    assert model_file.startswith("model Model\n\tculture: en-US\n")
+    assert model_file.count("\nref table ") == 27
+    tables = {p.stem for p in (model_dir / "definition" / "tables").glob("*.tmdl")}
+    assert {"_Measures", "dim_activity", "Compare against", "Update axis", "Risk grid", "Near-critical threshold"} <= tables
+    # the definition reads back exactly as the generator built it
+    dax = (ROOT / "powerbi" / "measures.dax").read_text(encoding="utf-8")
+    built = build_model(read_tables(ROOT / "output" / "csv"), parse_measures(dax), r"V:\schedule-intelligence\output\csv",
+                        parse_functions(dax))
+    assert tmdl.read_model(model_dir / "definition") == built
+    # properties come before nested objects, or Desktop reports an indentation error (seen in Desktop)
+    assert model_file.index("\tsourceQueryCulture:") < model_file.index("\tdataAccessOptions")
 
 
 def test_generator_is_deterministic(generated, tmp_path):
@@ -61,7 +94,9 @@ def test_files_are_utf8_lf_two_space_json(generated):
         assert not data.startswith(b"\xef\xbb\xbf"), rel
         assert b"\r" not in data, rel
         data.decode("utf-8")
-        if "StaticResources" not in rel:
+        if rel.endswith(".tmdl"):                       # TMDL: tab-indented text, one trailing newline
+            assert data.endswith(b"\n") and not data.endswith(b"\n\n") and b"    " not in data.split(b"```")[0], rel
+        elif "StaticResources" not in rel:
             assert data.endswith(b"}\n") and data.startswith(b"{\n  \""), rel
 
 
@@ -77,12 +112,17 @@ def test_rewrite_removes_stale_pages_and_visuals(generated, tmp_path):
     assert not stale_page.exists() and not stale_visual.exists()
 
 
-def test_refuses_to_mix_tmdl_and_model_bim(generated, tmp_path):
+def test_rewrite_removes_a_stale_model_bim_and_table_file(generated, tmp_path):
     out = tmp_path / "project"
     shutil.copytree(generated[0], out)
-    (out / f"{PROJECT}.SemanticModel" / "definition").mkdir()
-    with pytest.raises(SystemExit):
-        write_project(generated[1], out)
+    stale_bim = out / f"{PROJECT}.SemanticModel" / "model.bim"
+    stale_table = out / f"{PROJECT}.SemanticModel" / "definition" / "tables" / "old_table.tmdl"
+    stale_bim.write_text("{}", encoding="utf-8")
+    stale_table.write_text("table old_table\n", encoding="utf-8")
+    write_project(generated[1], out)
+    assert not stale_bim.exists() and not stale_table.exists()
+    problems, _, _ = check_pbip.run_checks(out, ROOT)
+    assert not problems, "\n".join(problems[:10])
 
 
 def test_checker_reports_a_broken_field_reference(generated, tmp_path):
@@ -94,17 +134,17 @@ def test_checker_reports_a_broken_field_reference(generated, tmp_path):
     role["projections"][0]["field"]["Measure"]["Property"] = "No such measure"
     visual.write_text(json.dumps(doc, indent=2) + "\n", encoding="utf-8", newline="\n")
     problems, _, _ = check_pbip.run_checks(out, ROOT)
-    assert any("No such measure" in p and "not in model.bim" in p for p in problems)
+    assert any("No such measure" in p and "not in the model" in p for p in problems)
 
 
 def test_semantic_model_contents(generated):
-    model = _json(generated[0] / "DOP.SemanticModel" / "model.bim")["model"]
+    model = _model(generated[0])
     tables = {t["name"]: t for t in model["tables"]}
     threshold = tables["Near-critical threshold"]
     assert threshold["partitions"][0]["source"] == {"type": "calculated", "expression": "GENERATESERIES ( 0, 30, 1 )"}
     measures = {m["name"]: m for m in tables["_Measures"]["measures"]}
     assert "SELECTEDVALUE ( 'Near-critical threshold'[Near-critical threshold], 10 )" in \
-        measures["Near-critical threshold (d)"]["expression"]
+        _dax(measures["Near-critical threshold (d)"])
     assert measures["Day 1 forecast"]["formatString"] == "dd-mmm-yyyy"
     assert measures["Float erosion"]["formatString"] == "+0;-0;0"
     assert measures["BEI"]["formatString"] == "0.000" and measures["Owner DQ"]["formatString"] == "0.0%"
@@ -118,28 +158,33 @@ def test_semantic_model_contents(generated):
     assert '{"finish", type datetime}' in partition and '{"finish", type date}' in partition
 
 
-def test_kpi_tiles_carry_trend_lines(generated):
+def test_dax_functions_draw_the_trend_lines(generated):
     out = generated[0]
-    model = _json(out / "DOP.SemanticModel" / "model.bim")["model"]
+    model = _model(out)
     tables = {t["name"]: t for t in model["tables"]}
     measures = {m["name"]: m for m in tables["_Measures"]["measures"]}
-    def dax(m: dict) -> str:                 # TMSL keeps a multi-line expression as a list of lines
-        return "\n".join(m["expression"]) if isinstance(m["expression"], list) else m["expression"]
-
+    functions = {f["name"]: f for f in model["functions"]}
+    assert set(functions) == {"DOP.AtUpdate", "DOP.TrendSvg"} and "Trend KPI" not in tables
+    at_update, trend_svg = _dax(functions["DOP.AtUpdate"]), _dax(functions["DOP.TrendSvg"])
+    assert at_update.startswith("( value : SCALAR EXPR, snapshotId : INT64 VAL ) =>")
+    assert "REMOVEFILTERS ( dim_snapshot ), dim_snapshot[snapshot_id] = snapshotId" in at_update
+    assert trend_svg.startswith("( value : SCALAR EXPR ) =>")
+    assert "DOP.AtUpdate ( value, dim_snapshot[snapshot_id] )" in trend_svg
+    assert "data:image/svg+xml;utf8," in trend_svg and "SWITCH" not in trend_svg
+    assert functions["DOP.TrendSvg"]["description"].startswith("The KPI at every update")
+    functions_file = (out / "DOP.SemanticModel" / "definition" / "functions.tmdl").read_text(encoding="utf-8")
+    assert "function 'DOP.TrendSvg' = ```" in functions_file and "function 'DOP.AtUpdate' = ```" in functions_file
     trends = {name: m for name, m in measures.items() if name.startswith("Trend - ")}
     assert len(trends) == 16
-    renderer = measures["Trend line"]
     for name, m in trends.items():
         kpi = name[len("Trend - "):]
         assert m["dataCategory"] == "ImageUrl" and "formatString" not in m, name
-        assert f"'Trend KPI'[KPI] = \"{kpi}\"" in dax(m), name
-        assert f'"{kpi}", [{kpi}]' in dax(renderer), name
-    assert "formatString" not in renderer and "dataCategory" not in renderer
-    assert "data:image/svg+xml;utf8," in dax(renderer) and "REMOVEFILTERS ( dim_snapshot )" in dax(renderer)
-    kpi_table = tables["Trend KPI"]
-    assert kpi_table["isHidden"] is True and kpi_table["columns"][0]["isHidden"] is True
-    rows = "\n".join(kpi_table["partitions"][0]["source"]["expression"])
-    assert rows.startswith("DATATABLE (") and all(f'{{ "{name[len("Trend - "):]}" }}' in rows for name in trends)
+        assert _dax(m) == f"DOP.TrendSvg ( [{kpi}] )", name
+    # the sparkline measures carry their pattern inline: a table sparkline cannot follow a measure into a
+    # function (Missing_References in Desktop 2.159)
+    for name in ("Owner DQ by update", "Milestone variance vs BL1 by update", "Risk score (max) by update",
+                 "Float bridge by update"):
+        assert "DOP." not in _dax(measures[name]) and "NOT ISEMPTY (" in _dax(measures[name]), name
     # every tile of the four KPI strips draws its own trend: the image settings and the measure, per tile
     for page, tiles in (("p01_exec", 4), ("p02_milestones", 4), ("p03_critical", 6), ("p06_quality", 4)):
         visual = _json(next((out / PAGES / page / "visuals").glob("*_kpis/visual.json")))["visual"]
@@ -158,7 +203,7 @@ def test_kpi_tiles_carry_trend_lines(generated):
 
 def test_table_sparklines_read_every_update(generated):
     out = generated[0]
-    model = _json(out / "DOP.SemanticModel" / "model.bim")["model"]
+    model = _model(out)
     tables = {t["name"]: t for t in model["tables"]}
     axis = tables["Update axis"]                 # not related to the model: the data-date slicer leaves it whole
     assert axis["isHidden"] is True and {c["name"] for c in axis["columns"]} == {"snapshot_id", "data_date", "update"}
@@ -218,18 +263,77 @@ def test_report_pages_and_header_strip(generated):
 
 
 def test_compare_against_field_parameter(generated):
-    model = _json(generated[0] / "DOP.SemanticModel" / "model.bim")["model"]
+    model = _model(generated[0])
     table = next(t for t in model["tables"] if t["name"] == "Compare against")
     fields = next(c for c in table["columns"] if c["name"] == "Compare against Fields")
     assert fields["extendedProperties"][0]["value"] == {"version": 3, "kind": 2}
     expression = "\n".join(table["partitions"][0]["source"]["expression"])
     for measure in ("Slip vs previous period", "Finish variance vs BL0", "Finish variance vs BL1"):
         assert f"NAMEOF ( '_Measures'[{measure}] )" in expression
+    # the choice is a button slicer: three buttons, one pressed at a time, BL1 pressed when the page opens
     slicer = _json(generated[0] / PAGES / "p02_milestones" / "visuals" / "p02_h3_compare" / "visual.json")["visual"]
-    assert slicer["visualType"] == "slicer"
+    assert slicer["visualType"] == "advancedSlicerVisual"
+    assert slicer["query"]["queryState"]["Values"]["projections"][0]["queryRef"] == "Compare against.Compare against"
+    where = slicer["objects"]["general"][0]["properties"]["filter"]["filter"]["Where"][0]["Condition"]["In"]
+    assert where["Expressions"][0]["Column"]["Property"] == "Compare against Fields"
+    assert where["Values"] == [[{"Literal": {"Value": "'''_Measures''[Finish variance vs BL1]'"}}]]
+    assert _literal(slicer["objects"]["selection"][0]["properties"], "strictSingleSelect") == "true"
+    assert _literal(slicer["objects"]["layout"][0]["properties"], "columnCount") == "3L"
+    pressed = next(e for e in slicer["objects"]["fillCustom"] if e.get("selector") == {"id": "selection:selected"})
+    assert pressed["properties"]["fillColor"] == {"solid": {"color": {"expr": {"Literal": {"Value": "'#1F3A5F'"}}}}}
+    assert "label" not in {k for e in slicer["objects"]["value"] for k in e["properties"]}      # text = value
     table = _json(next((generated[0] / PAGES / "p02_milestones" / "visuals").glob("*_milestone_table/visual.json")))
     params = table["visual"]["query"]["queryState"]["Values"]["fieldParameters"]
     assert params[0]["parameterExpr"]["Column"]["Property"] == "Compare against"
+
+
+# Where a fixed hex colour may still appear in a visual (every other colour is the theme's, by position or by
+# default): text runs in a text box; conditional-formatting cases and gradient stops; a per-series fill with a
+# metadata selector; the rail's chrome and the pressed pill; the lineage text box's card; the risk map's cell lines
+ALLOWED_FIXED_COLOURS = [                    # (visual name, property path with the list indices removed)
+    (r".*", r"general\.properties\.paragraphs\.textRuns\.textStyle\.color$"),
+    (r".*", r"\.Conditional\.(Cases\.Value|DefaultValue)\.Literal\.Value$"),
+    (r".*", r"FillRule\.linearGradient2\.(min|max)\.color"),
+    (r".*", r"dataPoint\.properties\.fill\."),
+    (r".*_h\d+_(navigator|spotlight|reset|provenance|\w+_on)$", r".*"),
+    (r".*_h3_compare$", r"objects\.(value|fillCustom|outline)\."),
+    (r".*_v\d+_lineage_text$", r"visualContainerObjects\.(background|border)\."),
+    (r".*_v\d+_risk_map$", r"objects\.grid\."),
+]
+
+
+def test_theme_owns_the_structural_colours(generated):
+    """Visuals take text, background, outline and gridline colours from dop_theme.json and name palette colours by
+    theme position, so a theme-file change flows to every visual; fixed hex codes stay only where listed."""
+    import re
+
+    def walk(node, path):
+        if isinstance(node, dict):
+            for k, v in node.items():
+                yield from walk(v, f"{path}.{k}" if path else k)
+        elif isinstance(node, list):
+            for i, v in enumerate(node):
+                yield from walk(v, f"{path}.{i}")
+        elif isinstance(node, str) and re.search(r"#[0-9A-Fa-f]{6}\b", node):
+            yield path, node
+
+    offenders, theme_refs = [], 0
+    for visual in (generated[0] / PAGES).rglob("visual.json"):
+        doc = _json(visual)
+        for path, value in walk(doc["visual"], ""):
+            path = re.sub(r"\.\d+(?=\.|$)", "", path)
+            if not any(re.fullmatch(v, doc["name"]) and re.search(p, path) for v, p in ALLOWED_FIXED_COLOURS):
+                offenders.append(f"{doc['name']}: {path} = {value}")
+        theme_refs += json.dumps(doc).count('"ThemeDataColor"')
+    assert not offenders, "\n".join(offenders[:20])
+    assert theme_refs >= 40                 # accent bars, reference lines, sentiment colours, sparklines, tints
+    # the structural defaults the visuals rely on are in the theme
+    theme = _json(ROOT / "powerbi" / "dop_theme.json")["visualStyles"]
+    assert theme["*"]["*"]["subTitle"][0]["fontColor"]["solid"]["color"] == "#4A5568"
+    assert theme["cardVisual"]["*"]["referenceLabelValue"][0]["valueFontColor"]["solid"]["color"] == "#1F3A5F"
+    assert theme["actionButton"]["*"]["fill"][0]["fillColor"]["solid"]["color"] == "#FFFFFF"
+    assert theme["shape"]["*"]["title"][0]["fontColor"]["solid"]["color"] == "#1F3A5F"
+    assert theme["advancedSlicerVisual"]["*"]["value"][0]["fontColor"]["solid"]["color"] == "#1F3A5F"
 
 
 def _literal(props: dict, key: str):
@@ -252,6 +356,7 @@ def test_bookmarks_and_the_bl1_bl0_toggle(generated):
     assert bl0["options"]["applyOnlyToTargetVisuals"] is True and bl0["options"]["suppressData"] is False
     visuals = bl0["explorationState"]["sections"]["p02_milestones"]["visualContainers"]
     assert "p02_h4_dd_slicer" not in visuals
+    assert visuals["p02_h3_compare"]["singleVisual"]["visualType"] == "advancedSlicerVisual"
     where = (visuals["p02_h3_compare"]["singleVisual"]["objects"]["merge"]["general"][0]["properties"]["filter"]
              ["filter"]["Where"][0]["Condition"]["In"])
     assert where["Expressions"][0]["Column"]["Property"] == "Compare against Fields"

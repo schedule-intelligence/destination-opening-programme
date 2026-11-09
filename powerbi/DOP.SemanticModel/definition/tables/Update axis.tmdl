@@ -1,0 +1,43 @@
+table 'Update axis'
+	isHidden
+	lineageTag: 350a753e-9a09-5139-96e9-75022d8888d9
+
+	column snapshot_id
+		dataType: int64
+		isHidden
+		isNameInferred: false
+		isDataTypeInferred
+		lineageTag: f458de06-b333-5478-9878-194531d07703
+		sourceColumn: [snapshot_id]
+		summarizeBy: none
+
+	column data_date
+		dataType: dateTime
+		isHidden
+		isNameInferred: false
+		isDataTypeInferred
+		formatString: dd-mmm-yyyy
+		lineageTag: 2110d69a-8eaf-59f9-8d70-65e222059a37
+		sourceColumn: [data_date]
+		summarizeBy: none
+
+	column update
+		dataType: string
+		isHidden
+		isNameInferred: false
+		isDataTypeInferred
+		lineageTag: 22a4dbbd-7447-567d-8150-1d9b96a8d511
+		sourceColumn: [update]
+		sortByColumn: snapshot_id
+		summarizeBy: none
+
+	partition 'Update axis' = calculated
+		mode: import
+		source = ```
+				SELECTCOLUMNS (
+				    dim_snapshot,
+				    "snapshot_id", dim_snapshot[snapshot_id],
+				    "data_date", dim_snapshot[data_date],
+				    "update", FORMAT ( dim_snapshot[data_date], "mmm yyyy" )
+				)
+				```

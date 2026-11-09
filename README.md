@@ -70,8 +70,8 @@ Slide previews are rendered from the generated `.pptx` files with LibreOffice (`
 
 ## Power BI report
 
-The same reconciled CSVs load into a Power BI project, `powerbi/DOP.pbip`. It has a semantic model of 28 tables,
-26 relationships and 120 DAX measures, and seven report pages that mirror the dashboard tabs, plus a
+The same reconciled CSVs load into a Power BI project, `powerbi/DOP.pbip`. It has a semantic model (TMDL) of 27
+tables, 26 relationships, 119 DAX measures and 2 DAX functions, and seven report pages that mirror the dashboard tabs, plus a
 critical-path Gantt page, a drill-through page for any activity and a float tooltip page. `python -m dop pbip` generates the project, and `scripts/check_pbip.py` validates it offline
 against Microsoft's published schemas. It was also opened, refreshed and checked page by page in Power BI Desktop
 (October 2026 release). For the latest update it shows the dashboard's numbers: Day 1 on 21-Oct-2027, total float
@@ -199,7 +199,7 @@ schemas and the model), `python scripts/record_tour.py` (re-records the walkthro
 |---|---|
 | P6 XER files (2 baselines + 6 updates) | `data/xer/` |
 | Star schema (7 dims, 15 facts) for Power BI | `output/csv/` · [POWERBI.md](POWERBI.md) · [DATA_DICTIONARY.md](DATA_DICTIONARY.md) |
-| Power BI project: semantic model, 120 measures, 7 report pages + Gantt, drill-through and tooltip pages | `powerbi/DOP.pbip` · `docs/downloads/DOP.pbix` · [README_PBIP.md](powerbi/README_PBIP.md) |
+| Power BI project: semantic model (TMDL), 119 measures, 7 report pages + Gantt, drill-through and tooltip pages | `powerbi/DOP.pbip` · `docs/downloads/DOP.pbix` · [README_PBIP.md](powerbi/README_PBIP.md) |
 | Dashboard data (self-describing, reconciled) | `docs/data/dashboard.json` · [schema](docs/data/README.md) |
 | Reconciliation reports | `output/reports/reconciliation_<date>.md` |
 | Excel controls workbook per data date | `output/xlsx/DOP_controls_<date>.xlsx` |
@@ -213,7 +213,7 @@ schemas and the model), `python scripts/record_tour.py` (re-records the walkthro
 | Schedule-quality validation: logic, open ends, constraints, lags, calendars, float paths, critical and near-critical | `dop/pipeline/quality.py` (DCMA 14 + update discipline), Schedule Quality tab, owner scorecard; tests prove every injected issue is caught with zero false positives |
 | Update cycles, progress validation, variance, forecasting, scenario modelling, recovery planning | Six monthly updates; variance vs BL0 / BL1 / previous; milestone trend; recovery scenarios rescheduled by the CPM engine; Recovery tab and slide |
 | Controls for ownership, change, data cut-off, status dates, approvals, baseline governance | Owner codes, change register, BL1 via CR-003, data-date control U08; [PLANNING_REPORTING_CALENDAR.md](governance/PLANNING_REPORTING_CALENDAR.md) |
-| Power BI model from P6 exports; automated progress, milestone, critical path, float, variance, slippage, look-ahead, risk and dependency reporting | `output/csv/` star schema; Power BI project [`powerbi/DOP.pbip`](powerbi/README_PBIP.md) (semantic model, 120 DAX measures, 7 pages + Gantt, drill-through, tooltip); [POWERBI.md](POWERBI.md); `powerbi/dop_theme.json` |
+| Power BI model from P6 exports; automated progress, milestone, critical path, float, variance, slippage, look-ahead, risk and dependency reporting | `output/csv/` star schema; Power BI project [`powerbi/DOP.pbip`](powerbi/README_PBIP.md) (semantic model, 119 DAX measures and 2 functions, 7 pages + Gantt, drill-through, tooltip); [POWERBI.md](POWERBI.md); `powerbi/dop_theme.json` |
 | Drill-down portfolio → programme → project → workstream → WBS → activity | Dashboard breadcrumb and activity drawer; Power BI field parameters |
 | Data definitions and reconciliation controls aligned to the approved P6 schedule | [DATA_DICTIONARY.md](DATA_DICTIONARY.md); reconciliation gate (R01–R16); Reconciliation & Lineage tab; "Reconciled ✓" header |
 | Consulting-quality packs: executive summary, milestone outlook, critical path, two-week look-back and look-ahead, trend, decision log, recovery plan, owners and asks | `dop/pptx_gen.py` monthly (15 slides) and fortnightly (6 slides) packs |

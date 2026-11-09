@@ -33,7 +33,6 @@ MODEL_TABLES = {
     "Near-critical threshold": {"Near-critical threshold"},
     "Hierarchy level": {"Hierarchy level", "Hierarchy level Fields", "Hierarchy level Order"},
     "Compare against": {"Compare against", "Compare against Fields", "Compare against Order"},
-    "Trend KPI": {"KPI"},                    # the KPI each Trend - measure asks [Trend line] to draw
     "Update axis": {"snapshot_id", "data_date", "update"},   # sparkline and float-bridge axis (not related)
     "Risk grid": {"probability", "impact"},        # the 25 cells of the risk map (page 5)
     "security_owner_map": {"user_upn", "owner_code"},
@@ -114,18 +113,30 @@ def headers() -> dict[str, set[str]]:
     return out
 
 
-def measure_blocks(text: str) -> dict[str, str]:
-    """MEASURE name -> full definition text (until the next MEASURE, comment rule or EVALUATE)."""
-    blocks = {}
-    starts = [m for m in re.finditer(r"^[ \t]*MEASURE\s+'_Measures'\[([^\]]+)\]", text, re.M)]
+def _blocks(text: str, start: re.Pattern) -> dict[str, list[str]]:
+    """Definition name -> full definition text (until the next MEASURE or FUNCTION, comment rule or EVALUATE)."""
+    blocks: dict[str, list[str]] = {}
+    starts = [m for m in re.finditer(r"^[ \t]*(?:MEASURE|FUNCTION)\b", text, re.M)]
     for k, m in enumerate(starts):
+        head = start.match(text, m.start())
+        if not head:
+            continue
         end = starts[k + 1].start() if k + 1 < len(starts) else len(text)
         body = text[m.start():end]
         cut = re.search(r"^\s*(//|EVALUATE|```)", body[1:], re.M)
         if cut:
             body = body[:cut.start() + 1]
-        blocks.setdefault(m.group(1), []).append(textwrap.dedent(body.rstrip()).strip())
+        blocks.setdefault(head.group(1), []).append(textwrap.dedent(body.rstrip()).strip())
     return blocks
+
+
+def measure_blocks(text: str) -> dict[str, list[str]]:
+    return _blocks(text, re.compile(r"^[ \t]*MEASURE\s+'_Measures'\[([^\]]+)\]", re.M))
+
+
+def function_blocks(text: str) -> dict[str, list[str]]:
+    """FUNCTION name -> definition text (DAX user-defined functions, section 0 of measures.dax)."""
+    return _blocks(text, re.compile(r"^[ \t]*FUNCTION\s+([A-Za-z_][\w.]*)", re.M))
 
 
 def check_refs(label: str, code: str, tables: dict[str, set[str]], measures: set[str], errors: list[str]):
@@ -180,6 +191,17 @@ def main() -> int:
             errors.append(f"measures.dax: measure [{name}] defined {len(defs)} times")
         if not balanced(defs[0]):
             errors.append(f"measures.dax: unbalanced brackets in [{name}]")
+    functions = function_blocks(dax_text)
+    for name, defs in functions.items():
+        if len(defs) > 1:
+            errors.append(f"measures.dax: function {name} defined {len(defs)} times")
+        if not balanced(defs[0]):
+            errors.append(f"measures.dax: unbalanced brackets in function {name}")
+        if not name.startswith("DOP."):
+            errors.append(f"measures.dax: function {name} is outside the DOP. namespace")
+    called = set(re.findall(r"\b(DOP\.\w+)\s*\(", strip_dax(dax_text)))   # a call reads as Name ( ... )
+    for name in sorted(called - set(functions)):
+        errors.append(f"measures.dax: call to undefined function {name}")
     check_refs("measures.dax", dax_text, tables, measures, errors)
 
     doc = DOC.read_text(encoding="utf-8")
@@ -189,14 +211,25 @@ def main() -> int:
         if not balanced(code):
             errors.append(f"POWERBI.md dax block {k}: unbalanced brackets")
     shown: dict[str, list[str]] = {}
+    shown_functions: dict[str, list[str]] = {}
     for code in doc_blocks:
         for name, defs in measure_blocks(code).items():
             shown.setdefault(name, []).extend(defs)
+        for name, defs in function_blocks(code).items():
+            shown_functions.setdefault(name, []).extend(defs)
     for name, defs in shown.items():
         if name not in blocks:
             errors.append(f"POWERBI.md shows measure [{name}] that is not in measures.dax")
         elif defs[0] != blocks[name][0]:
             errors.append(f"POWERBI.md: measure [{name}] differs from measures.dax")
+    for name, defs in shown_functions.items():
+        if name not in functions:
+            errors.append(f"POWERBI.md shows function {name} that is not in measures.dax")
+        elif defs[0] != functions[name][0]:
+            errors.append(f"POWERBI.md: function {name} differs from measures.dax")
+    for name in functions:
+        if name not in shown_functions:
+            errors.append(f"POWERBI.md does not show function {name} (section 4, DAX functions)")
 
     for many, mcol, one, ocol, allowed in RELATIONSHIPS:
         one_vals = [norm(r[ocol]) for r in read_csv_rows(one)]
@@ -223,8 +256,8 @@ def main() -> int:
         print("Power BI checks FAILED:")
         print("\n".join(f"  - {e}" for e in errors))
         return 1
-    print(f"Power BI checks passed: {len(measures)} measures, {len(doc_blocks)} DAX blocks in POWERBI.md "
-          f"({len(shown)} measures shown), {len(RELATIONSHIPS)} relationships, theme OK")
+    print(f"Power BI checks passed: {len(measures)} measures and {len(functions)} functions, {len(doc_blocks)} DAX "
+          f"blocks in POWERBI.md ({len(shown)} measures shown), {len(RELATIONSHIPS)} relationships, theme OK")
     return 0
 
 

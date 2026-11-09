@@ -1,0 +1,38 @@
+model Model
+	culture: en-US
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: en-GB
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+	annotation __PBI_TimeIntelligenceEnabled = 0
+	annotation PBI_QueryOrder = ["CsvFolder","dim_activity","dim_calendar","dim_code","dim_date","dim_owner","dim_snapshot","dim_wbs","fact_activity_snapshot","fact_change","fact_dcma_check","fact_dcma_offender","fact_decision","fact_interface","fact_milestone_trend","fact_owner_scorecard","fact_readiness","fact_reconciliation","fact_relationship","fact_risk","fact_s_curve","fact_scenario","fact_snapshot_summary","_Measures"]
+
+ref table dim_activity
+ref table dim_calendar
+ref table dim_code
+ref table dim_date
+ref table dim_owner
+ref table dim_snapshot
+ref table dim_wbs
+ref table fact_activity_snapshot
+ref table fact_change
+ref table fact_dcma_check
+ref table fact_dcma_offender
+ref table fact_decision
+ref table fact_interface
+ref table fact_milestone_trend
+ref table fact_owner_scorecard
+ref table fact_readiness
+ref table fact_reconciliation
+ref table fact_relationship
+ref table fact_risk
+ref table fact_s_curve
+ref table fact_scenario
+ref table fact_snapshot_summary
+ref table 'Near-critical threshold'
+ref table 'Compare against'
+ref table 'Update axis'
+ref table 'Risk grid'
+ref table _Measures

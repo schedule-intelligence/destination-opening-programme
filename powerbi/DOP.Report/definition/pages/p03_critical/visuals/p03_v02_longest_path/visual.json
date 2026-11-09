@@ -573,24 +573,6 @@
                   "Value": "'The same activities as bars on the Critical path Gantt page; right-click to drill through'"
                 }
               }
-            },
-            "fontSize": {
-              "expr": {
-                "Literal": {
-                  "Value": "9D"
-                }
-              }
-            },
-            "fontColor": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Literal": {
-                      "Value": "'#4A5568'"
-                    }
-                  }
-                }
-              }
             }
           }
         }

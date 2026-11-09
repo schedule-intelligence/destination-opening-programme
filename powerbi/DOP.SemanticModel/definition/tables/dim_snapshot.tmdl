@@ -1,0 +1,122 @@
+table dim_snapshot
+	lineageTag: a738e023-30ed-561b-9377-e223ee6aed9a
+
+	column snapshot_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 90b2486f-f4af-57a1-8b7f-1026f4c4899f
+		sourceColumn: snapshot_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column label
+		dataType: string
+		lineageTag: 74dfb6ca-01e9-58a5-99fa-fdccb37b274b
+		sourceColumn: label
+		sortByColumn: data_date
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column data_date
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: 3ea02036-6877-5a18-a39e-a3e13b8644a8
+		sourceColumn: data_date
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column source_file
+		dataType: string
+		lineageTag: 63dc4b8b-efda-585e-a687-9e821fb4f979
+		sourceColumn: source_file
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column sha256
+		dataType: string
+		lineageTag: d5762bc1-489e-5670-a388-05a3074912ce
+		sourceColumn: sha256
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column baseline_in_force
+		dataType: string
+		lineageTag: b2aba15c-6f47-5180-a45c-0e6453abbbc0
+		sourceColumn: baseline_in_force
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column baseline_file
+		dataType: string
+		lineageTag: cd54140b-5193-5ee1-9ca5-0391f2601380
+		sourceColumn: baseline_file
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column baseline_sha256
+		dataType: string
+		lineageTag: 2d0db61e-7ca9-510e-9ca9-03ec4c4f3331
+		sourceColumn: baseline_sha256
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column cutoff_expected
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: 51974c48-5129-5b7a-8ac8-b51de4841bb1
+		sourceColumn: cutoff_expected
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column run_timestamp
+		dataType: string
+		lineageTag: a796cc43-0562-5d92-b0aa-18ac8cb84423
+		sourceColumn: run_timestamp
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_latest
+		dataType: boolean
+		lineageTag: 6d3ded5a-bb3b-5567-bd03-f4b1475f69d4
+		sourceColumn: is_latest
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_snapshot-ad32c5b7-16b8-57c5-8b6d-b4e7c100f9bd = m
+		mode: import
+		source = ```
+				let
+				    Source = Csv.Document(File.Contents(CsvFolder & "\dim_snapshot.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Nulls = Table.ReplaceValue(Promoted, "", null, Replacer.ReplaceValue, Table.ColumnNames(Promoted)),
+				    Typed = Table.TransformColumnTypes(Nulls, {
+				        {"snapshot_id", Int64.Type},
+				        {"label", type text},
+				        {"data_date", type date},
+				        {"source_file", type text},
+				        {"sha256", type text},
+				        {"baseline_in_force", type text},
+				        {"baseline_file", type text},
+				        {"baseline_sha256", type text},
+				        {"cutoff_expected", type date},
+				        {"run_timestamp", type text},
+				        {"is_latest", type logical}
+				    }, "en-GB")
+				in
+				    Typed
+				```
+
+	annotation PBI_ResultType = Table

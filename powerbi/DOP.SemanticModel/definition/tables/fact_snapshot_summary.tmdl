@@ -1,0 +1,257 @@
+table fact_snapshot_summary
+	lineageTag: ee7fe60f-d7a7-5ae3-9c6a-5f9b1b92f6b4
+
+	column snapshot_id
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: d6d93d92-1d2a-56c4-8eac-ae0f631fcaf6
+		sourceColumn: snapshot_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column label
+		dataType: string
+		lineageTag: 0f938dfb-8872-517f-8fc5-68b4dc7c619a
+		sourceColumn: label
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column data_date
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: 6c506e52-bd0c-581a-8b75-4ec1b218ae6b
+		sourceColumn: data_date
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column baseline
+		dataType: string
+		lineageTag: 7f0e9c2b-c23d-5b94-ad50-4f2f56ad4c1c
+		sourceColumn: baseline
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column day1_forecast
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: 41a5eef1-39ea-5bd8-bde7-9571a0306ece
+		sourceColumn: day1_forecast
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column day1_tf_d
+		dataType: double
+		formatString: +0;-0;0
+		lineageTag: 68a40ea2-3a23-571d-b68e-5920c28dd8b4
+		sourceColumn: day1_tf_d
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column day1_var_bl0_d
+		dataType: double
+		formatString: +0;-0;0
+		lineageTag: 7638205e-33e0-5fd9-948e-d91707fe6094
+		sourceColumn: day1_var_bl0_d
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column day1_var_bl1_d
+		dataType: double
+		formatString: +0;-0;0
+		lineageTag: 0455d941-f624-54e1-a4a6-1ab50395ac2f
+		sourceColumn: day1_var_bl1_d
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column dq_score
+		dataType: double
+		lineageTag: 85ffe2a2-58ae-54ac-9870-78e49d83bd88
+		sourceColumn: dq_score
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column dq_rating
+		dataType: string
+		lineageTag: 1b6ad304-2950-5d06-9df1-d3bd88924a5e
+		sourceColumn: dq_rating
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column cpli
+		dataType: double
+		lineageTag: 4fd47268-0a18-58b1-b312-99d698a84289
+		sourceColumn: cpli
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column bei
+		dataType: double
+		lineageTag: 9cdb4299-f6cb-55fe-9255-43eb728bb8bc
+		sourceColumn: bei
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column critical_count
+		dataType: int64
+		formatString: 0
+		lineageTag: 27404ab8-cdb4-5c47-8cd0-dbd15d9a6b01
+		sourceColumn: critical_count
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column near_critical_count
+		dataType: int64
+		formatString: 0
+		lineageTag: dda72d55-c2f7-5a6d-b954-ecac5c003500
+		sourceColumn: near_critical_count
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column longest_path_count
+		dataType: int64
+		formatString: 0
+		lineageTag: 41edbc9d-9c53-5d9f-8ba4-25fbfc1d7367
+		sourceColumn: longest_path_count
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column negative_float_count
+		dataType: int64
+		formatString: 0
+		lineageTag: f84cadcd-6a49-547a-92fb-ae222f847a56
+		sourceColumn: negative_float_count
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column min_float_d
+		dataType: double
+		formatString: 0
+		lineageTag: 306f056c-40dd-525e-870a-ec51dd4659dd
+		sourceColumn: min_float_d
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column avg_float_d
+		dataType: double
+		formatString: 0.0
+		lineageTag: 1cf87bc7-bfef-54e4-af55-80381a2312c3
+		sourceColumn: avg_float_d
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column activities
+		dataType: int64
+		formatString: 0
+		lineageTag: fc2441ee-76b7-532e-91eb-dfb03f152ec7
+		sourceColumn: activities
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column complete
+		dataType: int64
+		formatString: 0
+		lineageTag: 74caa3ee-8880-5f9b-bf90-74a92310f936
+		sourceColumn: complete
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column in_progress
+		dataType: int64
+		formatString: 0
+		lineageTag: 277f7aca-6036-54d1-9ac1-e6b344e859ca
+		sourceColumn: in_progress
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column not_started
+		dataType: int64
+		formatString: 0
+		lineageTag: df2c782d-2472-500c-a38e-93cf508a0077
+		sourceColumn: not_started
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column float_erosion_d
+		dataType: double
+		formatString: +0;-0;0
+		lineageTag: e481a667-2647-582f-9e06-99a81731b9ea
+		sourceColumn: float_erosion_d
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column day1_movement_d
+		dataType: double
+		formatString: +0;-0;0
+		lineageTag: 0b41faae-0cdf-54d7-8f97-3c606302195f
+		sourceColumn: day1_movement_d
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_snapshot_summary-5417782b-5cf7-5b0f-ada1-d785fe647c76 = m
+		mode: import
+		source = ```
+				let
+				    Source = Csv.Document(File.Contents(CsvFolder & "\fact_snapshot_summary.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Nulls = Table.ReplaceValue(Promoted, "", null, Replacer.ReplaceValue, Table.ColumnNames(Promoted)),
+				    Typed = Table.TransformColumnTypes(Nulls, {
+				        {"snapshot_id", Int64.Type},
+				        {"label", type text},
+				        {"data_date", type date},
+				        {"baseline", type text},
+				        {"day1_forecast", type datetime},
+				        {"day1_tf_d", type number},
+				        {"day1_var_bl0_d", type number},
+				        {"day1_var_bl1_d", type number},
+				        {"dq_score", type number},
+				        {"dq_rating", type text},
+				        {"cpli", type number},
+				        {"bei", type number},
+				        {"critical_count", Int64.Type},
+				        {"near_critical_count", Int64.Type},
+				        {"longest_path_count", Int64.Type},
+				        {"negative_float_count", Int64.Type},
+				        {"min_float_d", type number},
+				        {"avg_float_d", type number},
+				        {"activities", Int64.Type},
+				        {"complete", Int64.Type},
+				        {"in_progress", Int64.Type},
+				        {"not_started", Int64.Type},
+				        {"float_erosion_d", type number},
+				        {"day1_movement_d", type number}
+				    }, "en-GB"),
+				    Dates = Table.TransformColumnTypes(Typed, {
+				        {"day1_forecast", type date}
+				    })
+				in
+				    Dates
+				```
+
+	annotation PBI_ResultType = Table

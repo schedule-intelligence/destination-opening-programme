@@ -1,0 +1,49 @@
+table 'Compare against'
+	lineageTag: f76b778b-d5be-5773-b208-cd95c3aeef9d
+
+	column 'Compare against'
+		dataType: string
+		isNameInferred: false
+		isDataTypeInferred
+		lineageTag: 4451ad92-6a27-5503-92ab-6916a4dde3b0
+		sourceColumn: [Value1]
+		sortByColumn: 'Compare against Order'
+		summarizeBy: none
+
+		relatedColumnDetails
+			groupByColumn: 'Compare against Fields'
+
+	column 'Compare against Fields'
+		dataType: string
+		isHidden
+		isNameInferred: false
+		isDataTypeInferred
+		lineageTag: 65eb7425-fb6b-5c16-bb93-322edfffa548
+		sourceColumn: [Value2]
+		summarizeBy: none
+
+		extendedProperty ParameterMetadata =
+				{
+				  "version": 3,
+				  "kind": 2
+				}
+
+	column 'Compare against Order'
+		dataType: int64
+		isHidden
+		isNameInferred: false
+		isDataTypeInferred
+		formatString: 0
+		lineageTag: f137dd89-660b-58d2-add0-5d24d969c105
+		sourceColumn: [Value3]
+		summarizeBy: none
+
+	partition 'Compare against' = calculated
+		mode: import
+		source = ```
+				{
+				    ( "vs BL1", NAMEOF ( '_Measures'[Finish variance vs BL1] ), 0 ),
+				    ( "vs BL0", NAMEOF ( '_Measures'[Finish variance vs BL0] ), 1 ),
+				    ( "vs previous", NAMEOF ( '_Measures'[Slip vs previous period] ), 2 )
+				}
+				```

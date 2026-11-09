@@ -1,0 +1,93 @@
+table fact_relationship
+	lineageTag: 82485fff-abf0-5b5d-ba80-2a3a5c59abe1
+
+	column snapshot_id
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: f10eaa4b-9d0b-5a12-952c-7aa73d369456
+		sourceColumn: snapshot_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column pred_id
+		dataType: string
+		lineageTag: 6f8b3a92-7a03-5d39-bcdc-6356c66276f9
+		sourceColumn: pred_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column succ_id
+		dataType: string
+		lineageTag: 6d206f1c-952e-51ec-80ac-ac1ac88cb82c
+		sourceColumn: succ_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column rel_type
+		dataType: string
+		lineageTag: 73828539-18c4-5aeb-ab2a-ec23c5307859
+		sourceColumn: rel_type
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column lag_d
+		dataType: double
+		formatString: 0
+		lineageTag: 80d4c824-4591-5b95-94a3-661ee0040a64
+		sourceColumn: lag_d
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_driving
+		dataType: boolean
+		lineageTag: c50dffcc-7216-56bb-8b94-35e6dbea300c
+		sourceColumn: is_driving
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column slack_d
+		dataType: double
+		formatString: 0
+		lineageTag: becf9b61-5bc4-59ed-b23e-e9a18182db89
+		sourceColumn: slack_d
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_driving_label
+		dataType: string
+		lineageTag: ec1d415c-d42b-57d2-a562-334943a70b65
+		sourceColumn: is_driving_label
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_relationship-8a7db4c5-1eb8-556c-9165-aca8bea22cac = m
+		mode: import
+		source = ```
+				let
+				    Source = Csv.Document(File.Contents(CsvFolder & "\fact_relationship.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Nulls = Table.ReplaceValue(Promoted, "", null, Replacer.ReplaceValue, Table.ColumnNames(Promoted)),
+				    Typed = Table.TransformColumnTypes(Nulls, {
+				        {"snapshot_id", Int64.Type},
+				        {"pred_id", type text},
+				        {"succ_id", type text},
+				        {"rel_type", type text},
+				        {"lag_d", type number},
+				        {"is_driving", type logical},
+				        {"slack_d", type number}
+				    }, "en-GB"),
+				    Label_is_driving = Table.AddColumn(Typed, "is_driving_label", each if [is_driving] = null then null else if [is_driving] then "Yes" else "No", type text)
+				in
+				    Label_is_driving
+				```
+
+	annotation PBI_ResultType = Table

@@ -1,0 +1,151 @@
+table fact_risk
+	lineageTag: b228767c-7a67-5704-bf50-6e6c908884d0
+
+	column snapshot_id
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: d4b97890-4e1f-503d-af1e-ea9681881966
+		sourceColumn: snapshot_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column risk_id
+		dataType: string
+		lineageTag: 289b77ce-72e5-5bc1-bf39-047d8688e261
+		sourceColumn: risk_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column title
+		dataType: string
+		lineageTag: 190ae42c-3090-5421-924e-de1a693a88b1
+		sourceColumn: title
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column owner_code
+		dataType: string
+		lineageTag: b0fd5ab9-bcae-5a1b-a731-1032a02fee94
+		sourceColumn: owner_code
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column probability
+		dataType: int64
+		formatString: 0
+		lineageTag: cf7cdb1e-6ae4-5c6d-b6c6-510744c72c65
+		sourceColumn: probability
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column impact
+		dataType: int64
+		formatString: 0
+		lineageTag: d618fd19-61b0-556d-b5a3-0f2ec9861e7d
+		sourceColumn: impact
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column score
+		dataType: int64
+		formatString: 0
+		lineageTag: d6f30e60-5fab-5267-98ff-0e3a8bc296a5
+		sourceColumn: score
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column rating
+		dataType: string
+		lineageTag: 8c60b0ee-10d2-5dc9-99f7-3cc09df41129
+		sourceColumn: rating
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column trend
+		dataType: int64
+		formatString: 0
+		lineageTag: d627ad42-fa1c-503e-97f2-d16c5e525607
+		sourceColumn: trend
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column linked_activities
+		dataType: string
+		lineageTag: 52255558-9848-508d-ae70-d66d3adcfd4c
+		sourceColumn: linked_activities
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column mitigation
+		dataType: string
+		lineageTag: 7487ed81-4a10-5f4e-95c2-76e86a0d8301
+		sourceColumn: mitigation
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column mitigation_owner
+		dataType: string
+		lineageTag: 2773ca53-7feb-56b0-b0bd-847929d66b5c
+		sourceColumn: mitigation_owner
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column schedule_impact_days
+		dataType: int64
+		formatString: 0
+		lineageTag: 6b9f7cf1-48b6-55a3-a169-148efc4d7b97
+		sourceColumn: schedule_impact_days
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column min_linked_float_d
+		dataType: double
+		formatString: 0
+		lineageTag: c847ac24-c4dd-5807-bfe1-94a9b5084e94
+		sourceColumn: min_linked_float_d
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_risk-6969bef8-0115-55a6-baf3-b62d82146029 = m
+		mode: import
+		source = ```
+				let
+				    Source = Csv.Document(File.Contents(CsvFolder & "\fact_risk.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Nulls = Table.ReplaceValue(Promoted, "", null, Replacer.ReplaceValue, Table.ColumnNames(Promoted)),
+				    Typed = Table.TransformColumnTypes(Nulls, {
+				        {"snapshot_id", Int64.Type},
+				        {"risk_id", type text},
+				        {"title", type text},
+				        {"owner_code", type text},
+				        {"probability", Int64.Type},
+				        {"impact", Int64.Type},
+				        {"score", Int64.Type},
+				        {"rating", type text},
+				        {"trend", Int64.Type},
+				        {"linked_activities", type text},
+				        {"mitigation", type text},
+				        {"mitigation_owner", type text},
+				        {"schedule_impact_days", Int64.Type},
+				        {"min_linked_float_d", type number}
+				    }, "en-GB")
+				in
+				    Typed
+				```
+
+	annotation PBI_ResultType = Table

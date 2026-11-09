@@ -1,0 +1,121 @@
+table fact_change
+	lineageTag: 64d35172-9058-5430-abf1-6b96e2f5b2f0
+
+	column change_id
+		dataType: string
+		lineageTag: 328829d2-8255-5a2a-89c2-e0ce1d03adc1
+		sourceColumn: change_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column title
+		dataType: string
+		lineageTag: 36324756-402a-5168-a6dd-b8c6d4cc8a69
+		sourceColumn: title
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column reason
+		dataType: string
+		lineageTag: b49261f2-1d20-5be3-88d5-d78cf08280d5
+		sourceColumn: reason
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column change_type
+		dataType: string
+		lineageTag: f4929a36-0fc8-5490-a1b4-b8b4857aae28
+		sourceColumn: change_type
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column raised_data_date
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: ca25790b-736b-5e5d-93ee-c12af781d991
+		sourceColumn: raised_data_date
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column approver
+		dataType: string
+		lineageTag: 8b81e913-3857-58b5-a6c2-24d7cc47893a
+		sourceColumn: approver
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column approval_date
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: 7b1aa304-08c7-5b19-9a74-e61ae416738e
+		sourceColumn: approval_date
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column status
+		dataType: string
+		lineageTag: a97c5369-5ee0-56e1-86c8-774eb384b6cc
+		sourceColumn: status
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column baseline_effect
+		dataType: string
+		lineageTag: 7192489a-c1ec-591b-9070-805a31ad3fc3
+		sourceColumn: baseline_effect
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column linked_activity
+		dataType: string
+		lineageTag: 101d9d90-ac17-5e0a-98a4-0e399185b228
+		sourceColumn: linked_activity
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column day1_impact_days
+		dataType: int64
+		formatString: 0
+		lineageTag: 728671dc-2c80-5437-9d58-c8ddd69ec066
+		sourceColumn: day1_impact_days
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_change-f535a08d-b20c-5d09-807e-8338734f7f79 = m
+		mode: import
+		source = ```
+				let
+				    Source = Csv.Document(File.Contents(CsvFolder & "\fact_change.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Nulls = Table.ReplaceValue(Promoted, "", null, Replacer.ReplaceValue, Table.ColumnNames(Promoted)),
+				    Typed = Table.TransformColumnTypes(Nulls, {
+				        {"change_id", type text},
+				        {"title", type text},
+				        {"reason", type text},
+				        {"change_type", type text},
+				        {"raised_data_date", type date},
+				        {"approver", type text},
+				        {"approval_date", type date},
+				        {"status", type text},
+				        {"baseline_effect", type text},
+				        {"linked_activity", type text},
+				        {"day1_impact_days", Int64.Type}
+				    }, "en-GB")
+				in
+				    Typed
+				```
+
+	annotation PBI_ResultType = Table

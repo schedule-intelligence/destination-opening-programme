@@ -1,0 +1,44 @@
+table dim_owner
+	lineageTag: 469a28d6-f4dc-5876-823e-c40cb2e7908f
+
+	column owner_code
+		dataType: string
+		lineageTag: b237ce6e-632b-564e-84f9-cc104ad9d647
+		sourceColumn: owner_code
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column owner_name
+		dataType: string
+		lineageTag: 34e4f933-2435-5329-a05f-9b8ffd0ad9f8
+		sourceColumn: owner_name
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column accountable_role
+		dataType: string
+		lineageTag: a5bbfd9e-f618-5fd2-9d3f-961ba33dc112
+		sourceColumn: accountable_role
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_owner-8f594e47-93d6-5cda-8c46-235c73a8724a = m
+		mode: import
+		source = ```
+				let
+				    Source = Csv.Document(File.Contents(CsvFolder & "\dim_owner.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Nulls = Table.ReplaceValue(Promoted, "", null, Replacer.ReplaceValue, Table.ColumnNames(Promoted)),
+				    Typed = Table.TransformColumnTypes(Nulls, {
+				        {"owner_code", type text},
+				        {"owner_name", type text},
+				        {"accountable_role", type text}
+				    }, "en-GB")
+				in
+				    Typed
+				```
+
+	annotation PBI_ResultType = Table

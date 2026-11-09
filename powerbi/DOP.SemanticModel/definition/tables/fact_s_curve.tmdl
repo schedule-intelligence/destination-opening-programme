@@ -1,0 +1,64 @@
+table fact_s_curve
+	lineageTag: 5820bda3-5ade-59d8-bcb0-5a7d0ad60888
+
+	column date
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: 2ee7af95-6ed3-5a9e-966e-fecf4226bb22
+		sourceColumn: date
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column planned_bl0
+		dataType: double
+		lineageTag: 4f2d9fea-e26f-594f-a378-d87d84e9cb38
+		sourceColumn: planned_bl0
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column planned_bl1
+		dataType: double
+		lineageTag: f435fe6b-5142-5643-913f-ad32a26160f3
+		sourceColumn: planned_bl1
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column forecast
+		dataType: double
+		lineageTag: 1d03d0e1-4dd3-5145-a453-5525f44f5468
+		sourceColumn: forecast
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column actual
+		dataType: double
+		lineageTag: 5e95718f-a518-5ea8-8705-935708a638a7
+		sourceColumn: actual
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_s_curve-5eeccea9-c7c8-5242-91ba-b6fa1ccaae92 = m
+		mode: import
+		source = ```
+				let
+				    Source = Csv.Document(File.Contents(CsvFolder & "\fact_s_curve.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Nulls = Table.ReplaceValue(Promoted, "", null, Replacer.ReplaceValue, Table.ColumnNames(Promoted)),
+				    Typed = Table.TransformColumnTypes(Nulls, {
+				        {"date", type date},
+				        {"planned_bl0", type number},
+				        {"planned_bl1", type number},
+				        {"forecast", type number},
+				        {"actual", type number}
+				    }, "en-GB")
+				in
+				    Typed
+				```
+
+	annotation PBI_ResultType = Table

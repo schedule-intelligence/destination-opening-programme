@@ -1,0 +1,44 @@
+table dim_code
+	lineageTag: 49298a3a-c12d-552c-9b90-f7a62dac9c57
+
+	column code_type
+		dataType: string
+		lineageTag: 215c7604-c602-5079-8f76-ce1ee295bd96
+		sourceColumn: code_type
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column code_value
+		dataType: string
+		lineageTag: 91c6b79f-3bb8-5f33-b867-2cd9159764bd
+		sourceColumn: code_value
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column code_name
+		dataType: string
+		lineageTag: d12f6495-50bb-54f9-99c3-d74edd9004d7
+		sourceColumn: code_name
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_code-db004c69-2c77-5a59-b31a-fffc3f08bcc2 = m
+		mode: import
+		source = ```
+				let
+				    Source = Csv.Document(File.Contents(CsvFolder & "\dim_code.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Nulls = Table.ReplaceValue(Promoted, "", null, Replacer.ReplaceValue, Table.ColumnNames(Promoted)),
+				    Typed = Table.TransformColumnTypes(Nulls, {
+				        {"code_type", type text},
+				        {"code_value", type text},
+				        {"code_name", type text}
+				    }, "en-GB")
+				in
+				    Typed
+				```
+
+	annotation PBI_ResultType = Table

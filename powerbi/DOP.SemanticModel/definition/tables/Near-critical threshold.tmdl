@@ -1,0 +1,15 @@
+table 'Near-critical threshold'
+	lineageTag: 8ec25bb1-331a-5cc4-98e6-0e7a464c8122
+
+	column 'Near-critical threshold'
+		dataType: int64
+		isNameInferred: false
+		isDataTypeInferred
+		formatString: 0
+		lineageTag: 4a741e08-93df-5867-9d0e-91158aed04e1
+		sourceColumn: [Value]
+		summarizeBy: none
+
+	partition 'Near-critical threshold' = calculated
+		mode: import
+		source = GENERATESERIES ( 0, 30, 1 )

@@ -1,0 +1,1315 @@
+table _Measures
+	lineageTag: 9e6abd37-4a38-5c7b-b41d-70ed09b6b8f9
+
+	/// One update selected on the data-date slicer -> that update; none or several -> the latest in context
+	measure 'Selected snapshot id' = SELECTEDVALUE ( dim_snapshot[snapshot_id], MAX ( dim_snapshot[snapshot_id] ) )
+		formatString: 0
+		displayFolder: 01 Context
+		lineageTag: 7385ce6e-11a5-551e-b6a8-b5e16d0e2668
+
+	measure 'Previous snapshot id' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE (
+			        MAX ( dim_snapshot[snapshot_id] ),
+			        REMOVEFILTERS ( dim_snapshot ),
+			        dim_snapshot[snapshot_id] < _sid
+			    )
+			```
+		formatString: 0
+		displayFolder: 01 Context
+		lineageTag: 0e0937c3-1425-5612-90af-83a0f94e49a4
+
+	measure 'Data date' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE ( MAX ( dim_snapshot[data_date] ), dim_snapshot[snapshot_id] = _sid )
+			```
+		formatString: dd-mmm-yyyy
+		displayFolder: 01 Context
+		lineageTag: 5fe95975-e4f5-50a3-b3c1-18bb61513824
+
+	measure 'Previous data date' = ```
+			VAR _prev = [Previous snapshot id]
+			RETURN
+			    CALCULATE (
+			        MAX ( dim_snapshot[data_date] ),
+			        REMOVEFILTERS ( dim_snapshot ),
+			        dim_snapshot[snapshot_id] = _prev
+			    )
+			```
+		formatString: dd-mmm-yyyy
+		displayFolder: 01 Context
+		lineageTag: d41c222d-64ba-5823-bf19-ac7c095abe68
+
+	measure 'Baseline in force' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE ( SELECTEDVALUE ( dim_snapshot[baseline_in_force] ), dim_snapshot[snapshot_id] = _sid )
+			```
+		displayFolder: 01 Context
+		lineageTag: 3e06981f-3d78-526e-994d-298434923497
+
+	measure 'Source file' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE ( SELECTEDVALUE ( dim_snapshot[source_file] ), dim_snapshot[snapshot_id] = _sid )
+			```
+		displayFolder: 01 Context
+		lineageTag: 40d10d8b-ec9a-564a-80f2-e855d1a27ecd
+
+	measure 'Day 1 target' = DATE ( 2027, 10, 14 )
+		formatString: dd-mmm-yyyy
+		displayFolder: 02 Day 1 headline
+		lineageTag: 3b1fa3e5-d8ac-56ac-88bf-9c9cdef020bd
+
+	measure 'Day 1 forecast' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE ( MAX ( fact_snapshot_summary[day1_forecast] ), dim_snapshot[snapshot_id] = _sid )
+			```
+		formatString: dd-mmm-yyyy
+		displayFolder: 02 Day 1 headline
+		lineageTag: 365621df-84e6-5bcc-af7a-ec89e44ee689
+
+	measure 'Day 1 total float' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE ( SUM ( fact_snapshot_summary[day1_tf_d] ), dim_snapshot[snapshot_id] = _sid )
+			```
+		formatString: +0;-0;0
+		displayFolder: 02 Day 1 headline
+		lineageTag: addb615c-06f0-5f0e-9e77-554bfed70cf5
+
+	measure 'Day 1 variance vs BL0' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE ( SUM ( fact_snapshot_summary[day1_var_bl0_d] ), dim_snapshot[snapshot_id] = _sid )
+			```
+		formatString: +0;-0;0
+		displayFolder: 02 Day 1 headline
+		lineageTag: c96d97ce-91f0-5707-9fff-28ee798e660d
+
+	measure 'Day 1 variance vs BL1' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE ( SUM ( fact_snapshot_summary[day1_var_bl1_d] ), dim_snapshot[snapshot_id] = _sid )
+			```
+		formatString: +0;-0;0
+		displayFolder: 02 Day 1 headline
+		lineageTag: b7b88153-756c-587e-b0ea-dd6c46c07edc
+
+	measure 'Day 1 movement vs previous period' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE ( SUM ( fact_snapshot_summary[day1_movement_d] ), dim_snapshot[snapshot_id] = _sid )
+			```
+		formatString: +0;-0;0
+		displayFolder: 02 Day 1 headline
+		lineageTag: d558b374-9ea9-5286-b134-68ded97fc13e
+
+	/// Float erosion: change in Day 1 total float since the previous update (negative = float lost). The first update has no previous update, so the pipeline value (vs BL0) is used.
+	measure 'Float erosion' = ```
+			VAR _sid = [Selected snapshot id]
+			VAR _prev = [Previous snapshot id]
+			VAR _tf =
+			    CALCULATE (
+			        SUM ( fact_snapshot_summary[day1_tf_d] ),
+			        REMOVEFILTERS ( dim_snapshot ),
+			        dim_snapshot[snapshot_id] = _sid
+			    )
+			VAR _tfPrev =
+			    CALCULATE (
+			        SUM ( fact_snapshot_summary[day1_tf_d] ),
+			        REMOVEFILTERS ( dim_snapshot ),
+			        dim_snapshot[snapshot_id] = _prev
+			    )
+			VAR _first =
+			    CALCULATE (
+			        SUM ( fact_snapshot_summary[float_erosion_d] ),
+			        REMOVEFILTERS ( dim_snapshot ),
+			        dim_snapshot[snapshot_id] = _sid
+			    )
+			RETURN
+			    IF ( ISBLANK ( _prev ), _first, _tf - _tfPrev )
+			```
+		formatString: +0;-0;0
+		displayFolder: 02 Day 1 headline
+		lineageTag: 1db1621d-49ca-5220-bb3f-a73a81d354df
+
+	/// Float bridge (the waterfall on page 3): the first update's Day 1 total float, then the change at each later update, so the bars add up to the float of the last update shown
+	measure 'Float bridge' = IF ( ISBLANK ( [Previous snapshot id] ), [Day 1 total float], [Float erosion] )
+		formatString: +0;-0;0
+		displayFolder: 02 Day 1 headline
+		lineageTag: 39a2aebe-cf12-58f5-9fc8-977fbe4fcb8e
+
+	/// RAG colour for the Day 1 card (conditional formatting > Field value)
+	measure 'Day 1 RAG colour' = ```
+			VAR _tf = [Day 1 total float]
+			RETURN
+			    SWITCH (
+			        TRUE (),
+			        ISBLANK ( _tf ), "#64748B",
+			        _tf < 0, "#C0392B",
+			        _tf <= [Near-critical threshold (d)], "#D68910",
+			        "#1E8449"
+			    )
+			```
+		displayFolder: 02 Day 1 headline
+		lineageTag: ec7d1010-e725-5697-bf4d-a74940d26406
+
+	measure 'Planned % complete' = ```
+			VAR _sid = [Selected snapshot id]
+			VAR _t =
+			    CALCULATETABLE (
+			        fact_activity_snapshot,
+			        dim_snapshot[snapshot_id] = _sid,
+			        dim_activity[activity_type] = "TT_Task",
+			        fact_activity_snapshot[orig_dur_d] > 0
+			    )
+			VAR _num = SUMX ( _t, fact_activity_snapshot[orig_dur_d] * fact_activity_snapshot[planned_pct_bl] )
+			VAR _den = SUMX ( _t, fact_activity_snapshot[orig_dur_d] )
+			RETURN
+			    DIVIDE ( _num, _den ) / 100
+			```
+		formatString: 0.0%
+		displayFolder: 03 Progress
+		lineageTag: 48157b30-7cf2-5b62-9bce-363486c8555a
+
+	measure 'Weighted % complete (actual)' = ```
+			VAR _sid = [Selected snapshot id]
+			VAR _t =
+			    CALCULATETABLE (
+			        fact_activity_snapshot,
+			        dim_snapshot[snapshot_id] = _sid,
+			        dim_activity[activity_type] = "TT_Task",
+			        fact_activity_snapshot[orig_dur_d] > 0
+			    )
+			VAR _num = SUMX ( _t, fact_activity_snapshot[orig_dur_d] * fact_activity_snapshot[pct_duration] )
+			VAR _den = SUMX ( _t, fact_activity_snapshot[orig_dur_d] )
+			RETURN
+			    DIVIDE ( _num, _den ) / 100
+			```
+		formatString: 0.0%
+		displayFolder: 03 Progress
+		lineageTag: 95730e2f-40d2-50ed-8e25-8dfaee1234a0
+
+	/// Percentage points; negative = behind plan
+	measure 'Progress variance (pts)' = ( [Weighted % complete (actual)] - [Planned % complete] ) * 100
+		formatString: 0.0
+		displayFolder: 03 Progress
+		lineageTag: cf72744c-7f31-5506-94bd-bb813395a6d9
+
+	measure Activities = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE ( COUNTROWS ( fact_activity_snapshot ), dim_snapshot[snapshot_id] = _sid )
+			```
+		formatString: 0
+		displayFolder: 03 Progress
+		lineageTag: c3c4eb11-3b11-57a7-b3bf-12766ebae99f
+
+	measure 'Activities complete' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE (
+			        COUNTROWS ( fact_activity_snapshot ),
+			        dim_snapshot[snapshot_id] = _sid,
+			        fact_activity_snapshot[status] = "TK_Complete"
+			    )
+			```
+		formatString: 0
+		displayFolder: 03 Progress
+		lineageTag: 7f52452d-138a-560f-bd5b-6a159d090fcb
+
+	measure 'Activities in progress' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE (
+			        COUNTROWS ( fact_activity_snapshot ),
+			        dim_snapshot[snapshot_id] = _sid,
+			        fact_activity_snapshot[status] = "TK_Active"
+			    )
+			```
+		formatString: 0
+		displayFolder: 03 Progress
+		lineageTag: 4d275fe8-b4cf-54a0-8756-8afc9674ad8d
+
+	measure 'Activities not started' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE (
+			        COUNTROWS ( fact_activity_snapshot ),
+			        dim_snapshot[snapshot_id] = _sid,
+			        fact_activity_snapshot[status] = "TK_NotStart"
+			    )
+			```
+		formatString: 0
+		displayFolder: 03 Progress
+		lineageTag: 4131bbbb-4343-597d-9b53-cd48346e3913
+
+	measure 'Forecast finish' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE ( MAX ( fact_activity_snapshot[finish] ), dim_snapshot[snapshot_id] = _sid )
+			```
+		formatString: dd-mmm-yyyy
+		displayFolder: 04 Finish variance and slippage
+		lineageTag: 030506f1-49d6-5e0e-a9c4-abd0cd70a510
+
+	measure 'Finish variance vs BL0' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE ( MAX ( fact_activity_snapshot[var_finish_bl0_d] ), dim_snapshot[snapshot_id] = _sid )
+			```
+		formatString: +0;-0;0
+		displayFolder: 04 Finish variance and slippage
+		lineageTag: 1558865c-c304-50a6-966f-78caeafc6843
+
+	measure 'Finish variance vs BL1' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE ( MAX ( fact_activity_snapshot[var_finish_bl1_d] ), dim_snapshot[snapshot_id] = _sid )
+			```
+		formatString: +0;-0;0
+		displayFolder: 04 Finish variance and slippage
+		lineageTag: dd54e9aa-7b05-505b-8b2e-8168023d136e
+
+	measure 'Finish variance vs baseline in force' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE ( MAX ( fact_activity_snapshot[var_finish_bl_d] ), dim_snapshot[snapshot_id] = _sid )
+			```
+		formatString: +0;-0;0
+		displayFolder: 04 Finish variance and slippage
+		lineageTag: e267a2d7-892e-5283-b524-999911aa5076
+
+	measure 'Slip vs previous period' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE ( MAX ( fact_activity_snapshot[slip_vs_prev_d] ), dim_snapshot[snapshot_id] = _sid )
+			```
+		formatString: +0;-0;0
+		displayFolder: 04 Finish variance and slippage
+		lineageTag: 21709f7c-185c-5a4c-a850-493b97aa94a5
+
+	measure 'Activities slipped vs previous period' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE (
+			        COUNTROWS ( fact_activity_snapshot ),
+			        dim_snapshot[snapshot_id] = _sid,
+			        fact_activity_snapshot[slip_vs_prev_d] > 0
+			    ) + 0
+			```
+		formatString: 0
+		displayFolder: 04 Finish variance and slippage
+		lineageTag: 8ddb7940-697c-5bfd-87e4-20ee589d6b5c
+
+	measure 'Milestone forecast finish' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE ( MAX ( fact_milestone_trend[forecast_finish] ), dim_snapshot[snapshot_id] = _sid )
+			```
+		formatString: dd-mmm-yyyy
+		displayFolder: 05 Milestones
+		lineageTag: 6f52467e-62e9-56e9-b67e-f6e93678d56e
+
+	measure 'Milestone variance vs BL0' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE ( MAX ( fact_milestone_trend[var_bl0_d] ), dim_snapshot[snapshot_id] = _sid )
+			```
+		formatString: +0;-0;0
+		displayFolder: 05 Milestones
+		lineageTag: 5b7e1c76-0122-558f-891c-15f6ae773dc5
+
+	measure 'Milestone variance vs BL1' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE ( MAX ( fact_milestone_trend[var_bl1_d] ), dim_snapshot[snapshot_id] = _sid )
+			```
+		formatString: +0;-0;0
+		displayFolder: 05 Milestones
+		lineageTag: c7aff0b4-ed6d-5e55-936c-07dde53cab48
+
+	measure 'Milestone movement vs previous period' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE ( MAX ( fact_milestone_trend[movement_vs_prev_d] ), dim_snapshot[snapshot_id] = _sid )
+			```
+		formatString: +0;-0;0
+		displayFolder: 05 Milestones
+		lineageTag: ec8ed1a2-9b52-5ca5-a4be-9d7dd2e157d1
+
+	measure 'Milestones slipped vs previous period' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE (
+			        COUNTROWS ( fact_milestone_trend ),
+			        dim_snapshot[snapshot_id] = _sid,
+			        fact_milestone_trend[movement_vs_prev_d] > 0
+			    ) + 0
+			```
+		formatString: 0
+		displayFolder: 05 Milestones
+		lineageTag: b3c18bfb-99cc-57f9-ab72-5ea73c1c81aa
+
+	measure 'Milestones later than baseline in force' = ```
+			VAR _sid = [Selected snapshot id]
+			VAR _bl = [Baseline in force]
+			RETURN
+			    COUNTROWS (
+			        FILTER (
+			            CALCULATETABLE ( fact_milestone_trend, dim_snapshot[snapshot_id] = _sid ),
+			            IF (
+			                _bl = "BL1",
+			                fact_milestone_trend[var_bl1_d],
+			                fact_milestone_trend[var_bl0_d]
+			            ) > 0
+			        )
+			    ) + 0
+			```
+		formatString: 0
+		displayFolder: 05 Milestones
+		lineageTag: 7f1c1093-ab43-5c72-9c8e-745e084802fa
+
+	measure 'Near-critical threshold (d)' = SELECTEDVALUE ( 'Near-critical threshold'[Near-critical threshold], 10 )
+		formatString: 0
+		displayFolder: 06 Float and criticality
+		lineageTag: 59610cb0-bd44-50a0-8be4-5a1a228a15bb
+
+	/// Matches fact_snapshot_summary[critical_count] and control R12 (LOE excluded, as the pipeline counts it)
+	measure 'Critical count' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE (
+			        COUNTROWS ( fact_activity_snapshot ),
+			        dim_snapshot[snapshot_id] = _sid,
+			        fact_activity_snapshot[status] <> "TK_Complete",
+			        dim_activity[activity_type] <> "TT_LOE",
+			        fact_activity_snapshot[is_critical] = TRUE ()
+			    ) + 0
+			```
+		formatString: 0
+		displayFolder: 06 Float and criticality
+		lineageTag: 75e478c3-e872-5c41-8494-e7146f93d013
+
+	/// Matches reconciliation control R12 (LOE excluded, as in the source XER count)
+	measure 'Critical count (excl. LOE)' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE (
+			        COUNTROWS ( fact_activity_snapshot ),
+			        dim_snapshot[snapshot_id] = _sid,
+			        fact_activity_snapshot[status] <> "TK_Complete",
+			        fact_activity_snapshot[is_critical] = TRUE (),
+			        dim_activity[activity_type] <> "TT_LOE"
+			    ) + 0
+			```
+		formatString: 0
+		displayFolder: 06 Float and criticality
+		lineageTag: 015554a1-d94b-5169-9a4c-50887820d29b
+
+	/// What-if: 0 < TF <= threshold. At the default of 10 it equals fact_snapshot_summary[near_critical_count].
+	measure 'Near-critical count' = ```
+			VAR _sid = [Selected snapshot id]
+			VAR _thr = [Near-critical threshold (d)]
+			RETURN
+			    CALCULATE (
+			        COUNTROWS ( fact_activity_snapshot ),
+			        dim_snapshot[snapshot_id] = _sid,
+			        fact_activity_snapshot[status] <> "TK_Complete",
+			        dim_activity[activity_type] <> "TT_LOE",
+			        fact_activity_snapshot[total_float_d] > 0,
+			        fact_activity_snapshot[total_float_d] <= _thr
+			    ) + 0
+			```
+		formatString: 0
+		displayFolder: 06 Float and criticality
+		lineageTag: 6d93384e-2817-5293-8ffa-1798c2802821
+
+	measure 'Negative float count' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE (
+			        COUNTROWS ( fact_activity_snapshot ),
+			        dim_snapshot[snapshot_id] = _sid,
+			        fact_activity_snapshot[status] <> "TK_Complete",
+			        dim_activity[activity_type] <> "TT_LOE",
+			        fact_activity_snapshot[total_float_d] < 0
+			    ) + 0
+			```
+		formatString: 0
+		displayFolder: 06 Float and criticality
+		lineageTag: d36881da-da50-58ae-b1d3-70ae70d778bd
+
+	measure 'Longest path count' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE (
+			        COUNTROWS ( fact_activity_snapshot ),
+			        dim_snapshot[snapshot_id] = _sid,
+			        fact_activity_snapshot[is_longest_path] = TRUE ()
+			    ) + 0
+			```
+		formatString: 0
+		displayFolder: 06 Float and criticality
+		lineageTag: 86b8e2d1-257e-5bb1-a5ac-0c19c67d1555
+
+	measure 'Total float (min)' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE (
+			        MIN ( fact_activity_snapshot[total_float_d] ),
+			        dim_snapshot[snapshot_id] = _sid,
+			        fact_activity_snapshot[status] <> "TK_Complete",
+			        dim_activity[activity_type] <> "TT_LOE"
+			    )
+			```
+		formatString: 0
+		displayFolder: 06 Float and criticality
+		lineageTag: 9009ac91-d227-5043-939d-bf1bcc78a631
+
+	measure 'Total float (average)' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE (
+			        AVERAGE ( fact_activity_snapshot[total_float_d] ),
+			        dim_snapshot[snapshot_id] = _sid,
+			        fact_activity_snapshot[status] <> "TK_Complete",
+			        dim_activity[activity_type] <> "TT_LOE"
+			    )
+			```
+		formatString: 0.0
+		displayFolder: 06 Float and criticality
+		lineageTag: 60fe3013-d953-58be-87e0-a7ad96432fcc
+
+	/// Row-level flag for tables and conditional formatting: 2 = critical, 1 = near-critical, 0 = other
+	measure 'Criticality band' = ```
+			VAR _sid = [Selected snapshot id]
+			VAR _thr = [Near-critical threshold (d)]
+			VAR _tf =
+			    CALCULATE (
+			        MIN ( fact_activity_snapshot[total_float_d] ),
+			        dim_snapshot[snapshot_id] = _sid,
+			        fact_activity_snapshot[status] <> "TK_Complete"
+			    )
+			RETURN
+			    SWITCH ( TRUE (), ISBLANK ( _tf ), BLANK (), _tf <= 0, 2, _tf <= _thr, 1, 0 )
+			```
+		formatString: 0
+		displayFolder: 06 Float and criticality
+		lineageTag: 583a2244-f0c2-5ba7-9570-1d4566141b0f
+
+	measure 'Look window (days)' = 14
+		formatString: 0
+		displayFolder: 07 Look-back and look-ahead
+		lineageTag: fd7c13a0-8a1f-5e59-b51d-0aac4040ab29
+
+	measure 'Look-ahead items' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE (
+			        COUNTROWS ( fact_activity_snapshot ),
+			        dim_snapshot[snapshot_id] = _sid,
+			        fact_activity_snapshot[lookahead] = TRUE ()
+			    ) + 0
+			```
+		formatString: 0
+		displayFolder: 07 Look-back and look-ahead
+		lineageTag: 005eb11c-859c-5c4c-b3fa-da37b0608470
+
+	measure 'Look-ahead items (recomputed)' = ```
+			VAR _sid = [Selected snapshot id]
+			VAR _dd = [Data date]
+			VAR _end = _dd + [Look window (days)]
+			RETURN
+			    COUNTROWS (
+			        FILTER (
+			            CALCULATETABLE ( fact_activity_snapshot, dim_snapshot[snapshot_id] = _sid ),
+			            ( fact_activity_snapshot[status] = "TK_NotStart"
+			                && fact_activity_snapshot[start] >= _dd
+			                && fact_activity_snapshot[start] < _end )
+			                || ( fact_activity_snapshot[status] <> "TK_Complete"
+			                    && fact_activity_snapshot[finish] >= _dd
+			                    && fact_activity_snapshot[finish] < _end )
+			        )
+			    ) + 0
+			```
+		formatString: 0
+		displayFolder: 07 Look-back and look-ahead
+		lineageTag: 454620da-e173-5740-a2ca-460796b616e5
+
+	measure 'Look-ahead critical items' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE (
+			        COUNTROWS ( fact_activity_snapshot ),
+			        dim_snapshot[snapshot_id] = _sid,
+			        fact_activity_snapshot[lookahead] = TRUE (),
+			        fact_activity_snapshot[is_critical] = TRUE ()
+			    ) + 0
+			```
+		formatString: 0
+		displayFolder: 07 Look-back and look-ahead
+		lineageTag: 1bf62a3e-7b94-5023-94b2-fd3be22ddcfa
+
+	/// Visual-level filter for the look-ahead table: keep rows where the value is 1
+	measure 'Look-ahead item (flag)' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    IF (
+			        CALCULATE (
+			            COUNTROWS ( fact_activity_snapshot ),
+			            dim_snapshot[snapshot_id] = _sid,
+			            fact_activity_snapshot[lookahead] = TRUE ()
+			        ) > 0,
+			        1,
+			        0
+			    )
+			```
+		formatString: 0
+		displayFolder: 07 Look-back and look-ahead
+		lineageTag: 8f3e31bf-d778-5e82-90c4-b31f6766f34a
+
+	measure 'Look-back items' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE (
+			        COUNTROWS ( fact_activity_snapshot ),
+			        dim_snapshot[snapshot_id] = _sid,
+			        NOT ISBLANK ( fact_activity_snapshot[lookback_event] )
+			    ) + 0
+			```
+		formatString: 0
+		displayFolder: 07 Look-back and look-ahead
+		lineageTag: 6bbec09f-b141-5249-9df3-85fcb81a2369
+
+	measure 'Look-back achieved' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE (
+			        COUNTROWS ( fact_activity_snapshot ),
+			        dim_snapshot[snapshot_id] = _sid,
+			        fact_activity_snapshot[lookback_achieved] = TRUE ()
+			    ) + 0
+			```
+		formatString: 0
+		displayFolder: 07 Look-back and look-ahead
+		lineageTag: a50cf5fc-cef3-534a-a590-2a573ada2f56
+
+	/// Strict equality (==) so that blank (not a look-back item) is not counted as missed
+	measure 'Look-back missed' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE (
+			        COUNTROWS ( fact_activity_snapshot ),
+			        dim_snapshot[snapshot_id] = _sid,
+			        fact_activity_snapshot[lookback_achieved] == FALSE ()
+			    ) + 0
+			```
+		formatString: 0
+		displayFolder: 07 Look-back and look-ahead
+		lineageTag: e6f62424-43bd-58e9-9e10-042a9462e756
+
+	measure 'Look-back hit rate' = DIVIDE ( [Look-back achieved], [Look-back items] )
+		formatString: 0.0%
+		displayFolder: 07 Look-back and look-ahead
+		lineageTag: 8a7d5a4e-866e-597e-8876-fc0f8f121b96
+
+	measure 'Look-back item (flag)' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    IF (
+			        CALCULATE (
+			            COUNTROWS ( fact_activity_snapshot ),
+			            dim_snapshot[snapshot_id] = _sid,
+			            NOT ISBLANK ( fact_activity_snapshot[lookback_event] )
+			        ) > 0,
+			        1,
+			        0
+			    )
+			```
+		formatString: 0
+		displayFolder: 07 Look-back and look-ahead
+		lineageTag: db61805b-7353-5f8e-85cc-3fae446fb46d
+
+	measure 'DQ score' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE (
+			        DIVIDE ( SUM ( fact_dcma_check[score] ), SUM ( fact_dcma_check[weight] ) ) * 100,
+			        dim_snapshot[snapshot_id] = _sid
+			    )
+			```
+		formatString: 0.0
+		displayFolder: 08 Schedule quality
+		lineageTag: b8584a5f-11e5-5328-a5a7-145a83a1b65d
+
+	measure 'DQ rating' = ```
+			VAR _s = ROUND ( [DQ score], 1 )
+			RETURN
+			    SWITCH ( TRUE (), ISBLANK ( _s ), BLANK (), _s >= 85, "Good", _s >= 70, "Fair", "Poor" )
+			```
+		displayFolder: 08 Schedule quality
+		lineageTag: a3a38d40-9870-59c7-b68b-4c0d4cf288b6
+
+	measure 'DQ score movement' = ```
+			VAR _prev = [Previous snapshot id]
+			VAR _now = [DQ score]
+			VAR _before =
+			    CALCULATE (
+			        DIVIDE ( SUM ( fact_dcma_check[score] ), SUM ( fact_dcma_check[weight] ) ) * 100,
+			        REMOVEFILTERS ( dim_snapshot ),
+			        dim_snapshot[snapshot_id] = _prev
+			    )
+			RETURN
+			    IF ( ISBLANK ( _prev ), BLANK (), _now - _before )
+			```
+		formatString: 0.0
+		displayFolder: 08 Schedule quality
+		lineageTag: 6696cb41-8c68-5dee-9f38-52a348dd0b06
+
+	measure 'DCMA pass count' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE (
+			        COUNTROWS ( fact_dcma_check ),
+			        dim_snapshot[snapshot_id] = _sid,
+			        fact_dcma_check[group] = "DCMA",
+			        fact_dcma_check[passed] = TRUE ()
+			    ) + 0
+			```
+		formatString: 0
+		displayFolder: 08 Schedule quality
+		lineageTag: f7a447b3-27c9-562e-8364-dec2776b53e0
+
+	/// D10 (resources) is not applicable: passed is blank, so it is excluded here
+	measure 'DCMA applicable checks' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE (
+			        COUNTROWS ( fact_dcma_check ),
+			        dim_snapshot[snapshot_id] = _sid,
+			        fact_dcma_check[group] = "DCMA",
+			        NOT ISBLANK ( fact_dcma_check[passed] )
+			    ) + 0
+			```
+		formatString: 0
+		displayFolder: 08 Schedule quality
+		lineageTag: 6e9d7f7d-6fde-5385-a6a1-52a051ae2240
+
+	measure 'Update discipline pass count' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE (
+			        COUNTROWS ( fact_dcma_check ),
+			        dim_snapshot[snapshot_id] = _sid,
+			        fact_dcma_check[group] = "Update discipline",
+			        fact_dcma_check[passed] = TRUE ()
+			    ) + 0
+			```
+		formatString: 0
+		displayFolder: 08 Schedule quality
+		lineageTag: e040f812-7069-59f7-bdd7-94987ccf2a34
+
+	measure 'DCMA offenders' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE ( COUNTROWS ( fact_dcma_offender ), dim_snapshot[snapshot_id] = _sid ) + 0
+			```
+		formatString: 0
+		displayFolder: 08 Schedule quality
+		lineageTag: a0ba5fb8-415d-52a2-99da-418306e8555d
+
+	/// BEI = tasks completed / tasks due by the data date in the baseline in force (DCMA D14, LOE excluded). Baseline finishes fall at the end of the working day, so a baseline finish on the data date is not yet due.
+	measure 'BEI tasks completed' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE (
+			        COUNTROWS ( fact_activity_snapshot ),
+			        dim_snapshot[snapshot_id] = _sid,
+			        dim_activity[activity_type] <> "TT_LOE",
+			        fact_activity_snapshot[status] = "TK_Complete"
+			    ) + 0
+			```
+		formatString: 0
+		displayFolder: 08 Schedule quality
+		lineageTag: 40ef6a21-702b-5054-83c0-48029ee565a4
+
+	/// NOT ISBLANK is required: in DAX a blank date compares as earlier than any date
+	measure 'BEI tasks due' = ```
+			VAR _sid = [Selected snapshot id]
+			VAR _dd = [Data date]
+			RETURN
+			    CALCULATE (
+			        COUNTROWS ( fact_activity_snapshot ),
+			        dim_snapshot[snapshot_id] = _sid,
+			        dim_activity[activity_type] <> "TT_LOE",
+			        NOT ISBLANK ( fact_activity_snapshot[bl_finish] ),
+			        fact_activity_snapshot[bl_finish] < _dd
+			    ) + 0
+			```
+		formatString: 0
+		displayFolder: 08 Schedule quality
+		lineageTag: 4815be82-b2f6-58ea-a01f-e9f25271eec0
+
+	measure BEI = DIVIDE ( [BEI tasks completed], [BEI tasks due] )
+		formatString: 0.000
+		displayFolder: 08 Schedule quality
+		lineageTag: 2da9b0da-ae20-52db-9854-bc7fb429b882
+
+	/// CPLI = (critical path length + Day 1 total float) / critical path length (DCMA D13). It is read from the pipeline because the critical path length is working time on the Day 1 calendar, which the model does not hold.
+	measure CPLI = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE ( SUM ( fact_snapshot_summary[cpli] ), dim_snapshot[snapshot_id] = _sid )
+			```
+		formatString: 0.000
+		displayFolder: 08 Schedule quality
+		lineageTag: b15bb0bb-cfe3-5af3-8280-71828c3d0e95
+
+	/// Owner DQ = 1 - flagged / activities, per owner (fact_owner_scorecard)
+	measure 'Owner DQ' = ```
+			VAR _sid = [Selected snapshot id]
+			VAR _share =
+			    CALCULATE (
+			        DIVIDE ( SUM ( fact_owner_scorecard[flagged] ), SUM ( fact_owner_scorecard[activities] ) ),
+			        dim_snapshot[snapshot_id] = _sid
+			    )
+			RETURN
+			    IF ( ISBLANK ( _share ), BLANK (), 1 - _share )
+			```
+		formatString: 0.0%
+		displayFolder: 08 Schedule quality
+		lineageTag: adbde426-8e93-5c48-91db-30b3310ee040
+
+	measure 'Interfaces late' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE (
+			        COUNTROWS ( fact_interface ),
+			        dim_snapshot[snapshot_id] = _sid,
+			        fact_interface[status] = "Late"
+			    ) + 0
+			```
+		formatString: 0
+		displayFolder: 09 Interfaces and readiness gap
+		lineageTag: d0c86256-457f-55d5-83d7-d9ae8dc05ba2
+
+	measure 'Interfaces at risk' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE (
+			        COUNTROWS ( fact_interface ),
+			        dim_snapshot[snapshot_id] = _sid,
+			        fact_interface[status] = "At risk"
+			    ) + 0
+			```
+		formatString: 0
+		displayFolder: 09 Interfaces and readiness gap
+		lineageTag: 944aba49-2a5a-5313-89a9-dc222d779f18
+
+	measure 'Interface gap (max)' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE (
+			        MAX ( fact_interface[gap_days] ),
+			        dim_snapshot[snapshot_id] = _sid,
+			        fact_interface[status] <> "Complete"
+			    )
+			```
+		formatString: +0;-0;0
+		displayFolder: 09 Interfaces and readiness gap
+		lineageTag: 71538d3b-36f2-5971-815e-76b20ae3449c
+
+	measure 'Readiness gap' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE ( MAX ( fact_readiness[gap_d] ), dim_snapshot[snapshot_id] = _sid )
+			```
+		formatString: +0;-0;0
+		displayFolder: 09 Interfaces and readiness gap
+		lineageTag: 037c91fa-7b09-50de-99f5-9697a691da57
+
+	measure 'Readiness stages late' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE (
+			        COUNTROWS ( fact_readiness ),
+			        dim_snapshot[snapshot_id] = _sid,
+			        fact_readiness[gap_d] > 0
+			    ) + 0
+			```
+		formatString: 0
+		displayFolder: 09 Interfaces and readiness gap
+		lineageTag: effcf87a-1f3d-55ac-8f75-58be17b50cbf
+
+	measure 'High risks' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE (
+			        COUNTROWS ( fact_risk ),
+			        dim_snapshot[snapshot_id] = _sid,
+			        fact_risk[rating] = "High"
+			    ) + 0
+			```
+		formatString: 0
+		displayFolder: 10 Risks, decisions and recovery
+		lineageTag: deb20d8a-76c4-50fc-984e-c0edf9dd1de2
+
+	measure 'Risk score (max)' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE ( MAX ( fact_risk[score] ), dim_snapshot[snapshot_id] = _sid )
+			```
+		formatString: 0
+		displayFolder: 10 Risks, decisions and recovery
+		lineageTag: 808bd393-a9b0-56cc-925b-020ee19c9d35
+
+	/// Risk map (page 5): the risks in the cell of the 'Risk grid' row at the selected update, in risk order. An empty cell returns an empty text, not blank, so the matrix keeps all 25 cells
+	measure 'Risks in cell' = ```
+			VAR _sid = [Selected snapshot id]
+			VAR _p = SELECTEDVALUE ( 'Risk grid'[probability] )
+			VAR _i = SELECTEDVALUE ( 'Risk grid'[impact] )
+			VAR _risks =
+			    CALCULATETABLE (
+			        VALUES ( fact_risk[risk_id] ),
+			        dim_snapshot[snapshot_id] = _sid,
+			        fact_risk[probability] = _p,
+			        fact_risk[impact] = _i
+			    )
+			RETURN
+			    CONCATENATEX ( _risks, fact_risk[risk_id], ", ", fact_risk[risk_id], ASC ) & ""
+			```
+		displayFolder: 10 Risks, decisions and recovery
+		lineageTag: fe99065e-e880-5750-8fd7-5e9bd99461e6
+
+	/// Risk map (page 5): the cell's band by probability x impact, as the risk rating: high from 15, medium from 8
+	measure 'Risk cell colour' = ```
+			VAR _score = SELECTEDVALUE ( 'Risk grid'[probability] ) * SELECTEDVALUE ( 'Risk grid'[impact] )
+			RETURN
+			    SWITCH ( TRUE (), _score >= 15, "#F6D5D1", _score >= 8, "#FBE7C6", "#DDEFE3" )
+			```
+		displayFolder: 10 Risks, decisions and recovery
+		lineageTag: 502ae8c2-0945-594b-bf45-b1fe6b8bf5fc
+
+	measure 'Open decisions' = CALCULATE ( COUNTROWS ( fact_decision ), fact_decision[status] = "Open" ) + 0
+		formatString: 0
+		displayFolder: 10 Risks, decisions and recovery
+		lineageTag: ce519795-205c-55d3-994d-85f2658f7efb
+
+	measure 'Overdue decisions' = ```
+			CALCULATE (
+			    COUNTROWS ( fact_decision ),
+			    fact_decision[status] = "Open",
+			    fact_decision[overdue] = TRUE ()
+			) + 0
+			```
+		formatString: 0
+		displayFolder: 10 Risks, decisions and recovery
+		lineageTag: 5d90c4c3-ce51-5d58-b5c2-1ec070ec6ea5
+
+	measure 'Next decision needed by' = ```
+			CALCULATE (
+			    MIN ( fact_decision[needed_by] ),
+			    fact_decision[status] = "Open",
+			    fact_decision[overdue] == FALSE ()
+			)
+			```
+		formatString: dd-mmm-yyyy
+		displayFolder: 10 Risks, decisions and recovery
+		lineageTag: 044ceca3-50f6-5b2f-8575-50f3b806c60c
+
+	measure 'Recommended scenario' = CALCULATE ( SELECTEDVALUE ( fact_scenario[scenario_id] ), fact_scenario[recommended] = TRUE () )
+		displayFolder: 10 Risks, decisions and recovery
+		lineageTag: 512a25db-c5eb-5846-a8ce-8076fd34c7a0
+
+	measure 'Recommended scenario Day 1 total float' = CALCULATE ( SUM ( fact_scenario[day1_tf_d] ), fact_scenario[recommended] = TRUE () )
+		formatString: +0;-0;0
+		displayFolder: 10 Risks, decisions and recovery
+		lineageTag: 549d838a-2878-5693-8018-9d619470f121
+
+	measure 'Float gain' = CALCULATE ( SUM ( fact_scenario[float_gain_d] ), fact_scenario[recommended] = TRUE () )
+		formatString: +0;-0;0
+		displayFolder: 10 Risks, decisions and recovery
+		lineageTag: cb0240ae-44c5-539f-8b97-e2dc82d7b771
+
+	measure 'Scenario Day 1 impact' = SUM ( fact_scenario[day1_impact_days] )
+		formatString: +0;-0;0
+		displayFolder: 10 Risks, decisions and recovery
+		lineageTag: 7292f0b8-503b-5d71-9a67-58f14b258b94
+
+	measure 'Controls total' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE ( COUNTROWS ( fact_reconciliation ), dim_snapshot[snapshot_id] = _sid ) + 0
+			```
+		formatString: 0
+		displayFolder: 11 Reconciliation
+		lineageTag: b2d93655-b3ca-50ad-bdb9-b73cad21f1ee
+
+	measure 'Controls passed' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE (
+			        COUNTROWS ( fact_reconciliation ),
+			        dim_snapshot[snapshot_id] = _sid,
+			        fact_reconciliation[passed] = TRUE ()
+			    ) + 0
+			```
+		formatString: 0
+		displayFolder: 11 Reconciliation
+		lineageTag: 559c012b-dc7a-5532-b19c-3268334e76e3
+
+	measure 'Reconciliation status' = ```
+			VAR _n = [Controls total]
+			RETURN
+			    IF ( _n > 0 && [Controls passed] = _n, "Reconciled", "Not reconciled" )
+			```
+		displayFolder: 11 Reconciliation
+		lineageTag: 9aa6d663-7d2f-5f54-b57f-be186183c583
+
+	measure 'Reconciliation colour' = IF ( [Reconciliation status] = "Reconciled", "#1E8449", "#C0392B" )
+		displayFolder: 11 Reconciliation
+		lineageTag: b452ba51-def1-5f82-a43e-8979f18753b1
+
+	measure 'Finishes (forecast)' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE ( COUNTROWS ( fact_activity_snapshot ), dim_snapshot[snapshot_id] = _sid )
+			```
+		formatString: 0
+		displayFolder: 12 Baseline compare on the date axis
+		lineageTag: 3f4c10ae-7d34-5d82-9ad3-6bc315046187
+
+	measure 'Finishes (BL0)' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE (
+			        COUNTROWS ( fact_activity_snapshot ),
+			        dim_snapshot[snapshot_id] = _sid,
+			        USERELATIONSHIP ( fact_activity_snapshot[bl0_finish], dim_date[date] )
+			    )
+			```
+		formatString: 0
+		displayFolder: 12 Baseline compare on the date axis
+		lineageTag: 89c23d67-5aac-59ca-a0cd-f466b634a6b6
+
+	measure 'Finishes (BL1)' = ```
+			VAR _sid = [Selected snapshot id]
+			RETURN
+			    CALCULATE (
+			        COUNTROWS ( fact_activity_snapshot ),
+			        dim_snapshot[snapshot_id] = _sid,
+			        USERELATIONSHIP ( fact_activity_snapshot[bl1_finish], dim_date[date] )
+			    )
+			```
+		formatString: 0
+		displayFolder: 12 Baseline compare on the date axis
+		lineageTag: 4a93725b-49bb-5069-a475-11d6a663ea3a
+
+	measure 'Milestone finishes (forecast)' = CALCULATE ( [Finishes (forecast)], dim_activity[is_milestone] = TRUE () )
+		formatString: 0
+		displayFolder: 12 Baseline compare on the date axis
+		lineageTag: 680376d9-2572-5059-8f5c-2f0b890c5220
+
+	measure 'Milestone finishes (BL0)' = CALCULATE ( [Finishes (BL0)], dim_activity[is_milestone] = TRUE () )
+		formatString: 0
+		displayFolder: 12 Baseline compare on the date axis
+		lineageTag: 0c906e2f-4a4b-5bd6-886e-f9b3f3eacaa9
+
+	measure 'Milestone finishes (BL1)' = CALCULATE ( [Finishes (BL1)], dim_activity[is_milestone] = TRUE () )
+		formatString: 0
+		displayFolder: 12 Baseline compare on the date axis
+		lineageTag: fb1a31c9-4882-515e-86e3-f052a29e5e71
+
+	measure 'Provenance line' = ```
+			"Data date " & FORMAT ( [Data date], "dd-mmm-yyyy" )
+			    & " | Baseline " & [Baseline in force]
+			    & " | " & [Reconciliation status] & " " & [Controls passed] & "/" & [Controls total]
+			    & " | " & [Source file]
+			    & " | DQ " & FORMAT ( [DQ score], "0" )
+			```
+		displayFolder: 13 Action titles and provenance
+		lineageTag: b815fb4d-7683-5e49-adf6-7e240739a681
+
+	measure 'Title - Executive summary' = ```
+			VAR _tf = [Day 1 total float]
+			VAR _pos =
+			    IF (
+			        _tf < 0,
+			        FORMAT ( -_tf, "0" ) & " working days beyond",
+			        FORMAT ( _tf, "0" ) & " working days inside"
+			    )
+			VAR _rec = [Recommended scenario]
+			VAR _dec =
+			    SUBSTITUTE (
+			        CALCULATE ( SELECTEDVALUE ( fact_scenario[decision] ), fact_scenario[recommended] = TRUE () ),
+			        ", ",
+			        " and "
+			    )
+			RETURN
+			    "Day 1 is forecast for " & FORMAT ( [Day 1 forecast], "dd-mmm-yyyy" ) & ", " & _pos & " the "
+			        & FORMAT ( [Day 1 target], "dd-mmm-yyyy" ) & " target; recovery " & _rec
+			        & " brings Day 1 total float to " & FORMAT ( [Recommended scenario Day 1 total float], "+0;-0;0" )
+			        & " working days if " & _dec & " are approved."
+			```
+		displayFolder: 13 Action titles and provenance
+		lineageTag: b0da67e5-3042-59c7-8a6a-389299c90d41
+
+	measure 'Title - Milestones' = ```
+			VAR _m = [Day 1 movement vs previous period]
+			VAR _move =
+			    SWITCH (
+			        TRUE (),
+			        ISBLANK ( _m ), "has no previous update",
+			        _m < 0, "moved " & FORMAT ( -_m, "0" ) & " calendar days earlier",
+			        _m > 0, "slipped " & FORMAT ( _m, "0" ) & " calendar days",
+			        "did not move"
+			    )
+			RETURN
+			    FORMAT ( [Milestones later than baseline in force], "0" ) & " milestones are later than "
+			        & [Baseline in force] & "; the Day 1 forecast " & _move & " since the previous update."
+			```
+		displayFolder: 13 Action titles and provenance
+		lineageTag: bcd9910d-c78a-571e-b7ef-16f73195b1c8
+
+	measure 'Title - Critical path' = ```
+			FORMAT ( [Critical count], "0" ) & " activities are critical and " & FORMAT ( [Near-critical count], "0" )
+			    & " near-critical (total float of " & [Near-critical threshold (d)] & " working days or less); "
+			    & FORMAT ( [Look-ahead critical items], "0" ) & " critical activities start or finish in the next "
+			    & [Look window (days)] & " days."
+			```
+		displayFolder: 13 Action titles and provenance
+		lineageTag: f907b1cb-7b0f-5a0d-a0a3-f33c1715e83c
+
+	measure 'Title - Interfaces and readiness' = ```
+			FORMAT ( [Interfaces late], "0" ) & " interfaces are late and " & FORMAT ( [Interfaces at risk], "0" )
+			    & " at risk; the worst readiness stage is " & FORMAT ( [Readiness gap], "+0;-0;0" )
+			    & " calendar days against the date that protects Day 1."
+			```
+		displayFolder: 13 Action titles and provenance
+		lineageTag: 9600cf21-3309-53fa-af2a-f604379108f9
+
+	/// Names every open decision with its owner and date, so the ask is explicit in the title
+	measure 'Title - Decisions' = ```
+			VAR _openTbl = FILTER ( fact_decision, fact_decision[status] = "Open" && fact_decision[overdue] == FALSE () )
+			VAR _lateTbl = FILTER ( fact_decision, fact_decision[status] = "Open" && fact_decision[overdue] = TRUE () )
+			VAR _open =
+			    CONCATENATEX (
+			        _openTbl,
+			        fact_decision[decision_id] & " (" & fact_decision[owner] & ") by "
+			            & FORMAT ( fact_decision[needed_by], "dd-mmm-yyyy" ),
+			        ", ",
+			        fact_decision[needed_by], ASC
+			    )
+			VAR _late =
+			    CONCATENATEX (
+			        _lateTbl,
+			        fact_decision[decision_id] & " (" & fact_decision[owner] & ", due "
+			            & FORMAT ( fact_decision[needed_by], "dd-mmm-yyyy" ) & ")",
+			        ", ",
+			        fact_decision[needed_by], ASC
+			    )
+			VAR _n = COUNTROWS ( _openTbl ) + 0
+			VAR _l = COUNTROWS ( _lateTbl ) + 0
+			RETURN
+			    FORMAT ( _n, "0" ) & IF ( _n = 1, " decision is", " decisions are" ) & " needed"
+			        & IF ( _n > 0, ": " & _open, "" )
+			        & IF ( _l > 0, "; " & _late & IF ( _l = 1, " is", " are" ) & " overdue.", "; none is overdue." )
+			```
+		displayFolder: 13 Action titles and provenance
+		lineageTag: 7644ea85-4b9c-5591-9191-3f533ab3277b
+
+	measure 'Title - Schedule quality' = ```
+			VAR _mv = [DQ score movement]
+			RETURN
+			    "DQ score is " & FORMAT ( [DQ score], "0.0" ) & " (" & [DQ rating] & ")"
+			        & IF ( ISBLANK ( _mv ), "", ", " & FORMAT ( _mv, "+0.0;-0.0;0.0" ) & " points since the previous update" )
+			        & "; " & FORMAT ( [DCMA pass count], "0" ) & " of " & FORMAT ( [DCMA applicable checks], "0" )
+			        & " applicable DCMA checks pass."
+			```
+		displayFolder: 13 Action titles and provenance
+		lineageTag: bc3c9201-f8eb-590b-9ed3-22bf53c600c3
+
+	measure 'Title - Reconciliation' = ```
+			IF (
+			    [Reconciliation status] = "Reconciled",
+			    "All " & FORMAT ( [Controls total], "0" ) & " controls agree between the source XER, the model and the dashboard for "
+			        & FORMAT ( [Data date], "dd-mmm-yyyy" ) & ".",
+			    FORMAT ( [Controls total] - [Controls passed], "0" ) & " of " & FORMAT ( [Controls total], "0" )
+			        & " controls fail for " & FORMAT ( [Data date], "dd-mmm-yyyy" ) & ": do not publish this update."
+			)
+			```
+		displayFolder: 13 Action titles and provenance
+		lineageTag: 5c3e64b5-ddbb-5561-af13-3a1cfd26eb97
+
+	/// Card trend: calendar days of the Day 1 forecast against BL1, by update
+	measure 'Trend - Day 1 variance vs BL1' = DOP.TrendSvg ( [Day 1 variance vs BL1] )
+		displayFolder: 14 Trend lines for the KPI cards
+		lineageTag: 332b0349-2ecc-5330-97a5-40772890fd97
+		dataCategory: ImageUrl
+
+	/// Card trend: working days of Day 1 total float, by update
+	measure 'Trend - Day 1 total float' = DOP.TrendSvg ( [Day 1 total float] )
+		displayFolder: 14 Trend lines for the KPI cards
+		lineageTag: 129df633-e901-509e-bf27-4cc531f88767
+		dataCategory: ImageUrl
+
+	/// Card trend: duration-weighted % complete, by update
+	measure 'Trend - Weighted % complete (actual)' = DOP.TrendSvg ( [Weighted % complete (actual)] )
+		displayFolder: 14 Trend lines for the KPI cards
+		lineageTag: a3e9c0b9-fae1-52cf-9781-cbd3d0f678fc
+		dataCategory: ImageUrl
+
+	/// Card trend: DQ score out of 100, by update
+	measure 'Trend - DQ score' = DOP.TrendSvg ( [DQ score] )
+		displayFolder: 14 Trend lines for the KPI cards
+		lineageTag: fb2dbb8c-35c8-52b5-8b03-047d49f5db7c
+		dataCategory: ImageUrl
+
+	/// Card trend: milestones later than the baseline in force, by update
+	measure 'Trend - Milestones later than baseline in force' = DOP.TrendSvg ( [Milestones later than baseline in force] )
+		displayFolder: 14 Trend lines for the KPI cards
+		lineageTag: e3ca6a87-207a-54a6-b31c-6a2c9bec6a39
+		dataCategory: ImageUrl
+
+	/// Card trend: milestones that slipped against the previous update, by update
+	measure 'Trend - Milestones slipped vs previous period' = DOP.TrendSvg ( [Milestones slipped vs previous period] )
+		displayFolder: 14 Trend lines for the KPI cards
+		lineageTag: c66645fc-cd7f-5129-a2df-446aece12cc1
+		dataCategory: ImageUrl
+
+	/// Card trend: calendar days the Day 1 forecast moved, by update
+	measure 'Trend - Day 1 movement vs previous period' = DOP.TrendSvg ( [Day 1 movement vs previous period] )
+		displayFolder: 14 Trend lines for the KPI cards
+		lineageTag: 94d6d851-c271-5e8a-b492-9a169618b044
+		dataCategory: ImageUrl
+
+	/// Card trend: critical activities, by update
+	measure 'Trend - Critical count' = DOP.TrendSvg ( [Critical count] )
+		displayFolder: 14 Trend lines for the KPI cards
+		lineageTag: 569a326a-2f66-5cce-9390-134d83d459a6
+		dataCategory: ImageUrl
+
+	/// Card trend: near-critical activities at the selected threshold, by update
+	measure 'Trend - Near-critical count' = DOP.TrendSvg ( [Near-critical count] )
+		displayFolder: 14 Trend lines for the KPI cards
+		lineageTag: 46d7f967-1b25-5659-9fb3-8160a7a2e06b
+		dataCategory: ImageUrl
+
+	/// Card trend: activities with negative float, by update
+	measure 'Trend - Negative float count' = DOP.TrendSvg ( [Negative float count] )
+		displayFolder: 14 Trend lines for the KPI cards
+		lineageTag: b4f38359-40d5-56a5-961e-f1e9f0acab20
+		dataCategory: ImageUrl
+
+	/// Card trend: lowest total float in working days, by update
+	measure 'Trend - Total float (min)' = DOP.TrendSvg ( [Total float (min)] )
+		displayFolder: 14 Trend lines for the KPI cards
+		lineageTag: 1d0b62b0-2b74-5f4f-8ddb-867904d755db
+		dataCategory: ImageUrl
+
+	/// Card trend: activities in the 14-day look-ahead, by update
+	measure 'Trend - Look-ahead items' = DOP.TrendSvg ( [Look-ahead items] )
+		displayFolder: 14 Trend lines for the KPI cards
+		lineageTag: bddfe7b0-4617-5c5b-a2bd-df496bfbd09b
+		dataCategory: ImageUrl
+
+	/// Card trend: share of look-back items achieved, by update
+	measure 'Trend - Look-back hit rate' = DOP.TrendSvg ( [Look-back hit rate] )
+		displayFolder: 14 Trend lines for the KPI cards
+		lineageTag: af510225-6d84-522b-a78f-6ba014ede2ae
+		dataCategory: ImageUrl
+
+	/// Card trend: DCMA checks passed, by update
+	measure 'Trend - DCMA pass count' = DOP.TrendSvg ( [DCMA pass count] )
+		displayFolder: 14 Trend lines for the KPI cards
+		lineageTag: 1f7a44fc-6cd0-55fe-9834-9cd912dbb929
+		dataCategory: ImageUrl
+
+	/// Card trend: critical path length index, by update
+	measure 'Trend - CPLI' = DOP.TrendSvg ( [CPLI] )
+		displayFolder: 14 Trend lines for the KPI cards
+		lineageTag: 7a37f6cb-8a03-5790-a68c-4bb20cb3f17f
+		dataCategory: ImageUrl
+
+	/// Card trend: baseline execution index, by update
+	measure 'Trend - BEI' = DOP.TrendSvg ( [BEI] )
+		displayFolder: 14 Trend lines for the KPI cards
+		lineageTag: 85333517-745f-5ee8-939a-e073dfb4775a
+		dataCategory: ImageUrl
+
+	/// Sparkline: the owner's DQ (share of activities not flagged), by update
+	measure 'Owner DQ by update' = ```
+			VAR _s = SELECTEDVALUE ( 'Update axis'[snapshot_id] )
+			RETURN
+			    IF (
+			        NOT ISBLANK ( _s ) && _s <= [Selected snapshot id] && NOT ISEMPTY ( fact_owner_scorecard ),
+			        CALCULATE ( [Owner DQ], REMOVEFILTERS ( dim_snapshot ), dim_snapshot[snapshot_id] = _s )
+			    )
+			```
+		formatString: 0.0%
+		displayFolder: 15 Sparklines in the tables, and the float bridge
+		lineageTag: 7a7ff172-79a7-55b5-8da4-356982e6929e
+
+	/// Sparkline: the milestone's forecast finish against BL1, in calendar days, by update
+	measure 'Milestone variance vs BL1 by update' = ```
+			VAR _s = SELECTEDVALUE ( 'Update axis'[snapshot_id] )
+			RETURN
+			    IF (
+			        NOT ISBLANK ( _s ) && _s <= [Selected snapshot id] && NOT ISEMPTY ( fact_activity_snapshot ),
+			        CALCULATE ( [Milestone variance vs BL1], REMOVEFILTERS ( dim_snapshot ), dim_snapshot[snapshot_id] = _s )
+			    )
+			```
+		formatString: +0;-0;0
+		displayFolder: 15 Sparklines in the tables, and the float bridge
+		lineageTag: 3fc0460c-88d1-5295-9c39-c3ee2df6d60c
+
+	/// Sparkline: the risk's score, by update
+	measure 'Risk score (max) by update' = ```
+			VAR _s = SELECTEDVALUE ( 'Update axis'[snapshot_id] )
+			RETURN
+			    IF (
+			        NOT ISBLANK ( _s ) && _s <= [Selected snapshot id] && NOT ISEMPTY ( fact_risk ),
+			        CALCULATE ( [Risk score (max)], REMOVEFILTERS ( dim_snapshot ), dim_snapshot[snapshot_id] = _s )
+			    )
+			```
+		formatString: 0
+		displayFolder: 15 Sparklines in the tables, and the float bridge
+		lineageTag: d4729ce7-5f1d-5f71-beaa-0283abaccb3a
+
+	/// Sparkline: the float bridge on page 3 (a waterfall over 'Update axis'[update]), by update
+	measure 'Float bridge by update' = ```
+			VAR _s = SELECTEDVALUE ( 'Update axis'[snapshot_id] )
+			RETURN
+			    IF (
+			        NOT ISBLANK ( _s ) && _s <= [Selected snapshot id] && NOT ISEMPTY ( fact_snapshot_summary ),
+			        CALCULATE ( [Float bridge], REMOVEFILTERS ( dim_snapshot ), dim_snapshot[snapshot_id] = _s )
+			    )
+			```
+		formatString: +0;-0;0
+		displayFolder: 15 Sparklines in the tables, and the float bridge
+		lineageTag: a77f9694-2a9e-501a-9d82-2458e6998d5a
+
+	column Placeholder
+		dataType: string
+		isHidden
+		lineageTag: 10a9af68-8eaa-5f9c-a427-5a9c3886f435
+		sourceColumn: Placeholder
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition _Measures-0924984c-2871-59fe-ab1e-26833a17e4cd = m
+		mode: import
+		source = ```
+				let
+				    Source = #table(type table [Placeholder = text], {})
+				in
+				    Source
+				```
+
+	annotation PBI_ResultType = Table

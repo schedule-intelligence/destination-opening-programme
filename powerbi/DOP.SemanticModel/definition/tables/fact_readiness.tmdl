@@ -1,0 +1,154 @@
+table fact_readiness
+	lineageTag: 51fbe752-68db-5b97-bd13-0f701b0d5554
+
+	column snapshot_id
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 99407780-24c1-53b0-9856-f7b59749da72
+		sourceColumn: snapshot_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column asset_code
+		dataType: string
+		lineageTag: d428b890-47f4-54f5-a29b-5d0de6250d43
+		sourceColumn: asset_code
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column stage
+		dataType: string
+		lineageTag: cdde2944-59f7-5742-bab1-52b99dfab18e
+		sourceColumn: stage
+		sortByColumn: stage_order
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column activity_id
+		dataType: string
+		lineageTag: 5c08371c-e11d-5279-978d-c8a115ef9d6a
+		sourceColumn: activity_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column forecast
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: 585b9c0a-d5b6-508e-9aa8-467c12db93f4
+		sourceColumn: forecast
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column baseline
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: 1b5418c6-7ec4-5f55-9d9a-4ca2f32b896a
+		sourceColumn: baseline
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column need_by
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: 65c349ca-1a34-5713-959a-675165e77dc0
+		sourceColumn: need_by
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column gap_d
+		dataType: double
+		formatString: +0;-0;0
+		lineageTag: 68414cc4-2410-5a46-b01e-2f71cc69ff32
+		sourceColumn: gap_d
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column var_bl_d
+		dataType: double
+		formatString: +0;-0;0
+		lineageTag: 2d251148-a0f5-52b6-b998-a1225743251c
+		sourceColumn: var_bl_d
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column span_from_prev_d
+		dataType: double
+		formatString: 0
+		lineageTag: 9c2d05c1-8c2b-5630-a2e2-ee27bb997121
+		sourceColumn: span_from_prev_d
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column status
+		dataType: string
+		lineageTag: 08d6bbf5-40d4-52ab-9783-5de1fefad569
+		sourceColumn: status
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column total_float_d
+		dataType: double
+		formatString: 0
+		lineageTag: 11fd03ec-2918-5dec-ac44-cab0c5e55c3c
+		sourceColumn: total_float_d
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column stage_order
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 2e5028b1-0246-50c2-a70b-8d5903abc4cd
+		sourceColumn: stage_order
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_readiness-acbcd3f4-79f9-5de9-91b2-ca4003664f8a = m
+		mode: import
+		source = ```
+				let
+				    Source = Csv.Document(File.Contents(CsvFolder & "\fact_readiness.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Nulls = Table.ReplaceValue(Promoted, "", null, Replacer.ReplaceValue, Table.ColumnNames(Promoted)),
+				    Typed = Table.TransformColumnTypes(Nulls, {
+				        {"snapshot_id", Int64.Type},
+				        {"asset_code", type text},
+				        {"stage", type text},
+				        {"activity_id", type text},
+				        {"forecast", type datetime},
+				        {"baseline", type datetime},
+				        {"need_by", type datetime},
+				        {"gap_d", type number},
+				        {"var_bl_d", type number},
+				        {"span_from_prev_d", type number},
+				        {"status", type text},
+				        {"total_float_d", type number}
+				    }, "en-GB"),
+				    Dates = Table.TransformColumnTypes(Typed, {
+				        {"forecast", type date},
+				        {"baseline", type date},
+				        {"need_by", type date}
+				    }),
+				    Staged = Table.AddColumn(Dates, "stage_order", each 1 + List.PositionOf({"Construction complete", "T&C complete", "Handover to operator", "Operator trained", "Trials & test events complete", "Day 1 ready"}, [stage]), Int64.Type)
+				in
+				    Staged
+				```
+
+	annotation PBI_ResultType = Table

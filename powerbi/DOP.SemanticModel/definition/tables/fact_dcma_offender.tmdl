@@ -1,0 +1,64 @@
+table fact_dcma_offender
+	lineageTag: 2f8902ac-be9b-59d4-a5fb-becc39100512
+
+	column snapshot_id
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 56facc49-f5cb-5b7a-9fc8-d3187c647a57
+		sourceColumn: snapshot_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column check_id
+		dataType: string
+		lineageTag: 2983c406-cb76-57ac-84f2-0845b682b49c
+		sourceColumn: check_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column item
+		dataType: string
+		lineageTag: 23715662-785e-577c-a65a-217c31de5c0b
+		sourceColumn: item
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column activity_id
+		dataType: string
+		lineageTag: 47ab120f-a5ea-57be-8927-a6f7765bcee4
+		sourceColumn: activity_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column owner_code
+		dataType: string
+		lineageTag: e0b9e2c9-24b9-5ff3-bb2f-ba9d450ad4cd
+		sourceColumn: owner_code
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_dcma_offender-1d488d7a-0642-5428-ae37-0af086783632 = m
+		mode: import
+		source = ```
+				let
+				    Source = Csv.Document(File.Contents(CsvFolder & "\fact_dcma_offender.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Nulls = Table.ReplaceValue(Promoted, "", null, Replacer.ReplaceValue, Table.ColumnNames(Promoted)),
+				    Typed = Table.TransformColumnTypes(Nulls, {
+				        {"snapshot_id", Int64.Type},
+				        {"check_id", type text},
+				        {"item", type text},
+				        {"activity_id", type text},
+				        {"owner_code", type text}
+				    }, "en-GB")
+				in
+				    Typed
+				```
+
+	annotation PBI_ResultType = Table

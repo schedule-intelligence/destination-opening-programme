@@ -376,24 +376,6 @@
                   "Value": "'Cells by probability x impact: red 15 or more (high), amber 8 to 14, green below 8'"
                 }
               }
-            },
-            "fontSize": {
-              "expr": {
-                "Literal": {
-                  "Value": "9D"
-                }
-              }
-            },
-            "fontColor": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Literal": {
-                      "Value": "'#4A5568'"
-                    }
-                  }
-                }
-              }
             }
           }
         }

@@ -354,24 +354,6 @@
                   "Value": "'Every control must agree across the three before the update is published'"
                 }
               }
-            },
-            "fontSize": {
-              "expr": {
-                "Literal": {
-                  "Value": "9D"
-                }
-              }
-            },
-            "fontColor": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Literal": {
-                      "Value": "'#4A5568'"
-                    }
-                  }
-                }
-              }
             }
           }
         }

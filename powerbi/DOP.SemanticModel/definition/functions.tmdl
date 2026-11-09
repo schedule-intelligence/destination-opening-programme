@@ -1,0 +1,56 @@
+/// The value at update snapshotId: the data-date slicer lifted, that one update kept
+function 'DOP.AtUpdate' = ```
+		( value : SCALAR EXPR, snapshotId : INT64 VAL ) =>
+		CALCULATE ( value, REMOVEFILTERS ( dim_snapshot ), dim_snapshot[snapshot_id] = snapshotId )
+		```
+
+/// The KPI at every update up to the selected one as an SVG data URI: a teal line over a light fill, the last update marked, and a dashed red zero line where the values cross zero
+function 'DOP.TrendSvg' = ```
+		( value : SCALAR EXPR ) =>
+		VAR _sid = [Selected snapshot id]
+		VAR _pts =
+		    FILTER (
+		        ADDCOLUMNS (
+		            CALCULATETABLE (
+		                VALUES ( dim_snapshot[snapshot_id] ),
+		                REMOVEFILTERS ( dim_snapshot ),
+		                dim_snapshot[snapshot_id] <= _sid
+		            ),
+		            "@v", DOP.AtUpdate ( value, dim_snapshot[snapshot_id] )
+		        ),
+		        NOT ISBLANK ( [@v] )
+		    )
+		VAR _n = COUNTROWS ( _pts )
+		VAR _lo = MINX ( _pts, [@v] )
+		VAR _hi = MAXX ( _pts, [@v] )
+		VAR _xy =
+		    ADDCOLUMNS (
+		        _pts,
+		        "@x", IF ( _n <= 1, 60, 7 + ( RANKX ( _pts, dim_snapshot[snapshot_id], , ASC ) - 1 ) * 106 / ( _n - 1 ) ),
+		        "@y", IF ( _hi = _lo, 19, 7 + ( _hi - [@v] ) * 24 / ( _hi - _lo ) )
+		    )
+		VAR _line =
+		    CONCATENATEX ( _xy, FORMAT ( [@x], "0.0" ) & "," & FORMAT ( [@y], "0.0" ), " ", dim_snapshot[snapshot_id], ASC )
+		VAR _end = TOPN ( 1, _xy, dim_snapshot[snapshot_id], DESC )
+		VAR _x1 = FORMAT ( MINX ( _xy, [@x] ), "0.0" )
+		VAR _x2 = FORMAT ( MAXX ( _end, [@x] ), "0.0" )
+		VAR _y2 = FORMAT ( MAXX ( _end, [@y] ), "0.0" )
+		VAR _y0 = FORMAT ( 7 + _hi * 24 / ( _hi - _lo ), "0.0" )
+		VAR _zero =
+		    IF (
+		        _lo < 0 && _hi > 0,
+		        "<line x1='0' x2='120' y1='" & _y0 & "' y2='" & _y0
+		            & "' stroke='%23C0392B' stroke-width='1.2' stroke-dasharray='3 2' vector-effect='non-scaling-stroke'/>"
+		    )
+		RETURN
+		    IF (
+		        _n > 0,
+		        "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='40' viewBox='0 0 120 40'>" & _zero
+		            & "<polygon points='" & _x1 & ",38 " & _line & " " & _x2
+		            & ",38' fill='%232B7A78' fill-opacity='0.14'/>"
+		            & "<polyline points='" & _line
+		            & "' fill='none' stroke='%232B7A78' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'"
+		            & " vector-effect='non-scaling-stroke'/>"
+		            & "<circle cx='" & _x2 & "' cy='" & _y2 & "' r='5.5' fill='%231F3A5F'/></svg>"
+		    )
+		```

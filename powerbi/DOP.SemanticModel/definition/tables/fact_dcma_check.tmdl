@@ -1,0 +1,160 @@
+table fact_dcma_check
+	lineageTag: d3a31895-1d32-5b79-ac00-61f963d44280
+
+	column snapshot_id
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 66ab025b-bb46-5d94-b9bb-33914d1eb714
+		sourceColumn: snapshot_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column check_id
+		dataType: string
+		lineageTag: b54d38a7-1ecb-5dfd-bc2d-fb98ffe26162
+		sourceColumn: check_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column check_name
+		dataType: string
+		lineageTag: 4a0600fe-89d7-54a9-8f8c-3646d2a7ab54
+		sourceColumn: check_name
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column group
+		dataType: string
+		lineageTag: 1b8e60bd-a97f-5e23-8646-6eb948cd03c5
+		sourceColumn: group
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column kind
+		dataType: string
+		lineageTag: e95b46fa-ea16-5a74-bd65-8bf5d8d3dd17
+		sourceColumn: kind
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column threshold
+		dataType: double
+		formatString: 0.##
+		lineageTag: 839f4632-9796-539d-90ad-5333e76ddbde
+		sourceColumn: threshold
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column weight
+		dataType: int64
+		formatString: 0
+		lineageTag: 89e64708-870c-5187-842a-5c04736e3c0e
+		sourceColumn: weight
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column value
+		dataType: double
+		formatString: 0.##
+		lineageTag: 4ffce62f-1623-5180-b32c-77e5fada738c
+		sourceColumn: value
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column denominator
+		dataType: int64
+		formatString: 0
+		lineageTag: d07784d8-a001-5cbd-8f5e-06fa8feaba0d
+		sourceColumn: denominator
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column count
+		dataType: int64
+		formatString: 0
+		lineageTag: a86099a4-e0a9-500b-862e-bd72e8952b4b
+		sourceColumn: count
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column passed
+		dataType: boolean
+		lineageTag: d3144a72-0ba6-546b-b064-9127a71358bc
+		sourceColumn: passed
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column score
+		dataType: double
+		formatString: 0.0
+		lineageTag: fef42ead-bde1-587c-89f7-302be1f0a1fd
+		sourceColumn: score
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column definition
+		dataType: string
+		lineageTag: 8f9414d2-8b1c-5701-a683-e4d8183fda64
+		sourceColumn: definition
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column playbook
+		dataType: string
+		lineageTag: 91c2c076-9663-5658-bdb0-7b096ab29139
+		sourceColumn: playbook
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column passed_label
+		dataType: string
+		lineageTag: ebac5460-73e2-5ad2-b112-793c79cd8283
+		sourceColumn: passed_label
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_dcma_check-4484d94b-748e-513a-8a9a-acf99fe07b55 = m
+		mode: import
+		source = ```
+				let
+				    Source = Csv.Document(File.Contents(CsvFolder & "\fact_dcma_check.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Nulls = Table.ReplaceValue(Promoted, "", null, Replacer.ReplaceValue, Table.ColumnNames(Promoted)),
+				    Typed = Table.TransformColumnTypes(Nulls, {
+				        {"snapshot_id", Int64.Type},
+				        {"check_id", type text},
+				        {"check_name", type text},
+				        {"group", type text},
+				        {"kind", type text},
+				        {"threshold", type number},
+				        {"weight", Int64.Type},
+				        {"value", type number},
+				        {"denominator", Int64.Type},
+				        {"count", Int64.Type},
+				        {"passed", type logical},
+				        {"score", type number},
+				        {"definition", type text},
+				        {"playbook", type text}
+				    }, "en-GB"),
+				    Label_passed = Table.AddColumn(Typed, "passed_label", each if [passed] = null then null else if [passed] then "Pass" else "Fail", type text)
+				in
+				    Label_passed
+				```
+
+	annotation PBI_ResultType = Table

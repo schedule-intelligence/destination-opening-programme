@@ -300,8 +300,9 @@
               "solid": {
                 "color": {
                   "expr": {
-                    "Literal": {
-                      "Value": "'#C0392B'"
+                    "ThemeDataColor": {
+                      "ColorId": 5,
+                      "Percent": 0
                     }
                   }
                 }
@@ -346,8 +347,9 @@
               "solid": {
                 "color": {
                   "expr": {
-                    "Literal": {
-                      "Value": "'#C0392B'"
+                    "ThemeDataColor": {
+                      "ColorId": 5,
+                      "Percent": 0
                     }
                   }
                 }
@@ -385,8 +387,9 @@
               "solid": {
                 "color": {
                   "expr": {
-                    "Literal": {
-                      "Value": "'#C0392B'"
+                    "ThemeDataColor": {
+                      "ColorId": 5,
+                      "Percent": 0
                     }
                   }
                 }
@@ -461,24 +464,6 @@
               "expr": {
                 "Literal": {
                   "Value": "'Recommended scenario in teal'"
-                }
-              }
-            },
-            "fontSize": {
-              "expr": {
-                "Literal": {
-                  "Value": "9D"
-                }
-              }
-            },
-            "fontColor": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Literal": {
-                      "Value": "'#4A5568'"
-                    }
-                  }
                 }
               }
             }

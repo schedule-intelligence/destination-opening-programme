@@ -1,0 +1,246 @@
+table fact_owner_scorecard
+	lineageTag: 9ad169c9-be04-5d0b-98d6-42010f2b94db
+
+	column snapshot_id
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 2e1b082d-9cab-5579-bf3a-ef044ea17855
+		sourceColumn: snapshot_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column owner_code
+		dataType: string
+		lineageTag: 7a796604-5f8d-5b40-91bc-f9deb22b6d9d
+		sourceColumn: owner_code
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column activities
+		dataType: int64
+		formatString: 0
+		lineageTag: 1e4d214a-e0a9-5dd6-ab6e-76261ea2d19d
+		sourceColumn: activities
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column incomplete
+		dataType: int64
+		formatString: 0
+		lineageTag: 9477787d-358f-5ac2-a753-8356efb5d5bd
+		sourceColumn: incomplete
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column flagged
+		dataType: int64
+		formatString: 0
+		lineageTag: 6fdf1ebc-7a41-510e-b22f-f4c2def3894c
+		sourceColumn: flagged
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column owner_dq
+		dataType: double
+		lineageTag: 7c5cf84f-3be8-57f9-b8ae-fb9320842117
+		sourceColumn: owner_dq
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column update_issues
+		dataType: int64
+		formatString: 0
+		lineageTag: 498c9d7d-737e-57af-9bfc-9c1651abdf10
+		sourceColumn: update_issues
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column logic_issues
+		dataType: int64
+		formatString: 0
+		lineageTag: 9d8e1325-b849-529b-8d8e-105504fe2157
+		sourceColumn: logic_issues
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column n_D01
+		dataType: int64
+		formatString: 0
+		lineageTag: c6c20dcf-a256-5928-b22a-210b0653ffaf
+		sourceColumn: n_D01
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column n_D05
+		dataType: int64
+		formatString: 0
+		lineageTag: eded2ae7-31f5-50af-8e0f-4394c1e7f737
+		sourceColumn: n_D05
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column n_D06
+		dataType: int64
+		formatString: 0
+		lineageTag: 6189b717-8426-5f0d-88ef-00ad7eeaa3ba
+		sourceColumn: n_D06
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column n_D07
+		dataType: int64
+		formatString: 0
+		lineageTag: 7766c528-a2f8-5f3a-9e4a-2aa2f531e6d8
+		sourceColumn: n_D07
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column n_D08
+		dataType: int64
+		formatString: 0
+		lineageTag: f54390d0-3e64-51ef-a3bc-572d41e81d79
+		sourceColumn: n_D08
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column n_D09
+		dataType: int64
+		formatString: 0
+		lineageTag: f5d6b0cc-d4bb-5b3a-8f8b-b42ff002a229
+		sourceColumn: n_D09
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column n_D11
+		dataType: int64
+		formatString: 0
+		lineageTag: 4ec62108-819e-54af-ad19-d7cc06b9a5d4
+		sourceColumn: n_D11
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column n_U01
+		dataType: int64
+		formatString: 0
+		lineageTag: 6d4a8b9c-ff38-563b-95f6-d74b0f3199f5
+		sourceColumn: n_U01
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column n_U03
+		dataType: int64
+		formatString: 0
+		lineageTag: f5a52200-355c-5264-84a0-04ec56ff471c
+		sourceColumn: n_U03
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column n_U04
+		dataType: int64
+		formatString: 0
+		lineageTag: 8dc8b554-cbb2-57fe-9e21-a152b653040e
+		sourceColumn: n_U04
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column n_U05
+		dataType: int64
+		formatString: 0
+		lineageTag: e64a2fe8-1911-5434-b275-1205cbffb9eb
+		sourceColumn: n_U05
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column n_U06
+		dataType: int64
+		formatString: 0
+		lineageTag: 5aaa8e99-6f68-5274-b8e7-cce269831ef5
+		sourceColumn: n_U06
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column n_U07
+		dataType: int64
+		formatString: 0
+		lineageTag: 2c45af76-cd00-5155-85fa-704d77e35fb0
+		sourceColumn: n_U07
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column n_U09
+		dataType: int64
+		formatString: 0
+		lineageTag: 3b836ba3-8e41-57f0-b248-d27d3dc636c0
+		sourceColumn: n_U09
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column n_U11
+		dataType: int64
+		formatString: 0
+		lineageTag: 32d4f242-b8af-51e7-b4eb-111b355f1a28
+		sourceColumn: n_U11
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_owner_scorecard-8a19fd16-c8c6-534b-a308-b5a7a1be1264 = m
+		mode: import
+		source = ```
+				let
+				    Source = Csv.Document(File.Contents(CsvFolder & "\fact_owner_scorecard.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Nulls = Table.ReplaceValue(Promoted, "", null, Replacer.ReplaceValue, Table.ColumnNames(Promoted)),
+				    Typed = Table.TransformColumnTypes(Nulls, {
+				        {"snapshot_id", Int64.Type},
+				        {"owner_code", type text},
+				        {"activities", Int64.Type},
+				        {"incomplete", Int64.Type},
+				        {"flagged", Int64.Type},
+				        {"owner_dq", type number},
+				        {"update_issues", Int64.Type},
+				        {"logic_issues", Int64.Type},
+				        {"n_D01", Int64.Type},
+				        {"n_D05", Int64.Type},
+				        {"n_D06", Int64.Type},
+				        {"n_D07", Int64.Type},
+				        {"n_D08", Int64.Type},
+				        {"n_D09", Int64.Type},
+				        {"n_D11", Int64.Type},
+				        {"n_U01", Int64.Type},
+				        {"n_U03", Int64.Type},
+				        {"n_U04", Int64.Type},
+				        {"n_U05", Int64.Type},
+				        {"n_U06", Int64.Type},
+				        {"n_U07", Int64.Type},
+				        {"n_U09", Int64.Type},
+				        {"n_U11", Int64.Type}
+				    }, "en-GB")
+				in
+				    Typed
+				```
+
+	annotation PBI_ResultType = Table

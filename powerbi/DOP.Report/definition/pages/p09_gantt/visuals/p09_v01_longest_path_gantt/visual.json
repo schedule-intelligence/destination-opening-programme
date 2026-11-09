@@ -494,24 +494,6 @@
                   "Value": "'Red: critical (total float 0 or less); amber: near-critical; right-click an activity to drill through'"
                 }
               }
-            },
-            "fontSize": {
-              "expr": {
-                "Literal": {
-                  "Value": "9D"
-                }
-              }
-            },
-            "fontColor": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Literal": {
-                      "Value": "'#4A5568'"
-                    }
-                  }
-                }
-              }
             }
           }
         }

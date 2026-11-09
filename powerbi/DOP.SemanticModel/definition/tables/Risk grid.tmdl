@@ -1,0 +1,30 @@
+table 'Risk grid'
+	isHidden
+	lineageTag: e84a8212-b59f-5ae7-8699-6b4074ec45c9
+
+	column probability
+		dataType: int64
+		isHidden
+		isNameInferred: false
+		isDataTypeInferred
+		lineageTag: 7c658dba-ff16-551a-bff1-fab1314133d5
+		sourceColumn: [probability]
+		summarizeBy: none
+
+	column impact
+		dataType: int64
+		isHidden
+		isNameInferred: false
+		isDataTypeInferred
+		lineageTag: 52a737ec-cf92-5d7b-bc89-944c5b23f625
+		sourceColumn: [impact]
+		summarizeBy: none
+
+	partition 'Risk grid' = calculated
+		mode: import
+		source = ```
+				CROSSJOIN (
+				    SELECTCOLUMNS ( GENERATESERIES ( 1, 5, 1 ), "probability", [Value] ),
+				    SELECTCOLUMNS ( GENERATESERIES ( 1, 5, 1 ), "impact", [Value] )
+				)
+				```

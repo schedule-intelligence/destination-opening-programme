@@ -1,9 +1,10 @@
 """Power BI project (PBIP) generator: `python -m dop pbip`.
 
-Writes `powerbi/DOP.pbip`, `powerbi/DOP.SemanticModel` (TMSL `model.bim`) and `powerbi/DOP.Report` (PBIR) from:
+Writes `powerbi/DOP.pbip`, `powerbi/DOP.SemanticModel` (a TMDL `definition` folder, compatibility level 1702) and
+`powerbi/DOP.Report` (PBIR) from:
 
 - the star-schema CSVs in `output/csv` (headers, plus every row to choose and verify each column type);
-- `powerbi/measures.dax` (every MEASURE, with its expression kept verbatim);
+- `powerbi/measures.dax` (every MEASURE and every FUNCTION, with its expression kept verbatim);
 - `powerbi/dop_theme.json` (registered as the report's custom theme);
 - a page background image, `dop_background.svg`, generated here from the grid constants (the navy header band);
 - the report bookmarks of POWERBI.md section 7 and a phone layout (`mobile.json` per visual), built from the
@@ -27,6 +28,8 @@ import shutil
 import uuid
 from dataclasses import dataclass
 
+from dop import tmdl
+
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 PROJECT = "DOP"
 DEFAULT_CSV_FOLDER = r"V:\schedule-intelligence\output\csv"
@@ -38,7 +41,8 @@ MEASURE_TABLE = "_Measures"
 THRESHOLD_TABLE = "Near-critical threshold"   # the name measures.dax uses (POWERBI.md section 4)
 COMPARE_TABLE = "Compare against"             # field parameter (POWERBI.md section 4, item 4)
 TREND_PREFIX = "Trend - "                     # measures.dax section 14: SVG trend images (data category Image URL)
-TREND_TABLE, TREND_RENDERER = "Trend KPI", "Trend line"   # the KPI each Trend - measure names; the SVG renderer
+TREND_FUNCTION = "DOP.TrendSvg"               # the DAX function (measures.dax section 0) every Trend - measure calls
+COMPATIBILITY_LEVEL = 1702                    # DAX user-defined functions need 1702 or later
 # measures.dax section 15: "<measure> by update" is drawn by table sparklines over the hidden, unrelated axis table
 AXIS_TABLE, SPARK_SUFFIX = "Update axis", " by update"
 GRID_TABLE = "Risk grid"      # the 25 cells of the risk map (page 5): probability x impact, 1 to 5 each
@@ -79,10 +83,14 @@ BM_LOOK_AHEAD, BM_LOOK_BACK = "bm_look_ahead", "bm_look_back"
 BM_DECISIONS, BM_RISKS, BM_RISK_MAP = "bm_register_decisions", "bm_register_risks", "bm_register_map"
 BM_FLOAT_TREND, BM_FLOAT_BRIDGE = "bm_float_trend", "bm_float_bridge"
 
-# Palette shared with the dashboard, the PowerPoint packs and dop_theme.json
+# Palette shared with the dashboard, the PowerPoint packs and dop_theme.json. The report's structural colours
+# (text, backgrounds, gridlines, outlines) live in dop_theme.json only; visuals name a palette colour by its theme
+# position (theme_colour) and keep a fixed hex code only where a theme colour cannot go (see colour).
 NAVY, TEAL, SLATE = "#1F3A5F", "#2B7A78", "#64748B"
-RED, AMBER, GREEN, WHITE, MUTED = "#C0392B", "#D68910", "#1E8449", "#FFFFFF", "#4A5568"
-PLOT_TINT = "#F5F8FB"         # the faint fill behind the lines of a page's hero chart
+RED, AMBER, GREEN, WHITE = "#C0392B", "#D68910", "#1E8449", "#FFFFFF"
+FOREGROUND = "#1A202C"        # text in a text box (a text run takes a fixed colour)
+RAIL_LINE = "#4A6A90"         # outline of the rail's buttons: the navy tinted toward white
+PLOT_TINT = 0.95              # the hero chart's plot area: the navy tinted this far toward white
 
 # Canvas and grid (pixels): the header strip sits on a navy band painted by the page background image, the title
 # row under it, then the content area with 16 px margins and gutters
@@ -227,7 +235,7 @@ _COUNT_WORDS = re.compile(r"^(Activities|Milestones|Critical count|Near-critical
 
 def measure_format(name: str) -> str | None:
     """Format string for a measure (POWERBI.md section 5); None for text measures."""
-    if name in _TEXT_MEASURES or name == TREND_RENDERER or name.startswith(("Title - ", TREND_PREFIX)):
+    if name in _TEXT_MEASURES or name.startswith(("Title - ", TREND_PREFIX)):
         return None
     if name.endswith(SPARK_SUFFIX):           # a sparkline's values: the measure it reads by update
         return measure_format(name[:-len(SPARK_SUFFIX)])
@@ -279,7 +287,25 @@ def num(value: float) -> dict:
 
 
 def colour(hex_code: str) -> dict:
+    """A fixed colour. Kept for the cases a theme colour cannot express: text runs in a text box, the colour of
+    a conditional-formatting case or gradient stop, a per-series fill with a metadata selector (Desktop resolves a
+    theme colour there wrongly), and white text on the navy rail, which is white in any theme."""
     return {"solid": {"color": lit(text(hex_code))}}
+
+
+# The theme's data colours by position (dop_theme.json dataColors, the shared palette order). A visual that
+# colours itself by position follows the theme, so a theme-file change flows to every visual.
+TC_NAVY, TC_TEAL, TC_GOLD, TC_PLUM, TC_SLATE, TC_RED, TC_AMBER, TC_GREEN = range(8)
+
+
+def theme_colour(index: int, percent: float = 0) -> dict:
+    """The theme's data colour at `index`, tinted toward white (percent > 0) or shaded toward black (< 0)."""
+    return {"solid": {"color": {"expr": {"ThemeDataColor": {"ColorId": index, "Percent": percent}}}}}
+
+
+def fill_of(value: int | str) -> dict:
+    """A theme colour for a palette position, a fixed colour for a hex code."""
+    return theme_colour(value) if isinstance(value, int) else colour(value)
 
 
 # ----------------------------------------------------------------------------------------------------------------
@@ -366,6 +392,7 @@ def read_tables(csv_dir: pathlib.Path) -> list[CsvTable]:
 # ----------------------------------------------------------------------------------------------------------------
 
 _MEASURE_LINE = re.compile(r"^(?P<indent>[ \t]*)MEASURE\s+'_Measures'\[(?P<name>[^\]]+)\]\s*=(?P<rest>.*)$")
+_FUNCTION_LINE = re.compile(r"^(?P<indent>[ \t]*)FUNCTION\s+(?P<name>[A-Za-z_][\w.]*)\s*=(?P<rest>.*)$")
 _SECTION = re.compile(r"^\s*//\s*(\d+)\.\s+(.+?)\s*$")
 
 
@@ -376,20 +403,31 @@ def _is_rule(comment: str) -> bool:
 def parse_measures(dax: str) -> list[dict]:
     """Every MEASURE in the DEFINE block: name, expression lines (dedented, otherwise verbatim), display folder
     (the numbered section heading) and description (the // comment directly above the MEASURE)."""
+    return _parse_define(dax)[0]
+
+
+def parse_functions(dax: str) -> list[dict]:
+    """Every FUNCTION in the DEFINE block (a DAX user-defined function): name, expression lines (the parameter
+    list and the body, dedented) and description (the // comment directly above it)."""
+    return _parse_define(dax)[1]
+
+
+def _parse_define(dax: str) -> tuple[list[dict], list[dict]]:
     lines = dax.split("\n")
     try:
         start = next(i for i, l in enumerate(lines) if l.strip() == "DEFINE") + 1
     except StopIteration:
         raise ValueError("measures.dax: no DEFINE block") from None
-    measures, folder, comment, state, i = [], None, [], "normal", start
+    measures, functions, folder, comment, state, i = [], [], None, [], "normal", start
     while i < len(lines):
         line, stripped = lines[i], lines[i].strip()
         if line.startswith("EVALUATE"):
             break
-        match = _MEASURE_LINE.match(line)
+        match = _MEASURE_LINE.match(line) or _FUNCTION_LINE.match(line)
         if match:
             indent = len(match.group("indent").expandtabs(4))
-            body = [match.group("rest")] if match.group("rest").strip() else []
+            first = [match.group("rest").strip()] if match.group("rest").strip() else []   # text after the =
+            body = []
             j = i + 1
             while j < len(lines):
                 nxt = lines[j]
@@ -399,12 +437,16 @@ def parse_measures(dax: str) -> list[dict]:
                 j += 1
             while body and not body[-1].strip():
                 body.pop()
-            if not body:
-                raise ValueError(f"measures.dax: measure [{match.group('name')}] has no expression")
-            margin = min(len(b) - len(b.lstrip()) for b in body if b.strip())
-            expression = [b[margin:].rstrip() if b.strip() else "" for b in body]
-            measures.append({"name": match.group("name"), "expression": expression, "folder": folder,
-                             "description": " ".join(comment)})
+            if not body and not first:
+                raise ValueError(f"measures.dax: [{match.group('name')}] has no expression")
+            margin = min((len(b) - len(b.lstrip()) for b in body if b.strip()), default=0)
+            expression = first + [b[margin:].rstrip() if b.strip() else "" for b in body]
+            if line.lstrip().startswith("FUNCTION"):
+                functions.append({"name": match.group("name"), "expression": expression,
+                                  "description": " ".join(comment)})
+            else:
+                measures.append({"name": match.group("name"), "expression": expression, "folder": folder,
+                                 "description": " ".join(comment)})
             comment, state, i = [], "normal", j
             continue
         if stripped.startswith("//"):
@@ -422,15 +464,15 @@ def parse_measures(dax: str) -> list[dict]:
         elif not stripped:
             comment = []
         i += 1
-    names = [m["name"] for m in measures]
+    names = [m["name"] for m in measures] + [f["name"] for f in functions]
     dupes = sorted({n for n in names if names.count(n) > 1})
     if dupes:
-        raise ValueError(f"measures.dax: measures defined more than once: {dupes}")
-    return measures
+        raise ValueError(f"measures.dax: measures or functions defined more than once: {dupes}")
+    return measures, functions
 
 
 # ----------------------------------------------------------------------------------------------------------------
-# Semantic model (model.bim, TMSL)
+# Semantic model (built as a dictionary in TOM's shape, written as TMDL by dop.tmdl)
 # ----------------------------------------------------------------------------------------------------------------
 
 def _partition_m(table: CsvTable) -> list[str]:
@@ -502,7 +544,8 @@ def _column(table: str, c: CsvColumn, key_columns: set[tuple[str, str]]) -> dict
     return col
 
 
-def build_model(tables: list[CsvTable], measures: list[dict], csv_folder: str) -> dict:
+def build_model(tables: list[CsvTable], measures: list[dict], csv_folder: str,
+                functions: list[dict] | None = None) -> dict:
     by_name = {t.name: t for t in tables}
     key_columns = {(r[0], r[1]) for r in RELATIONSHIPS} | {(r[2], r[3]) for r in RELATIONSHIPS}
     for many, mcol, one, ocol, _ in RELATIONSHIPS:
@@ -590,28 +633,19 @@ def build_model(tables: list[CsvTable], measures: list[dict], csv_folder: str) -
                      for k, (label, m) in enumerate(params)] + ["}"])}}],
     })
 
-    # measures.dax section 14: the KPI names the Trend - measures pass to [Trend line], one row each (hidden: the
-    # table only carries the choice). Every name must be a branch of the renderer's SWITCH.
-    trend_kpis = sorted(m["name"][len(TREND_PREFIX):] for m in measures if m["name"].startswith(TREND_PREFIX))
-    if trend_kpis:
-        renderer = next((m for m in measures if m["name"] == TREND_RENDERER), None)
-        if renderer is None:
-            raise ValueError(f"measures.dax: the {TREND_PREFIX!r} measures need [{TREND_RENDERER}]")
-        body = "\n".join(renderer["expression"])
-        unknown = [k for k in trend_kpis if f'"{k}", [{k}]' not in body]
-        if unknown:
-            raise ValueError(f"measures.dax: [{TREND_RENDERER}] does not draw {unknown}")
-        model_tables.append({
-            "name": TREND_TABLE,
-            "lineageTag": guid("table", TREND_TABLE),
-            "isHidden": True,
-            "columns": [{"type": "calculatedTableColumn", "name": "KPI", "dataType": "string", "isHidden": True,
-                         "isNameInferred": False, "isDataTypeInferred": True, "sourceColumn": "[KPI]",
-                         "lineageTag": guid("column", TREND_TABLE, "KPI"), "summarizeBy": "none"}],
-            "partitions": [{"name": TREND_TABLE, "mode": "import", "source": {"type": "calculated", "expression": (
-                ['DATATABLE ( "KPI", STRING, {'] + [f'    {{ "{k}" }}' + ("," if i < len(trend_kpis) - 1 else "")
-                                                     for i, k in enumerate(trend_kpis)] + ["} )"])}}],
-        })
+    # measures.dax section 14: every Trend - measure is the KPI drawn by the DOP.TrendSvg function (section 0)
+    functions = list(functions or [])
+    function_names = {f["name"] for f in functions}
+    for m in measures:
+        if m["name"].startswith(TREND_PREFIX):
+            kpi = m["name"][len(TREND_PREFIX):]
+            if "\n".join(m["expression"]).strip() != f"{TREND_FUNCTION} ( [{kpi}] )":
+                raise ValueError(f"measures.dax: [{m['name']}] must be {TREND_FUNCTION} ( [{kpi}] )")
+            if TREND_FUNCTION not in function_names:
+                raise ValueError(f"measures.dax: the {TREND_PREFIX!r} measures need FUNCTION {TREND_FUNCTION}")
+    for f in functions:
+        if not f["name"].startswith("DOP."):
+            raise ValueError(f"measures.dax: function {f['name']} must be in the DOP. namespace")
 
     # measures.dax section 15: the axis of the table sparklines, one row per update. It is not related to any table,
     # so the data-date slicer leaves every update on it; each "by update" measure reads its row's update itself
@@ -689,28 +723,31 @@ def build_model(tables: list[CsvTable], measures: list[dict], csv_folder: str) -
 
     folder_m = csv_folder.replace('"', '""')
     query_order = ["CsvFolder"] + [t.name for t in tables] + [MEASURE_TABLE]
-    return {
-        "compatibilityLevel": 1601,
-        "model": {
-            "culture": "en-US",
-            "dataAccessOptions": {"legacyRedirects": True, "returnErrorValuesAsNull": True},
-            "defaultPowerBIDataSourceVersion": "powerBI_V3",
-            "sourceQueryCulture": "en-GB",
-            "tables": model_tables,
-            "relationships": relationships,
-            "expressions": [{
-                "name": "CsvFolder",
-                "kind": "m",
-                "expression": f'"{folder_m}" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]',
-                "lineageTag": guid("expression", "CsvFolder"),
-                "annotations": [{"name": "PBI_ResultType", "value": "Text"}],
-            }],
-            "annotations": [
-                {"name": "__PBI_TimeIntelligenceEnabled", "value": "0"},
-                {"name": "PBI_QueryOrder", "value": json.dumps(query_order, separators=(",", ":"))},
-            ],
-        },
+    model = {
+        "culture": "en-US",
+        "dataAccessOptions": {"legacyRedirects": True, "returnErrorValuesAsNull": True},
+        "defaultPowerBIDataSourceVersion": "powerBI_V3",
+        "sourceQueryCulture": "en-GB",
+        "tables": model_tables,
+        "relationships": relationships,
+        "expressions": [{
+            "name": "CsvFolder",
+            "kind": "m",
+            "expression": f'"{folder_m}" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]',
+            "lineageTag": guid("expression", "CsvFolder"),
+            "annotations": [{"name": "PBI_ResultType", "value": "Text"}],
+        }],
+        "annotations": [
+            {"name": "__PBI_TimeIntelligenceEnabled", "value": "0"},
+            {"name": "PBI_QueryOrder", "value": json.dumps(query_order, separators=(",", ":"))},
+        ],
     }
+    if functions:                 # DAX user-defined functions (measures.dax section 0), expressions verbatim
+        model["functions"] = [{"name": f["name"],
+                               "expression": f["expression"][0] if len(f["expression"]) == 1 else f["expression"],
+                               **({"description": f["description"]} if f["description"] else {})}
+                              for f in functions]
+    return {"compatibilityLevel": COMPATIBILITY_LEVEL, "model": model}
 
 
 # ----------------------------------------------------------------------------------------------------------------
@@ -718,6 +755,7 @@ def build_model(tables: list[CsvTable], measures: list[dict], csv_folder: str) -
 # ----------------------------------------------------------------------------------------------------------------
 
 AGG_FUNCTION = {"Sum": 0, "Min": 3, "Max": 4}
+SLICER_TYPES = ("slicer", "advancedSlicerVisual")        # the classic dropdown and the button slicer
 
 
 @dataclass(frozen=True)
@@ -963,7 +1001,7 @@ class ReportBuilder:
         }
 
     def card(self, fields: list[Field], title: str | None, value_size: int = 15, label: bool = False,
-             colour_by: str | None = None, accent: str | None = NAVY, alt: str | None = None,
+             colour_by: str | None = None, accent: int | None = TC_NAVY, alt: str | None = None,
              label_size: int = 9) -> dict:
         """The new card visual: several values with labels and accent bars, for boxes of 240 px and wider."""
         value = {"textWrap": flag(True), "fontSize": num(value_size)}
@@ -977,8 +1015,8 @@ class ReportBuilder:
             objects["value"].append({
                 "properties": {"fontColor": {"solid": {"color": {"expr": field_expr(mea(colour_by))}}}},
                 "selector": {"data": [{"dataViewWildcard": {"matchingOption": 0}}], "metadata": query_ref(fields[0])}})
-        if accent:
-            objects["accentBar"] = [{"properties": {"show": flag(True), "color": colour(accent), "width": num(3)},
+        if accent is not None:
+            objects["accentBar"] = [{"properties": {"show": flag(True), "color": theme_colour(accent), "width": num(3)},
                                      "selector": {"id": "default"}}]
         return {"visualType": "cardVisual", "query": {"queryState": {"Data": self.role(fields)}},
                 "objects": objects, "visualContainerObjects": self.container_objects(title, alt)}
@@ -1002,30 +1040,27 @@ class ReportBuilder:
         return {"visualType": "multiRowCard", "query": {"queryState": {"Values": self.role(fields)}},
                 "objects": {"dataLabels": [{"properties": {"fontSize": num(value_size)}}],
                             "categoryLabels": [{"properties": {"show": flag(True), "fontSize": num(label_size)}}],
-                            "card": [{"properties": {"barShow": flag(True), "barColor": colour(NAVY),
+                            "card": [{"properties": {"barShow": flag(True), "barColor": theme_colour(TC_NAVY),
                                                      "barWeight": num(3)}}]},
                 "visualContainerObjects": self.container_objects(title)}
 
     @staticmethod
     def back_button() -> dict:
         """Back button for the drill-through page, navy on a white pill in the title row (reading view has no
-        other way back)."""
-        navy, sel = colour(NAVY), {"id": "default"}
+        other way back). Its colours (pill, outline, text, icon) are the theme's button defaults."""
+        sel = {"id": "default"}
         return {
             "visualType": "actionButton",
             "objects": {
                 "icon": [{"properties": {"show": flag(True)}},
-                         {"properties": {"shapeType": lit(text("back")), "lineColor": navy,
-                                         "placement": lit(text("left")), "iconSize": num(14),
-                                         "leftMargin": lit("30L"), "rightMargin": lit("8L")}, "selector": sel}],
-                "text": [{"properties": {"show": flag(True)}},
-                         {"properties": {"text": lit(text("Back")), "fontColor": navy, "fontSize": num(11),
-                                         "bold": flag(True), "horizontalAlignment": lit(text("left"))},
+                         {"properties": {"shapeType": lit(text("back")), "placement": lit(text("left")),
+                                         "iconSize": num(14), "leftMargin": lit("30L"), "rightMargin": lit("8L")},
                           "selector": sel}],
-                "fill": [{"properties": {"show": flag(True)}},
-                         {"properties": {"fillColor": colour(WHITE), "transparency": num(0)}, "selector": sel}],
-                "outline": [{"properties": {"show": flag(True)}},
-                            {"properties": {"lineColor": colour("#CBD5E0"), "weight": num(1)}, "selector": sel}],
+                "text": [{"properties": {"show": flag(True)}},
+                         {"properties": {"text": lit(text("Back")), "fontSize": num(11), "bold": flag(True),
+                                         "horizontalAlignment": lit(text("left"))}, "selector": sel}],
+                "fill": [{"properties": {"show": flag(True)}}],
+                "outline": [{"properties": {"show": flag(True)}}],
                 "shape": [{"properties": {"tileShape": lit(text("rectangleRoundedByPixel")),
                                           "rectangleRoundedCurve": lit("18L")}, "selector": sel}],
             },
@@ -1041,35 +1076,43 @@ class ReportBuilder:
 
     def bookmark_button(self, label: str, bookmark: str, style: str, tooltip: str, icon: str | None = None) -> dict:
         """A button that applies a report bookmark. style "rail": outlined text on the navy rail; "on" / "off": the
-        two looks of a segmented toggle (navy pill for the active choice, white pill for the other)."""
+        two looks of a segmented toggle (navy pill for the active choice, the theme's default button for the
+        other). Buttons take fixed colours: Desktop does not resolve a theme colour in a button's fill, outline or
+        text (seen in Desktop: the pill went white). None leaves the theme's button default (white fill, grey
+        outline, navy text); the rail's colours are the rail's chrome."""
         looks = {
-            "rail": {"fill": WHITE, "fill_t": 100, "hover_t": 88, "text": WHITE, "line": "#4A6A90", "size": 10,
+            "rail": {"fill": None, "fill_t": 100, "hover_t": 88, "text": WHITE, "line": RAIL_LINE, "size": 10,
                      "bold": False, "align": "left", "curve": "6L"},
-            "on": {"fill": NAVY, "fill_t": 0, "hover_t": 0, "text": WHITE, "line": NAVY, "size": 9, "bold": True,
-                   "align": "center", "curve": "10L"},
-            "off": {"fill": WHITE, "fill_t": 0, "hover_t": 0, "text": NAVY, "line": "#CBD5E0", "size": 9,
+            "on": {"fill": NAVY, "fill_t": 0, "hover_t": 0, "text": WHITE, "line": NAVY, "size": 9,
+                   "bold": True, "align": "center", "curve": "10L"},
+            "off": {"fill": None, "fill_t": 0, "hover_t": 0, "text": None, "line": None, "size": 9,
                     "bold": False, "align": "center", "curve": "10L"},
         }[style]
-        hover_fill = "#EDF2F7" if style == "off" else looks["fill"]
-        text_props = {"text": lit(text(label)), "fontColor": colour(looks["text"]), "fontSize": num(looks["size"]),
-                      "bold": flag(looks["bold"]), "fontFamily": lit(text("Segoe UI")),
-                      "horizontalAlignment": lit(text(looks["align"]))}
+
+        def paint(value) -> dict:
+            return {"color": colour(value)} if value is not None else {}
+
+        text_props = {"text": lit(text(label)), "fontSize": num(looks["size"]), "bold": flag(looks["bold"]),
+                      "fontFamily": lit(text("Segoe UI")), "horizontalAlignment": lit(text(looks["align"]))}
+        if looks["text"] is not None:
+            text_props["fontColor"] = colour(looks["text"])
         if style == "rail":
             text_props["leftMargin"] = lit("8L")
+        fill = {k: v["color"] for k, v in (("fillColor", paint(looks["fill"])),) if v}
+        line = {k: v["color"] for k, v in (("lineColor", paint(looks["line"])),) if v}
         objects = {
             "text": self._states(True, {"default": text_props, "hover": text_props}),
-            "fill": self._states(True, {
-                "default": {"fillColor": colour(looks["fill"]), "transparency": num(looks["fill_t"])},
-                "hover": {"fillColor": colour(hover_fill), "transparency": num(looks["hover_t"])}}),
-            "outline": self._states(True, {"default": {"lineColor": colour(looks["line"]), "weight": num(1),
-                                                       "transparency": num(0)}}),
+            "fill": self._states(True, {"default": {**fill, "transparency": num(looks["fill_t"])},
+                                        "hover": {**fill, "transparency": num(looks["hover_t"])}}),
+            "outline": self._states(True, {"default": {**line, "weight": num(1), "transparency": num(0)}}),
             "shape": [{"properties": {"tileShape": lit(text("rectangleRoundedByPixel")),
                                       "rectangleRoundedCurve": lit(looks["curve"])}, "selector": {"id": "default"}}],
         }
         if icon:
-            icon_props = {"shapeType": lit(text(icon)), "lineColor": colour(looks["text"]),
-                          "placement": lit(text("left")), "iconSize": num(14), "leftMargin": lit("10L"),
-                          "rightMargin": lit("8L")}
+            icon_props = {"shapeType": lit(text(icon)), "placement": lit(text("left")), "iconSize": num(14),
+                          "leftMargin": lit("10L"), "rightMargin": lit("8L")}
+            if looks["text"] is not None:
+                icon_props["lineColor"] = colour(looks["text"])
             objects["icon"] = self._states(True, {"default": icon_props, "hover": icon_props})
         else:
             objects["icon"] = self._states(False, {})
@@ -1107,7 +1150,7 @@ class ReportBuilder:
                     "default": {"fillColor": colour(WHITE), "transparency": num(100)},
                     "hover": {"fillColor": colour(WHITE), "transparency": num(92)},
                     "selected": {"fillColor": colour(WHITE), "transparency": num(86)}}),
-                "accentBar": self._states(True, {
+                "accentBar": self._states(True, {              # rail chrome: fixed colours (see bookmark_button)
                     "default": {"color": colour(NAVY), "position": lit(text("Left")), "width": num(4)},
                     "hover": {"color": colour(NAVY), "position": lit(text("Left")), "width": num(4)},
                     "selected": {"color": colour(TEAL), "position": lit(text("Left")), "width": num(4)}}),
@@ -1142,7 +1185,7 @@ class ReportBuilder:
     def headline(self, f: Field, alt: str) -> dict:
         """The page's thesis sentence: the title of an empty shape, bound to the title measure and word-wrapped,
         left-aligned. A visual title wraps onto a second line; the new card's value cut the sentence off with
-        "..." in Desktop."""
+        "..." in Desktop. Its colour is the theme's shape title (navy); a theme colour in a title went white."""
         sel = {"id": "default"}
         return {
             "visualType": "shape",
@@ -1150,7 +1193,7 @@ class ReportBuilder:
             "visualContainerObjects": vco(
                 title={"show": flag(True), "text": {"expr": field_expr(f)}, "titleWrap": flag(True),
                        "fontSize": num(13), "fontFamily": lit(text("Segoe UI Semibold")), "bold": flag(True),
-                       "fontColor": colour(NAVY), "alignment": lit(text("left")), "heading": lit(text("Heading2"))},
+                       "alignment": lit(text("left")), "heading": lit(text("Heading2"))},
                 background={"show": flag(False)}, border={"show": flag(False)}, dropShadow={"show": flag(False)},
                 visualHeader={"show": flag(False)}, general={"altText": lit(text(alt))},
                 padding={"top": num(0), "bottom": num(0), "left": num(0), "right": num(0)}),
@@ -1184,25 +1227,23 @@ class ReportBuilder:
         (refs: {kpi index: [(measure, caption)]}), such as the change since the previous update or the baseline
         variance. colour_by colours a KPI value with a colour measure."""
         sel = {"id": "default"}
+        # colours come from the theme (cardVisual: value, label, reference labels); the strip sets sizes and places
         objects = {
             "value": [{"properties": {"fontSize": num(value_size), "fontFamily": lit(text("Segoe UI Semibold")),
-                                      "fontColor": colour(NAVY), "horizontalAlignment": lit(text("left"))},
-                       "selector": sel}],
-            "label": [{"properties": {"show": flag(True), "fontSize": num(10), "fontColor": colour(MUTED),
-                                      "position": lit(text("aboveValue")),
+                                      "horizontalAlignment": lit(text("left"))}, "selector": sel}],
+            "label": [{"properties": {"show": flag(True), "fontSize": num(10), "position": lit(text("aboveValue")),
                                       "horizontalAlignment": lit(text("left"))}, "selector": sel}],
             "outline": [{"properties": {"show": flag(False)}, "selector": sel}],
-            "accentBar": [{"properties": {"show": flag(True), "color": colour(TEAL), "width": num(3)},
+            "accentBar": [{"properties": {"show": flag(True), "color": theme_colour(TC_TEAL), "width": num(3)},
                            "selector": sel}],
             # tabular: caption left, value right-aligned; sentence: caption and value run together, for tiles
             # too narrow for both columns
             "referenceLabelLayout": [{"properties": {"arrangement": lit(text("rows")),
                                                      "style": lit(text(ref_style)),
                                                      "horizontalAlignment": lit(text("left"))}}],
-            "referenceLabelTitle": [{"properties": {"titleFontSize": num(9), "titleFontColor": colour(MUTED)},
+            "referenceLabelTitle": [{"properties": {"titleFontSize": num(9)}, "selector": sel}],
+            "referenceLabelValue": [{"properties": {"valueFontSize": num(9), "valueBold": flag(True)},
                                      "selector": sel}],
-            "referenceLabelValue": [{"properties": {"valueFontSize": num(9), "valueFontColor": colour(NAVY),
-                                                    "valueBold": flag(True)}, "selector": sel}],
             "referenceLabel": [],
         }
         if columns:                       # a fixed grid (columns x rows) instead of one row of narrow tiles
@@ -1301,30 +1342,66 @@ class ReportBuilder:
                 "columnHeaders": [{"properties": {"customColumnWidth": flag(True)}}],
                 "columnWidth": [{"properties": {"value": num(w)}, "selector": {"metadata": m}} for m, w in widths],
             },
-            "visualContainerObjects": {**self.container_objects(title), **vco(subTitle={
-                "show": flag(True), "text": lit(text(subtitle)), "fontSize": num(9), "fontColor": colour(MUTED)})},
+            "visualContainerObjects": self.with_subtitle(self.container_objects(title), subtitle),
+        }
+
+    @staticmethod
+    def selection_filter(f: Field, selected: str, filter_column: str | None = None) -> dict:
+        """A slicer's selection when the page opens: the literal `selected` on filter_column (default: the slicer's
+        own column), in the shape Desktop keeps under general.filter."""
+        alias = f.table[0].lower()
+        return {"filter": {
+            "Version": 2,
+            "From": [{"Name": alias, "Entity": f.table, "Type": 0}],
+            "Where": [{"Condition": {"In": {
+                "Expressions": [{"Column": {"Expression": {"SourceRef": {"Source": alias}},
+                                            "Property": filter_column or f.name}}],
+                "Values": [[{"Literal": {"Value": selected}}]]}}}]}}
+
+    def button_slicer(self, f: Field, title: str, selected: str, filter_column: str, buttons: int) -> dict:
+        """A row of buttons (the button slicer), one per value of f and one pressed at a time; `selected` is the
+        button pressed when the page opens. A button at rest is the theme's default (white, grey outline, navy
+        text); the pressed one is a navy pill with white text. Objects and state selectors as Desktop writes them:
+        the button's text is `value` (the field's member; `label` is the optional highlight measure), its fill
+        `fillCustom`, and the pressed state's selector id is "selection:selected"."""
+        sel, pressed = {"id": "default"}, {"id": "selection:selected"}
+        return {
+            "visualType": "advancedSlicerVisual",
+            "query": {"queryState": {"Values": self.role([f], active=True)}},
+            "objects": {
+                "general": [{"properties": {"filter": self.selection_filter(f, selected, filter_column)}}],
+                "selection": [{"properties": {"singleSelect": flag(True), "strictSingleSelect": flag(True)}}],
+                "layout": [{"properties": {"columnCount": lit(f"{buttons}L"), "rowCount": lit("1L")}}],
+                "shapeCustomRectangle": [{"properties": {"tileShape": lit(text("rectangleRoundedByPixel")),
+                                                         "rectangleRoundedCurve": lit("10L")}, "selector": sel}],
+                "value": [{"properties": {"fontSize": num(9)}, "selector": sel},
+                          {"properties": {"fontColor": colour(WHITE), "bold": flag(True)}, "selector": pressed}],
+                "label": [{"properties": {"show": flag(False)}, "selector": sel}],
+                "fillCustom": [{"properties": {"show": flag(True)}},
+                               {"properties": {"fillColor": colour(NAVY), "transparency": num(0)}, "selector": pressed}],
+                "outline": [{"properties": {"show": flag(True)}},
+                            {"properties": {"weight": num(1)}, "selector": sel},
+                            {"properties": {"lineColor": colour(NAVY)}, "selector": pressed}],
+                "accentBar": [{"properties": {"show": flag(False)}, "selector": sel}],
+            },
+            # no title: a button row needs about 56 px of height for its text, which is the whole title-row slot
+            "visualContainerObjects": {
+                "title": [{"properties": {"show": flag(False), "text": lit(text(title))}}],
+                "padding": [{"properties": {"top": num(2), "bottom": num(2), "left": num(8), "right": num(8)}}],
+                "general": [{"properties": {"altText": lit(text(f"Slicer: {title}"))}}],
+            },
         }
 
     def slicer(self, f: Field, header: str, mode: str, single: bool, strict: bool, sort_desc: bool = False,
-               selected: str | None = None, sync: str | None = None, horizontal: bool = False,
-               filter_column: str | None = None) -> dict:
-        """selected: the literal selected when the page opens, on filter_column (default: the slicer's column)."""
+               selected: str | None = None, sync: str | None = None, filter_column: str | None = None) -> dict:
+        """The classic slicer (a dropdown): selected is the literal selected when the page opens, on filter_column
+        (default: the slicer's column)."""
         query = {"queryState": {"Values": self.role([f], active=True)}}
         if sort_desc:
             query["sortDefinition"] = self.sort(f, "Descending")
-        general = {"selfFilterEnabled": flag(not horizontal)}      # no search box on a row of tiles
-        if horizontal:                    # the list laid out as a row of tiles
-            general["orientation"] = lit("1D")
-            general["outlineColor"] = colour("#CBD5E0")
+        general = {"selfFilterEnabled": flag(True)}
         if selected is not None:
-            alias = f.table[0].lower()
-            general["filter"] = {"filter": {
-                "Version": 2,
-                "From": [{"Name": alias, "Entity": f.table, "Type": 0}],
-                "Where": [{"Condition": {"In": {
-                    "Expressions": [{"Column": {"Expression": {"SourceRef": {"Source": alias}},
-                                                "Property": filter_column or f.name}}],
-                    "Values": [[{"Literal": {"Value": selected}}]]}}}]}}
+            general["filter"] = self.selection_filter(f, selected, filter_column)
         selection = {"singleSelect": flag(single)}
         if strict:
             selection["strictSingleSelect"] = flag(True)
@@ -1389,17 +1466,18 @@ class ReportBuilder:
         sparks = [f for f in fields if f.kind == "Sparkline"]
         if sparks:
             objects["sparklines"] = [
-                {"properties": {"chartType": lit(text("line")), "dataColor": colour(TEAL), "strokeWidth": num(1.5),
-                                "markers": lit(SPARK_MARKERS), "markerColor": colour(NAVY), "markerSize": num(3)},
+                {"properties": {"chartType": lit(text("line")), "dataColor": theme_colour(TC_TEAL),
+                                "strokeWidth": num(1.5), "markers": lit(SPARK_MARKERS),
+                                "markerColor": theme_colour(TC_NAVY), "markerSize": num(3)},
                  "selector": {"metadata": query_ref(f)}} for f in sparks]
         return {"visualType": "tableEx", "query": query, "objects": objects,
                 "visualContainerObjects": self.with_subtitle(self.container_objects(title), subtitle)}
 
     @staticmethod
     def with_subtitle(container: dict, subtitle: str | None) -> dict:
+        """The subtitle's size and colour are the theme's (visualStyles * subTitle)."""
         if subtitle:
-            container["subTitle"] = [{"properties": {"show": flag(True), "text": lit(text(subtitle)),
-                                                     "fontSize": num(9), "fontColor": colour(MUTED)}}]
+            container["subTitle"] = [{"properties": {"show": flag(True), "text": lit(text(subtitle))}}]
         return container
 
     def matrix(self, rows: list[Field], columns: list[Field], values: list[Field], title: str,
@@ -1444,10 +1522,11 @@ class ReportBuilder:
             "valueAxis": [{"properties": value_axis}],
             "labels": [{"properties": {"show": flag(True), "fontSize": num(9), "labelDisplayUnits": lit(text("1"))}}],
             "legend": [{"properties": {"show": flag(False)}}],
-            "sentimentColors": [{"properties": {"increaseFill": colour(GREEN), "decreaseFill": colour(RED),
-                                                "totalFill": colour(NAVY)}}],
+            "sentimentColors": [{"properties": {"increaseFill": theme_colour(TC_GREEN),
+                                                "decreaseFill": theme_colour(TC_RED),
+                                                "totalFill": theme_colour(TC_NAVY)}}],
             "y1AxisReferenceLine": [{"properties": {
-                "show": flag(True), "value": lit("0D"), "lineColor": colour(SLATE), "style": lit(text("solid")),
+                "show": flag(True), "value": lit("0D"), "lineColor": theme_colour(TC_SLATE), "style": lit(text("solid")),
                 "width": num(1), "position": lit(text("front")), "dataLabelShow": flag(False)},
                 "selector": {"id": "0"}}],
         }
@@ -1491,7 +1570,8 @@ class ReportBuilder:
               plot_tint: bool = False) -> dict:
         """series_colours fixes the colour of each series value ({value: hex}), so a status series never takes
         whichever theme colour its sort position gives it. y_title "" hides the value-axis title (the chart title
-        says what is counted). y_lines: (value, label, colour, shade[, (horizontal, vertical) label position]).
+        says what is counted). y_lines: (value, label, palette position, shade[, (horizontal, vertical) label
+        position]); the line and its label take that theme colour.
         category_room: the share of the chart (%) the category labels may take, so long owner names or rotated
         month labels show whole; with it the labels drop to 8 pt. drill: further category levels the reader can
         drill down to (the chart's header arrows), inactive until then."""
@@ -1523,7 +1603,7 @@ class ReportBuilder:
             "labels": [{"properties": {"show": flag(labels), "labelDisplayUnits": lit(text("1"))}}],
         }
         if visual_type != "lineChart" and len(y) == 1 and series is None:
-            objects["dataPoint"] = [{"properties": {"defaultColor": colour(NAVY)}}]
+            objects["dataPoint"] = [{"properties": {"defaultColor": theme_colour(TC_NAVY)}}]
         if series_colours:
             if series is None:
                 raise ValueError(f"{title}: series_colours needs a series field")
@@ -1537,25 +1617,25 @@ class ReportBuilder:
                                     for ref, hex_code in colours.items()]
         # horizontal lines (value, label, colour, shade "before"/"after"/"none") and a vertical line at a date
         # measure with the period after it shaded
-        for i, (value, label, hex_code, shade, *where) in enumerate(y_lines or []):
+        for i, (value, label, tone, shade, *where) in enumerate(y_lines or []):
             across, up = where[0] if where else ("left", "above")
             objects.setdefault("y1AxisReferenceLine", []).append({"properties": {
                 "show": flag(True), "displayName": lit(text(label)), "value": lit(f"{value}D"),
-                "lineColor": colour(hex_code), "style": lit(text("dashed")), "width": num(1.5),
+                "lineColor": theme_colour(tone), "style": lit(text("dashed")), "width": num(1.5),
                 "position": lit(text("front")), "dataLabelShow": flag(True), "dataLabelText": lit(text("Name")),
-                "dataLabelColor": colour(hex_code), "dataLabelHorizontalPosition": lit(text(across)),
+                "dataLabelColor": theme_colour(tone), "dataLabelHorizontalPosition": lit(text(across)),
                 "dataLabelVerticalPosition": lit(text(up)),
-                "shadeShow": flag(shade != "none"), "shadeRegion": lit(text(shade)), "shadeColor": colour(hex_code),
+                "shadeShow": flag(shade != "none"), "shadeRegion": lit(text(shade)), "shadeColor": theme_colour(tone),
                 "shadeTransparency": num(92)}, "selector": {"id": str(i)}})
         if x_line:
             measure, label = x_line
             objects["xAxisReferenceLine"] = [{"properties": {
                 "show": flag(True), "displayName": lit(text(label)), "value": {"expr": field_expr(mea(measure))},
-                "lineColor": colour(TEAL), "style": lit(text("solid")), "width": num(2), "position": lit(text("front")),
-                "dataLabelShow": flag(True), "dataLabelText": lit(text("Name")), "dataLabelColor": colour(TEAL),
-                "dataLabelVerticalPosition": lit(text("above")), "shadeShow": flag(True),
-                "shadeRegion": lit(text("after")), "shadeColor": colour(SLATE), "shadeTransparency": num(92)},
-                "selector": {"id": "0"}}]
+                "lineColor": theme_colour(TC_TEAL), "style": lit(text("solid")), "width": num(2),
+                "position": lit(text("front")), "dataLabelShow": flag(True), "dataLabelText": lit(text("Name")),
+                "dataLabelColor": theme_colour(TC_TEAL), "dataLabelVerticalPosition": lit(text("above")),
+                "shadeShow": flag(True), "shadeRegion": lit(text("after")), "shadeColor": theme_colour(TC_SLATE),
+                "shadeTransparency": num(92)}, "selector": {"id": "0"}}]
         if markers:
             objects["lineStyles"] = [{"properties": {"showMarker": flag(True), "markerSize": num(5),
                                                      "strokeWidth": num(2.5)}}]
@@ -1563,12 +1643,10 @@ class ReportBuilder:
             objects["seriesLabels"] = [{"properties": {"show": flag(True), "textSize": num(9)}}]
             objects["legend"] = [{"properties": {"show": flag(False)}}]
         if plot_tint:                     # a faint tint behind the lines sets the hero chart apart from the cards
-            objects["plotArea"] = [{"properties": {"color": colour(PLOT_TINT), "colorTransparency": num(0)}}]
-        container = self.container_objects(title)
-        if subtitle:
-            container["subTitle"] = [{"properties": {"show": flag(True), "text": lit(text(subtitle)),
-                                                     "fontSize": num(9), "fontColor": colour(MUTED)}}]
-        return {"visualType": visual_type, "query": query, "objects": objects, "visualContainerObjects": container}
+            objects["plotArea"] = [{"properties": {"color": theme_colour(TC_NAVY, PLOT_TINT),
+                                                   "colorTransparency": num(0)}}]
+        return {"visualType": visual_type, "query": query, "objects": objects,
+                "visualContainerObjects": self.with_subtitle(self.container_objects(title), subtitle)}
 
     # -- pages ------------------------------------------------------------------------------------------------
     def add_page(self, number: int, key: str, display: str, title_measure: str | None, rows: list,
@@ -1607,7 +1685,7 @@ class ReportBuilder:
         # extra_slicer (key, visual): one more title-row slicer, named p06_h3_<key>, before the threshold
         right = [s for s in ("compare", "extra", "threshold", "data_date")
                  if s in slicers or (s == "extra" and extra_slicer)]
-        slot_w = {"compare": 264, "extra": SLOT_W, "threshold": SLOT_W, "data_date": SLOT_W}
+        slot_w = {"compare": 300, "extra": SLOT_W, "threshold": SLOT_W, "data_date": SLOT_W}   # three buttons
         right_w = sum(slot_w[s] + GUTTER for s in right) + (BACK_W + GUTTER if drillthrough else 0)
         placed.append((f"{prefix}_h8_kicker", self.textbox([[(display.upper(), {
             "fontFamily": "Segoe UI Semibold", "fontSize": "10px", "color": TEAL, "fontWeight": "bold"})]], tight=True),
@@ -1619,11 +1697,10 @@ class ReportBuilder:
         for slot in right:
             box = (x, SLOT_Y, slot_w[slot], SLOT_H)
             if slot == "compare":
-                # tiles in a row (a horizontal list slicer), one at a time, opening on BL1
-                placed.append((f"{prefix}_h3_compare", self.slicer(
-                    col(COMPARE_TABLE, COMPARE_TABLE), "Compare against", "Basic", single=True, strict=True,
-                    selected=text(compare_key("vs BL1")), filter_column=f"{COMPARE_TABLE} Fields",
-                    horizontal=True), box, None))
+                # a button slicer: one button per comparison, one pressed at a time, opening on BL1
+                placed.append((f"{prefix}_h3_compare", self.button_slicer(
+                    col(COMPARE_TABLE, COMPARE_TABLE), "Compare against", selected=text(compare_key("vs BL1")),
+                    filter_column=f"{COMPARE_TABLE} Fields", buttons=len(COMPARE_OPTIONS)), box, None))
             elif slot == "extra":
                 placed.append((f"{prefix}_h3_{extra_slicer[0]}", extra_slicer[1], box, None))
             elif slot == "threshold":
@@ -1753,10 +1830,11 @@ class ReportBuilder:
             "sorts": {n: v["query"]["sortDefinition"]["sort"] for n, v, _, _ in placed
                       if v.get("query", {}).get("sortDefinition")},
             "slicers": {n: v["objects"]["general"][0]["properties"]["filter"] for n, v, _, _ in placed
-                        if v.get("visualType") == "slicer" and re.match(rf"{prefix}_h\d+_", n)
+                        if v.get("visualType") in SLICER_TYPES and re.match(rf"{prefix}_h\d+_", n)
                         and "filter" in v["objects"]["general"][0]["properties"]},
+            "slicer_types": {n: v["visualType"] for n, v, _, _ in placed if v.get("visualType") in SLICER_TYPES},
             # title-row slicers that open with nothing selected (Reset clears them)
-            "cleared": [n for n, v, _, _ in placed if v.get("visualType") == "slicer"
+            "cleared": [n for n, v, _, _ in placed if v.get("visualType") in SLICER_TYPES
                         and re.match(rf"{prefix}_h\d+_", n) and "filter" not in v["objects"]["general"][0]["properties"]]}
         if not any(v.get("visualType") == "ganttChart" for _, v, _, _ in placed):
             self.mobile_layout(page, placed, hosts)
@@ -1770,7 +1848,7 @@ class ReportBuilder:
         W, G = MOBILE_W, MOBILE_GAP
         prefix = page[:3]
         by_name = {n: (v, box) for n, v, box, _ in placed}
-        navy_box = {"background": {"show": flag(True), "color": colour(NAVY), "transparency": num(0)},
+        navy_box = {"background": {"show": flag(True), "color": theme_colour(TC_NAVY), "transparency": num(0)},
                     "padding": {"top": num(8), "bottom": num(8), "left": num(10), "right": num(10)}}
         out: dict[str, tuple[tuple[int, int, int, int], dict]] = {}
         y = 0
@@ -1917,7 +1995,7 @@ def build_pages(rb: ReportBuilder) -> None:
     float_trend = rb.chart(
         "lineChart", col("dim_snapshot", "data_date", "Data date"), [mea("Day 1 total float", "Day 1 total float")],
         "Day 1 total float by update (working days)", sort=(col("dim_snapshot", "data_date"), "Ascending"),
-        labels=True, markers=True, legend=False, y_lines=[(0, "Zero float", RED, "before")], plot_tint=True,
+        labels=True, markers=True, legend=False, y_lines=[(0, "Zero float", TC_RED, "before")], plot_tint=True,
         colours={"_Measures.Day 1 total float": NAVY}, subtitle="Below the line, Day 1 is later than its target")
     s_curve = rb.chart(
         "lineChart", col("fact_s_curve", "date", "Month end"),
@@ -1989,7 +2067,7 @@ def build_pages(rb: ReportBuilder) -> None:
                 tooltips=[mea("Milestone forecast finish", "Forecast finish")],
                 sort=(col("dim_snapshot", "data_date"), "Ascending"), y_title="Days vs BL0",
                 # no zoom slider: Desktop does not show one in a responsive visual this short (208 px)
-                series_labels=True, markers=True, y_lines=[(0, "On BL0", SLATE, "none")],
+                series_labels=True, markers=True, y_lines=[(0, "On BL0", TC_SLATE, "none")],
                 plot_tint=True, subtitle="One line per gate; the forecast date is in the tooltip"),
                 gate_filter)),
             # a count that is non-zero in every update. Drill levels below the owner (asset, then workstream) let
@@ -2082,7 +2160,7 @@ def build_pages(rb: ReportBuilder) -> None:
                 [mea("Day 1 total float"), mea("Float erosion")],
                 "Day 1 float by update (wd)",
                 sort=(col("dim_snapshot", "data_date"), "Ascending"), y_title="Working days", markers=True,
-                series_labels=True, y_lines=[(0, "Zero", RED, "none")],
+                series_labels=True, y_lines=[(0, "Zero", TC_RED, "none")],
                 colours={"_Measures.Day 1 total float": NAVY, "_Measures.Float erosion": TEAL},
                 subtitle="Erosion below zero: float lost since the previous update"), None)),
         ]),
@@ -2203,7 +2281,7 @@ def build_pages(rb: ReportBuilder) -> None:
                 sort=(agg("fact_scenario", "day1_tf_d", "Sum"), "Descending"), legend=False, labels=True,
                 y_title="Working days", series_colours={"Yes": TEAL, "No": SLATE},
                 # the label at the right end, above the line: the bars there are below zero
-                y_lines=[(0, "Zero float", RED, "none", ("right", "above"))],
+                y_lines=[(0, "Zero float", TC_RED, "none", ("right", "above"))],
                 subtitle="Recommended scenario in teal"), None)),
             (688, ("scenario_table", rb.table(
                 [col("fact_scenario", "scenario_id", "Scenario"), col("fact_scenario", "name", "Name"),
@@ -2309,8 +2387,8 @@ def build_pages(rb: ReportBuilder) -> None:
                 "DQ score by update", sort=(col("dim_snapshot", "data_date"), "Ascending"), labels=True,
                 markers=True, legend=False, colours={"_Measures.DQ score": NAVY},
                 # labels at the right end, clear of the early updates' points
-                y_lines=[(85, "Good (85)", GREEN, "none", ("right", "above")),
-                         (70, "Fair (70)", AMBER, "none", ("right", "under"))],
+                y_lines=[(85, "Good (85)", TC_GREEN, "none", ("right", "above")),
+                         (70, "Fair (70)", TC_AMBER, "none", ("right", "under"))],
                 subtitle="Good at 85 or more, fair from 70 to 85"), None)),
         ]),
         (176, [
@@ -2338,7 +2416,7 @@ def build_pages(rb: ReportBuilder) -> None:
                                          single=True, strict=False)))
 
     # 7 Reconciliation & lineage -------------------------------------------------------------------------------
-    lineage_style = {"fontFamily": "Segoe UI", "fontSize": "11px", "color": "#1A202C"}
+    lineage_style = {"fontFamily": "Segoe UI", "fontSize": "11px", "color": FOREGROUND}
     lineage = rb.textbox([
         [("Data lineage", {"fontFamily": "Segoe UI Semibold", "fontSize": "13px", "color": NAVY, "fontWeight": "bold"})],
         [("1. P6 XER exports: DOP_BL0.xer, DOP_BL1.xer and DOP_UPD_<data date>.xer (data/xer)", lineage_style)],
@@ -2411,7 +2489,7 @@ def build_pages(rb: ReportBuilder) -> None:
                 [agg(fas, "total_float_d", "Min", "Total float (working days)")],
                 "Total float by update: when did this activity lose its float?",
                 sort=(col("dim_snapshot", "data_date"), "Ascending"), labels=True, markers=True,
-                y_title="Working days", y_lines=[(0, "Zero float", RED, "before", ("right", "above"))],
+                y_title="Working days", y_lines=[(0, "Zero float", TC_RED, "before", ("right", "above"))],
                 legend=False), None)),
             (512, ("drivers", rb.table(
                 [col("fact_relationship", "pred_id", "Predecessor"), col("fact_relationship", "rel_type", "Type"),
@@ -2454,8 +2532,8 @@ def build_bookmarks(rb: ReportBuilder) -> dict[str, bytes]:
     def named(page: str, key: str) -> str:
         return next(n for n in state[page]["visuals"] if re.fullmatch(rf"{page[:3]}_[hv]\d+_{key}", n))
 
-    def slicer(filt: dict, label: str | None = None) -> dict:
-        state = {"visualType": "slicer", "objects": {"merge": {"general": [{"properties": {"filter": filt}}]}}}
+    def slicer(filt: dict, label: str | None = None, visual_type: str = "slicer") -> dict:
+        state = {"visualType": visual_type, "objects": {"merge": {"general": [{"properties": {"filter": filt}}]}}}
         if label:                          # the selected tile's name, as Desktop caches it for the filter pane
             where = filt["filter"]["Where"][0]["Condition"]["In"]
             column = where["Expressions"][0]["Column"]
@@ -2474,7 +2552,7 @@ def build_bookmarks(rb: ReportBuilder) -> dict[str, bytes]:
     def compare_state(label: str) -> dict:
         filt = copy.deepcopy(state[ms_page]["slicers"][compare])
         filt["filter"]["Where"][0]["Condition"]["In"]["Values"] = [[{"Literal": {"Value": text(compare_key(label))}}]]
-        return slicer(filt, label)
+        return slicer(filt, label, state[ms_page]["slicer_types"][compare])
 
     # bookmark toggles: page, then per choice (visual shown for it, its button prefix); the first is the default
     toggles = {"compare": (ms_page, {"BL1": ("finish_profile", "bl1"), "BL0": ("finish_profile_bl0", "bl0")}),
@@ -2599,11 +2677,12 @@ def _platform(kind: str) -> dict:
 def build_files(root: pathlib.Path = ROOT, csv_folder: str = DEFAULT_CSV_FOLDER) -> tuple[dict[str, bytes], dict]:
     """All project files as {path relative to the powerbi folder: bytes}, plus a summary."""
     tables = read_tables(root / "output" / "csv")
-    measures = parse_measures((root / "powerbi" / "measures.dax").read_text(encoding="utf-8"))
+    dax = (root / "powerbi" / "measures.dax").read_text(encoding="utf-8")
+    measures, functions = parse_measures(dax), parse_functions(dax)
     theme = (root / "powerbi" / "dop_theme.json").read_bytes()
     json.loads(theme)                                            # must parse
 
-    model = build_model(tables, measures, csv_folder)
+    model = build_model(tables, measures, csv_folder, functions)
     by_name = {t.name: t for t in tables}
     kinds = {(t.name, c.name): c.kind for t in tables for c in t.columns}
     snapshots = by_name["dim_snapshot"].rows
@@ -2639,7 +2718,7 @@ def build_files(root: pathlib.Path = ROOT, csv_folder: str = DEFAULT_CSV_FOLDER)
                                   "settings": {"enableAutoRecovery": True}}),
         f"{sm}/.platform": dumps(_platform("SemanticModel")),
         f"{sm}/definition.pbism": dumps({"$schema": SCHEMAS["pbism"], "version": "4.2", "settings": {}}),
-        f"{sm}/model.bim": dumps(model),
+        **{f"{sm}/{path}": text.encode("utf-8") for path, text in tmdl.write_model(model, PROJECT).items()},
         f"{rp}/.platform": dumps(_platform("Report")),
         f"{rp}/definition.pbir": dumps({"$schema": SCHEMAS["pbir"], "version": "4.0",
                                         "datasetReference": {"byPath": {"path": f"../{sm}"}}}),
@@ -2676,31 +2755,32 @@ def build_files(root: pathlib.Path = ROOT, csv_folder: str = DEFAULT_CSV_FOLDER)
     files = dict(sorted(files.items()))
     visuals = sum(1 for p in files if p.endswith("/visual.json"))
     summary = {"tables": len(model["model"]["tables"]), "csv_tables": len(tables), "measures": len(measures),
-               "relationships": len(RELATIONSHIPS), "pages": len(rb.pages), "visuals": visuals,
-               "files": len(files)}
+               "functions": len(functions), "relationships": len(RELATIONSHIPS), "pages": len(rb.pages),
+               "visuals": visuals, "files": len(files)}
     return files, summary
 
 
 def write_project(files: dict[str, bytes], out_dir: pathlib.Path) -> None:
-    """Write the files and remove page or visual folders that the current design no longer has."""
-    sm_definition = out_dir / f"{PROJECT}.SemanticModel" / "definition"
-    if sm_definition.exists():
-        raise SystemExit(f"{sm_definition} holds a TMDL model; a project cannot have both TMDL and model.bim. "
-                         "Remove that folder or write to another --out folder.")
+    """Write the files and remove what the current design no longer has: page, visual, phone-layout or bookmark
+    files in the report definition, table files in the model definition, and a `model.bim` left from the TMSL
+    format (a project cannot hold both a TMDL definition folder and model.bim)."""
     for rel, data in files.items():
         path = out_dir / rel
         path.parent.mkdir(parents=True, exist_ok=True)
         if not path.exists() or path.read_bytes() != data:
             path.write_bytes(data)
-    # the report definition is generated as a whole: a page, visual, phone-layout or bookmark file the current
-    # design does not have (an older design, or a phone layout Desktop wrote for a visual) is removed
-    definition = out_dir / f"{PROJECT}.Report" / "definition"
-    for path in sorted(definition.rglob("*"), reverse=True):
-        rel = path.relative_to(out_dir).as_posix()
-        if path.is_file() and rel not in files:
-            path.unlink()
-        elif path.is_dir() and not any(path.iterdir()):
-            shutil.rmtree(path)
+    model_bim = out_dir / f"{PROJECT}.SemanticModel" / "model.bim"
+    if model_bim.exists():
+        model_bim.unlink()
+    # the definitions are generated as a whole: a file the current design does not have (an older design, or a
+    # phone layout Desktop wrote for a visual) is removed
+    for definition in (out_dir / f"{PROJECT}.Report" / "definition", out_dir / f"{PROJECT}.SemanticModel" / "definition"):
+        for path in sorted(definition.rglob("*"), reverse=True):
+            rel = path.relative_to(out_dir).as_posix()
+            if path.is_file() and rel not in files:
+                path.unlink()
+            elif path.is_dir() and not any(path.iterdir()):
+                shutil.rmtree(path)
 
 
 def generate_pbip(root: pathlib.Path = ROOT, out_dir: pathlib.Path | None = None,

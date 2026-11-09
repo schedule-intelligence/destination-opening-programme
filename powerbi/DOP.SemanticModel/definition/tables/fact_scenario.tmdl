@@ -1,0 +1,171 @@
+table fact_scenario
+	lineageTag: 0bb83cc3-76c7-5fc1-97cc-a7a259a8f055
+
+	column scenario_id
+		dataType: string
+		lineageTag: 55828f7e-2150-5db1-b8eb-6093445173e9
+		sourceColumn: scenario_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column name
+		dataType: string
+		lineageTag: 639e619e-fc00-539a-91dd-192ceea46e79
+		sourceColumn: name
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column options
+		dataType: string
+		lineageTag: 24341f88-4851-5a17-8328-89c52ba950f6
+		sourceColumn: options
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column owner
+		dataType: string
+		lineageTag: b0849805-3d6e-591f-89c6-bb9140f3b8aa
+		sourceColumn: owner
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column day1_forecast
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: 44f72607-5a03-5289-b329-960eeb65e6c9
+		sourceColumn: day1_forecast
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column day1_impact_days
+		dataType: double
+		formatString: 0
+		lineageTag: 60c75023-b135-51ec-93d0-e1fd31b57a5e
+		sourceColumn: day1_impact_days
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column day1_tf_d
+		dataType: double
+		formatString: +0;-0;0
+		lineageTag: 9f53e4e7-df62-573d-9564-122505e0e71c
+		sourceColumn: day1_tf_d
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column float_gain_d
+		dataType: double
+		formatString: +0;-0;0
+		lineageTag: f871e281-9453-5d61-b76d-0813b3d1013f
+		sourceColumn: float_gain_d
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column neg_float_count
+		dataType: int64
+		formatString: 0
+		lineageTag: c7f3a841-a662-5202-8447-ca7bc92aa0e3
+		sourceColumn: neg_float_count
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column near_critical_count
+		dataType: int64
+		formatString: 0
+		lineageTag: 56d80809-31d8-5273-97e0-705651d7f4cc
+		sourceColumn: near_critical_count
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column recommended
+		dataType: boolean
+		lineageTag: 443f1804-1f02-5e34-b0dd-6e89640cb2f1
+		sourceColumn: recommended
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column decision
+		dataType: string
+		lineageTag: ec5cf79c-c4c2-525c-9684-3f03de5c4e76
+		sourceColumn: decision
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column cost
+		dataType: string
+		lineageTag: c7b2d253-d046-5edb-836e-26592790573a
+		sourceColumn: cost
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column description
+		dataType: string
+		lineageTag: 40bb3e8a-d79d-55ae-80a5-d7a2e0697a7f
+		sourceColumn: description
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column residual_risk
+		dataType: string
+		lineageTag: 0c7ad134-b83e-5207-862c-65635b71e1a2
+		sourceColumn: residual_risk
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column recommended_label
+		dataType: string
+		lineageTag: 1c89c7fd-fa64-54c4-b232-830179dae851
+		sourceColumn: recommended_label
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_scenario-64b62646-b2f6-57ca-965d-8da189fc0af3 = m
+		mode: import
+		source = ```
+				let
+				    Source = Csv.Document(File.Contents(CsvFolder & "\fact_scenario.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Nulls = Table.ReplaceValue(Promoted, "", null, Replacer.ReplaceValue, Table.ColumnNames(Promoted)),
+				    Typed = Table.TransformColumnTypes(Nulls, {
+				        {"scenario_id", type text},
+				        {"name", type text},
+				        {"options", type text},
+				        {"owner", type text},
+				        {"day1_forecast", type datetime},
+				        {"day1_impact_days", type number},
+				        {"day1_tf_d", type number},
+				        {"float_gain_d", type number},
+				        {"neg_float_count", Int64.Type},
+				        {"near_critical_count", Int64.Type},
+				        {"recommended", type logical},
+				        {"decision", type text},
+				        {"cost", type text},
+				        {"description", type text},
+				        {"residual_risk", type text}
+				    }, "en-GB"),
+				    Dates = Table.TransformColumnTypes(Typed, {
+				        {"day1_forecast", type date}
+				    }),
+				    Label_recommended = Table.AddColumn(Dates, "recommended_label", each if [recommended] = null then null else if [recommended] then "Yes" else "No", type text)
+				in
+				    Label_recommended
+				```
+
+	annotation PBI_ResultType = Table

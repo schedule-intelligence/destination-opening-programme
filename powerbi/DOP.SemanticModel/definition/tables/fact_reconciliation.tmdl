@@ -1,0 +1,101 @@
+table fact_reconciliation
+	lineageTag: bbbc9c3d-6a4d-5b27-ba59-952c216172e3
+
+	column snapshot_id
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: c6e46fee-10b0-5ff1-af35-0da3322ddb17
+		sourceColumn: snapshot_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column control_id
+		dataType: string
+		lineageTag: 85c29668-dbe9-58dd-951e-8032b4a26890
+		sourceColumn: control_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column control
+		dataType: string
+		lineageTag: 2c3df79d-0b49-511f-bd80-d2cb62c4b494
+		sourceColumn: control
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column source_value
+		dataType: string
+		lineageTag: 30da772d-ea36-5483-8a14-e1b97b425b09
+		sourceColumn: source_value
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column model_value
+		dataType: string
+		lineageTag: 023e15b5-e354-5fe8-8ef5-417d4ce2ddc2
+		sourceColumn: model_value
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column dashboard_value
+		dataType: string
+		lineageTag: c2a5f51e-ee46-5584-9e03-c51c1a36a7c5
+		sourceColumn: dashboard_value
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column delta
+		dataType: double
+		formatString: 0.##
+		lineageTag: 051b3ed3-6bda-52df-af85-7ed9669d9635
+		sourceColumn: delta
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column passed
+		dataType: boolean
+		lineageTag: 5e28fdb0-2920-58cb-9d5a-6d598072cfe7
+		sourceColumn: passed
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column passed_label
+		dataType: string
+		lineageTag: 6533e9b2-3fb8-5cd9-b2b5-4395da51c8e2
+		sourceColumn: passed_label
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_reconciliation-41a260b4-1d16-5a18-b24a-5dc10b6de77f = m
+		mode: import
+		source = ```
+				let
+				    Source = Csv.Document(File.Contents(CsvFolder & "\fact_reconciliation.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Nulls = Table.ReplaceValue(Promoted, "", null, Replacer.ReplaceValue, Table.ColumnNames(Promoted)),
+				    Typed = Table.TransformColumnTypes(Nulls, {
+				        {"snapshot_id", Int64.Type},
+				        {"control_id", type text},
+				        {"control", type text},
+				        {"source_value", type text},
+				        {"model_value", type text},
+				        {"dashboard_value", type text},
+				        {"delta", type number},
+				        {"passed", type logical}
+				    }, "en-GB"),
+				    Label_passed = Table.AddColumn(Typed, "passed_label", each if [passed] = null then null else if [passed] then "Pass" else "Fail", type text)
+				in
+				    Label_passed
+				```
+
+	annotation PBI_ResultType = Table

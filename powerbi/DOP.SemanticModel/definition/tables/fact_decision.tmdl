@@ -1,0 +1,156 @@
+table fact_decision
+	lineageTag: ca57bd30-85ca-5a07-9192-abe62138afaf
+
+	column decision_id
+		dataType: string
+		lineageTag: 24d525d7-3b33-5f32-a271-2d1d6c83f0f7
+		sourceColumn: decision_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column ask
+		dataType: string
+		lineageTag: b49a4e42-1fba-55fe-90d5-2a5daa1a5ebc
+		sourceColumn: ask
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column owner
+		dataType: string
+		lineageTag: 6ac53a05-0f9a-50e3-9f6e-a1d78d9233c5
+		sourceColumn: owner
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column raised_data_date
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: e62cc99b-0860-55d8-813c-16267d4a77bd
+		sourceColumn: raised_data_date
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column needed_by
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: 747b5f90-dfd5-5e74-b0b3-859e57eb535f
+		sourceColumn: needed_by
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column status
+		dataType: string
+		lineageTag: 10351a1c-57e9-502b-9545-9f47e81455e8
+		sourceColumn: status
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column closed_on
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: f0a7838b-a0ba-555d-9d42-245079181e88
+		sourceColumn: closed_on
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column linked_activity
+		dataType: string
+		lineageTag: 27639517-ca04-5cb8-a57b-97b8b1c83920
+		sourceColumn: linked_activity
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column linked_forecast
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: adbd5e5c-5576-5757-811e-f6358ccb87c6
+		sourceColumn: linked_forecast
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column linked_tf_d
+		dataType: double
+		formatString: 0
+		lineageTag: 4012c65c-1023-54a5-b6e4-ed3f645879d2
+		sourceColumn: linked_tf_d
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column days_to_need
+		dataType: int64
+		formatString: 0
+		lineageTag: 34e04702-a0b2-533b-b5dd-49885e41aaa5
+		sourceColumn: days_to_need
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column overdue
+		dataType: boolean
+		lineageTag: 18494fa1-51a7-504c-86fe-ed9e0fa07c7b
+		sourceColumn: overdue
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column outcome
+		dataType: string
+		lineageTag: 4c796e30-bd72-509d-acff-ee227f84b1a2
+		sourceColumn: outcome
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column overdue_label
+		dataType: string
+		lineageTag: ebefbf0a-f380-5e69-85f4-4e2423e9ec7e
+		sourceColumn: overdue_label
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_decision-72d3f576-46fb-5899-9153-5d0ae7462756 = m
+		mode: import
+		source = ```
+				let
+				    Source = Csv.Document(File.Contents(CsvFolder & "\fact_decision.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Nulls = Table.ReplaceValue(Promoted, "", null, Replacer.ReplaceValue, Table.ColumnNames(Promoted)),
+				    Typed = Table.TransformColumnTypes(Nulls, {
+				        {"decision_id", type text},
+				        {"ask", type text},
+				        {"owner", type text},
+				        {"raised_data_date", type date},
+				        {"needed_by", type date},
+				        {"status", type text},
+				        {"closed_on", type date},
+				        {"linked_activity", type text},
+				        {"linked_forecast", type datetime},
+				        {"linked_tf_d", type number},
+				        {"days_to_need", Int64.Type},
+				        {"overdue", type logical},
+				        {"outcome", type text}
+				    }, "en-GB"),
+				    Dates = Table.TransformColumnTypes(Typed, {
+				        {"linked_forecast", type date}
+				    }),
+				    Label_overdue = Table.AddColumn(Dates, "overdue_label", each if [overdue] = null then null else if [overdue] then "Yes" else "No", type text)
+				in
+				    Label_overdue
+				```
+
+	annotation PBI_ResultType = Table

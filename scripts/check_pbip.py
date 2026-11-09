@@ -10,14 +10,15 @@ Checks
      schema's $id (and its published path, which the embedded schemas are referenced by). Every $ref is
      resolved once at start-up; nothing is fetched over the network.
   3. Every Entity/Property (Column, Measure, Aggregation, HierarchyLevel) in every visual.json, page filter and
-     drill-through binding resolves to model.bim; queryRefs are unique per visual and formatting selectors point
-     at a queryRef of the same visual.
-  4. Every relationship column exists in model.bim and in the CSV header, with one data type on both sides, and
+     drill-through binding resolves to the semantic model (the TMDL definition folder, read by dop.tmdl); queryRefs
+     are unique per visual and formatting selectors point at a queryRef of the same visual.
+  4. Every relationship column exists in the model and in the CSV header, with one data type on both sides, and
      the relationships (active and inactive) are exactly those of POWERBI.md section 3.
   5. Every CSV header in output/csv is a column of its table, with an explicit type in the model and in the
      partition's Table.TransformColumnTypes; the types agree with each other and with POWERBI.md section 2.
-  6. Every measure in powerbi/measures.dax is in _Measures with the same expression, and the format strings
-     listed in POWERBI.md section 5 are applied.
+  6. Every measure in powerbi/measures.dax is in _Measures with the same expression, every FUNCTION is a model
+     function with the same expression (compatibility level 1702 or later), and the format strings listed in
+     POWERBI.md section 5 are applied.
   7. powerbi/dop_theme.json validates against Microsoft's report theme schema (vendored in scripts/theme_schema),
      is copied unchanged to StaticResources/RegisteredResources and registered in report.json (resourcePackages and
      themeCollection.customTheme); every page background image is a registered image resource.
@@ -44,6 +45,10 @@ from referencing import Registry
 from referencing.jsonschema import DRAFT7
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from dop import tmdl  # noqa: E402  (the TMDL reader, shared with the generator)
+
 SCHEMA_DIR = pathlib.Path(__file__).resolve().parent / "pbir_schemas"
 THEME_SCHEMA_DIR = pathlib.Path(__file__).resolve().parent / "theme_schema"
 SCHEMA_BASE = "https://developer.microsoft.com/json-schemas/"
@@ -150,13 +155,10 @@ def csv_headers(csv_dir: pathlib.Path) -> dict[str, list[str]]:
     return out
 
 
-def dax_measures(text: str) -> dict[str, str]:
-    """MEASURE name -> expression from measures.dax, read independently of the generator's parser."""
-    define = text.split("\nEVALUATE", 1)[0]
+def _dax_definitions(define: str, start: str, name_end: str) -> dict[str, str]:
     out: dict[str, str] = {}
-    parts = re.split(r"(?m)^[ \t]*MEASURE[ \t]+'_Measures'\[", define)
-    for part in parts[1:]:
-        name, _, rest = part.partition("]")
+    for part in re.split(start, define)[1:]:
+        name, _, rest = part.partition(name_end)
         body = rest.split("=", 1)[1]
         lines = body.split("\n")
         while lines and (not lines[-1].strip() or lines[-1].strip().startswith("//")):
@@ -165,6 +167,24 @@ def dax_measures(text: str) -> dict[str, str]:
             out[name + " (duplicate)"] = ""
         out[name] = " ".join(" ".join(lines).split())
     return out
+
+
+def _define_block(text: str) -> str:
+    """The DEFINE block of measures.dax, with every definition cut at the next MEASURE or FUNCTION."""
+    define = text.split("\nEVALUATE", 1)[0]
+    return re.sub(r"(?m)^[ \t]*(MEASURE|FUNCTION)[ \t]+", lambda m: "\n\x00" + m.group(0), define)
+
+
+def dax_measures(text: str) -> dict[str, str]:
+    """MEASURE name -> expression from measures.dax, read independently of the generator's parser."""
+    chunks = [c for c in _define_block(text).split("\x00") if c.lstrip().startswith("MEASURE")]
+    return _dax_definitions("\n".join(chunks), r"(?m)^[ \t]*MEASURE[ \t]+'_Measures'\[", "]")
+
+
+def dax_functions(text: str) -> dict[str, str]:
+    """FUNCTION name -> expression (parameters and body) from measures.dax."""
+    chunks = [c for c in _define_block(text).split("\x00") if c.lstrip().startswith("FUNCTION")]
+    return _dax_definitions("\n".join(chunks), r"(?m)^[ \t]*FUNCTION[ \t]+", " ")
 
 
 def doc_section(doc: str, number: int) -> str:
@@ -282,14 +302,15 @@ def run_checks(project: pathlib.Path = ROOT / "powerbi", root: pathlib.Path = RO
     rel = lambda p: p.relative_to(project).as_posix()           # noqa: E731
     report_dir = project / f"{PROJECT}.Report"
     model_dir = project / f"{PROJECT}.SemanticModel"
-    for required in (project / f"{PROJECT}.pbip", model_dir / "model.bim", model_dir / "definition.pbism",
-                     report_dir / "definition.pbir", report_dir / "definition" / "report.json"):
+    for required in (project / f"{PROJECT}.pbip", model_dir / "definition.pbism", model_dir / "definition" / "model.tmdl",
+                     model_dir / "definition" / "database.tmdl", report_dir / "definition.pbir",
+                     report_dir / "definition" / "report.json"):
         if not required.is_file():
             problems.append(f"missing {required}")
     if problems:
         return problems, warnings, {}
-    if (model_dir / "definition").exists():
-        problems.append("DOP.SemanticModel has both model.bim and a TMDL definition folder")
+    if (model_dir / "model.bim").exists():
+        problems.append("DOP.SemanticModel has both a TMDL definition folder and model.bim (the TMSL format)")
 
     # 1. parse, encoding --------------------------------------------------------------------------------------
     docs_json: dict[pathlib.Path, object] = {}
@@ -304,13 +325,18 @@ def run_checks(project: pathlib.Path = ROOT / "powerbi", root: pathlib.Path = RO
         except UnicodeDecodeError:
             problems.append(f"{rel(path)}: is not UTF-8")
             continue
-        if path.suffix in (".json", ".pbir", ".pbism", ".pbip", ".bim") or path.name == ".platform":
+        if path.suffix in (".json", ".pbir", ".pbism", ".pbip") or path.name == ".platform":
             try:
                 docs_json[path] = json.loads(data.decode("utf-8"))
             except json.JSONDecodeError as exc:
                 problems.append(f"{rel(path)}: does not parse as JSON ({exc})")
+    try:
+        model_doc = tmdl.read_model(model_dir / "definition")
+    except Exception as exc:                                     # noqa: BLE001 - any parse failure is a problem
+        problems.append(f"DOP.SemanticModel/definition: does not read as TMDL ({type(exc).__name__}: {exc})")
     if problems:
         return problems, warnings, {}
+    tmdl_files = sum(1 for p in (model_dir / "definition").rglob("*.tmdl"))
 
     # 2. schemas ----------------------------------------------------------------------------------------------
     registry, schemas = load_schemas(problems)
@@ -341,7 +367,7 @@ def run_checks(project: pathlib.Path = ROOT / "powerbi", root: pathlib.Path = RO
         validated += 1
 
     # model ---------------------------------------------------------------------------------------------------
-    model = docs_json[model_dir / "model.bim"]["model"]
+    model = model_doc["model"]
     tables = {t["name"]: t for t in model.get("tables", [])}
     columns = {t: {c["name"]: c for c in tdef.get("columns", [])} for t, tdef in tables.items()}
     measures = {m["name"]: (t, m) for t, tdef in tables.items() for m in tdef.get("measures", [])}
@@ -349,34 +375,34 @@ def run_checks(project: pathlib.Path = ROOT / "powerbi", root: pathlib.Path = RO
                    for t, tdef in tables.items() for h in tdef.get("hierarchies", [])}
     level_cols = {(t, h["name"], lvl["name"]): lvl.get("column")
                   for t, tdef in tables.items() for h in tdef.get("hierarchies", []) for lvl in h.get("levels", [])}
-    if docs_json[model_dir / "model.bim"].get("compatibilityLevel", 0) < 1567:
-        problems.append("model.bim: compatibilityLevel is below 1567")
+    if model_doc.get("compatibilityLevel", 0) < 1702:
+        problems.append("database.tmdl: compatibilityLevel is below 1702 (DAX user-defined functions need 1702)")
     if model.get("defaultPowerBIDataSourceVersion") != "powerBI_V3":
-        problems.append("model.bim: defaultPowerBIDataSourceVersion must be powerBI_V3")
+        problems.append("model.tmdl: defaultPowerBIDataSourceVersion must be powerBI_V3")
     annotations = {a["name"]: a["value"] for a in model.get("annotations", [])}
     if annotations.get("__PBI_TimeIntelligenceEnabled") != "0":
-        problems.append("model.bim: annotation __PBI_TimeIntelligenceEnabled must be \"0\"")
+        problems.append("model.tmdl: annotation __PBI_TimeIntelligenceEnabled must be 0")
     expressions = {e["name"]: e for e in model.get("expressions", [])}
     csv_folder = expressions.get("CsvFolder", {}).get("expression", "")
     if isinstance(csv_folder, list):
         csv_folder = "\n".join(csv_folder)
     if "IsParameterQuery=true" not in csv_folder or 'Type="Text"' not in csv_folder:
-        problems.append("model.bim: CsvFolder must be a Text parameter query (meta IsParameterQuery=true)")
+        problems.append("expressions.tmdl: CsvFolder must be a Text parameter query (meta IsParameterQuery=true)")
     date_table = tables.get("dim_date", {})
     if date_table.get("dataCategory") != "Time" or not columns.get("dim_date", {}).get("date", {}).get("isKey"):
-        problems.append("model.bim: dim_date is not marked as the date table (dataCategory Time, date isKey)")
+        problems.append("model: dim_date is not marked as the date table (dataCategory Time, date isKey)")
     for t, cols in columns.items():
         for c in cols.values():
             if c.get("sortByColumn") and c["sortByColumn"] not in cols:
-                problems.append(f"model.bim: {t}[{c['name']}] sorts by missing column {c['sortByColumn']}")
+                problems.append(f"model: {t}[{c['name']}] sorts by missing column {c['sortByColumn']}")
             if c["name"].endswith(("_id", "_code", "_key")) and c.get("summarizeBy") != "none":
-                problems.append(f"model.bim: key or code column {t}[{c['name']}] must have summarizeBy none")
+                problems.append(f"model: key or code column {t}[{c['name']}] must have summarizeBy none")
     for (t, h, lvl), column in level_cols.items():
         if column not in columns.get(t, {}):
-            problems.append(f"model.bim: hierarchy {t}/{h} level {lvl} uses missing column {column}")
+            problems.append(f"model: hierarchy {t}/{h} level {lvl} uses missing column {column}")
     mt = tables.get(MEASURE_TABLE)
     if not mt or len(mt.get("columns", [])) != 1 or not mt["columns"][0].get("isHidden"):
-        problems.append("model.bim: _Measures must have exactly one hidden column")
+        problems.append("model: _Measures must have exactly one hidden column")
 
     # 5. CSV headers and types --------------------------------------------------------------------------------
     headers = csv_headers(root / "output" / "csv")
@@ -387,7 +413,7 @@ def run_checks(project: pathlib.Path = ROOT / "powerbi", root: pathlib.Path = RO
     typed_columns = 0
     for table, header in headers.items():
         if table not in tables:
-            problems.append(f"model.bim: no table for output/csv/{table}.csv")
+            problems.append(f"model: no table for output/csv/{table}.csv")
             continue
         partition = tables[table].get("partitions", [{}])[0].get("source", {})
         m_code = partition.get("expression", "")
@@ -437,7 +463,7 @@ def run_checks(project: pathlib.Path = ROOT / "powerbi", root: pathlib.Path = RO
         ends = ((r.get("fromTable"), r.get("fromColumn")), (r.get("toTable"), r.get("toColumn")))
         for t, c in ends:
             if c not in columns.get(t, {}):
-                problems.append(f"relationship {r.get('name')}: {t}[{c}] is not in model.bim")
+                problems.append(f"relationship {r.get('name')}: {t}[{c}] is not in the model")
             elif t in headers and c not in headers[t]:
                 problems.append(f"relationship {r.get('name')}: {t}[{c}] is not in output/csv/{t}.csv")
         types = {columns.get(t, {}).get(c, {}).get("dataType") for t, c in ends}
@@ -446,9 +472,9 @@ def run_checks(project: pathlib.Path = ROOT / "powerbi", root: pathlib.Path = RO
         model_rels.add((ends[0][0], ends[0][1], ends[1][0], ends[1][1], r.get("isActive", True)))
     documented_rels = doc_relationships(doc_text)
     for missing in sorted(documented_rels - model_rels):
-        problems.append(f"relationship in POWERBI.md section 3 missing from model.bim: {missing}")
+        problems.append(f"relationship in POWERBI.md section 3 missing from the model: {missing}")
     for extra in sorted(model_rels - documented_rels):
-        problems.append(f"relationship in model.bim not in POWERBI.md section 3: {extra}")
+        problems.append(f"relationship in the model not in POWERBI.md section 3: {extra}")
 
     # 6. measures ---------------------------------------------------------------------------------------------
     source = dax_measures((root / "powerbi" / "measures.dax").read_text(encoding="utf-8"))
@@ -466,7 +492,19 @@ def run_checks(project: pathlib.Path = ROOT / "powerbi", root: pathlib.Path = RO
                 problems.append(f"measure [{name}]: expression differs from measures.dax")
     for name in measures:
         if name not in source:
-            problems.append(f"measure [{name}] in model.bim is not in measures.dax")
+            problems.append(f"measure [{name}] in the model is not in measures.dax")
+    functions = {f["name"]: f for f in model.get("functions", [])}
+    for name, expression in dax_functions((root / "powerbi" / "measures.dax").read_text(encoding="utf-8")).items():
+        if name not in functions:
+            problems.append(f"function {name} from measures.dax is not in the model (functions.tmdl)")
+        else:
+            body = functions[name]["expression"]
+            body = body if isinstance(body, str) else "\n".join(body)
+            if " ".join(body.split()) != expression:
+                problems.append(f"function {name}: expression differs from measures.dax")
+    for name in functions:
+        if name not in dax_functions((root / "powerbi" / "measures.dax").read_text(encoding="utf-8")):
+            problems.append(f"function {name} in the model is not in measures.dax")
     for fmt, names in doc_formats(doc_text).items():
         for name in names:
             if name in measures and measures[name][1].get("formatString") != fmt:
@@ -642,7 +680,7 @@ def run_checks(project: pathlib.Path = ROOT / "powerbi", root: pathlib.Path = RO
                     hierarchy, _, level = prop.partition("/")
                     ok = level in hierarchies.get((entity, hierarchy), [])
                 if not ok:
-                    problems.append(f"{rel(path)}: {kind} {entity}[{prop}] at {where} is not in model.bim")
+                    problems.append(f"{rel(path)}: {kind} {entity}[{prop}] at {where} is not in the model")
     if len(set(bindings)) != len(bindings):
         problems.append("pageBinding names are not unique across the report")
 
@@ -684,6 +722,7 @@ def run_checks(project: pathlib.Path = ROOT / "powerbi", root: pathlib.Path = RO
             problems.append(f"{where}: button applies bookmark {target!r}, which does not exist")
 
     stats = {"files": len(docs_json), "validated": validated, "schemas": len({id(d) for d in schemas.values()}),
+             "tmdl_files": tmdl_files, "functions": len(model.get("functions", [])),
              "tables": len(tables), "csv_columns": typed_columns, "measures": len(measures),
              "relationships": len(model_rels), "pages": len(folders), "visuals": n_visuals, "field_refs": n_refs,
              "mobile": n_mobile, "bookmarks": len(bookmarks)}
@@ -701,7 +740,8 @@ def main(argv: list[str] | None = None) -> int:
         print("\n".join(f"  - {p}" for p in problems))
         return 1
     print(f"PBIP checks passed: {stats['validated']} files schema-valid against {stats['schemas']} vendored schemas; "
-          f"{stats['tables']} tables, {stats['csv_columns']} typed CSV columns, {stats['measures']} measures, "
+          f"{stats['tmdl_files']} TMDL files read; {stats['tables']} tables, {stats['csv_columns']} typed CSV columns, "
+          f"{stats['measures']} measures, {stats['functions']} functions, "
           f"{stats['relationships']} relationships, {stats['pages']} pages, {stats['visuals']} visuals "
           f"({stats['mobile']} in the phone layout), {stats['bookmarks']} bookmarks, "
           f"{stats['field_refs']} field references resolved")

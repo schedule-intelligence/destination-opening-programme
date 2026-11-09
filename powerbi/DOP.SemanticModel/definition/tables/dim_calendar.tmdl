@@ -1,0 +1,74 @@
+table dim_calendar
+	lineageTag: 8a238707-bf35-5483-9f45-dc4586ebf825
+
+	column calendar_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 5d0e5f60-96ea-54cb-8486-37da26a07720
+		sourceColumn: calendar_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column calendar_name
+		dataType: string
+		lineageTag: b7097a44-5b65-5743-9ed5-4a09ea2cf08d
+		sourceColumn: calendar_name
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column hours_per_day
+		dataType: double
+		lineageTag: eff0996e-de4b-502c-a460-fb045250e9ae
+		sourceColumn: hours_per_day
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column hours_per_week
+		dataType: double
+		lineageTag: 737afde7-d86e-558d-9a79-4723a97322fc
+		sourceColumn: hours_per_week
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column working_days
+		dataType: int64
+		formatString: 0
+		lineageTag: cda54bae-0f91-57b9-9690-f8d682487533
+		sourceColumn: working_days
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column holiday_exceptions
+		dataType: int64
+		formatString: 0
+		lineageTag: 804cb533-0d7e-55e3-8e21-d0c79ddab855
+		sourceColumn: holiday_exceptions
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_calendar-f6866d3e-66f6-5996-9cbf-48f4f63f3274 = m
+		mode: import
+		source = ```
+				let
+				    Source = Csv.Document(File.Contents(CsvFolder & "\dim_calendar.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Nulls = Table.ReplaceValue(Promoted, "", null, Replacer.ReplaceValue, Table.ColumnNames(Promoted)),
+				    Typed = Table.TransformColumnTypes(Nulls, {
+				        {"calendar_id", Int64.Type},
+				        {"calendar_name", type text},
+				        {"hours_per_day", type number},
+				        {"hours_per_week", type number},
+				        {"working_days", Int64.Type},
+				        {"holiday_exceptions", Int64.Type}
+				    }, "en-GB")
+				in
+				    Typed
+				```
+
+	annotation PBI_ResultType = Table

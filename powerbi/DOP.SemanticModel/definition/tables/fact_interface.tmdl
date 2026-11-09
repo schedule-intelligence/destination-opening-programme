@@ -1,0 +1,173 @@
+table fact_interface
+	lineageTag: 9fec56dd-54db-54ef-9235-fd97749c3b7f
+
+	column snapshot_id
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 67e97e41-9f77-5180-8d38-4ab8b5b6b530
+		sourceColumn: snapshot_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column interface_id
+		dataType: string
+		lineageTag: 9e114cb2-3e4a-5249-b4e8-559ea88cdab4
+		sourceColumn: interface_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column giver_id
+		dataType: string
+		lineageTag: c30e78c0-ca2e-5b0d-bb39-50b06a8aced9
+		sourceColumn: giver_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column receiver_id
+		dataType: string
+		lineageTag: daed6a7b-5cc0-55a9-bb9c-d957a5db8bc9
+		sourceColumn: receiver_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column description
+		dataType: string
+		lineageTag: 3684e277-9035-554b-acb6-ed1ebd534d13
+		sourceColumn: description
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column giver_owner
+		dataType: string
+		lineageTag: 289aafcf-96ff-5fa7-ae3e-2c7e6f5840a5
+		sourceColumn: giver_owner
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column receiver_owner
+		dataType: string
+		lineageTag: e18b9690-8080-5dcd-a665-02745a7a84fc
+		sourceColumn: receiver_owner
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column giver_asset
+		dataType: string
+		lineageTag: 6a116eeb-0075-5f1c-8737-d5beb20c956e
+		sourceColumn: giver_asset
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column receiver_asset
+		dataType: string
+		lineageTag: ca5cb1aa-8d87-59d4-8a6c-1161618e1c9b
+		sourceColumn: receiver_asset
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column giver_ws
+		dataType: string
+		lineageTag: dc09b505-0703-5c50-bf7b-5d3c7af19ba6
+		sourceColumn: giver_ws
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column receiver_ws
+		dataType: string
+		lineageTag: fca2a38d-31c8-567d-a4f1-c826904aa799
+		sourceColumn: receiver_ws
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column need_by
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: 21d4b70d-c924-5329-b1f3-40b9aefefcab
+		sourceColumn: need_by
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column giver_forecast
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: bab4954d-87e6-5486-b1c4-364d935ee77f
+		sourceColumn: giver_forecast
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column gap_days
+		dataType: int64
+		formatString: +0;-0;0
+		lineageTag: 301e3a2c-7025-57c7-a5a7-3018585f0cb9
+		sourceColumn: gap_days
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column status
+		dataType: string
+		lineageTag: 23313ffb-750a-5a70-95f2-f80bfa4cbef2
+		sourceColumn: status
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column giver_tf_d
+		dataType: double
+		formatString: 0
+		lineageTag: 6b6a98c9-44ed-54ea-ad62-b79a227f5630
+		sourceColumn: giver_tf_d
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_interface-835b28bb-8a55-56c1-a8a5-549a8d2cfe6e = m
+		mode: import
+		source = ```
+				let
+				    Source = Csv.Document(File.Contents(CsvFolder & "\fact_interface.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Nulls = Table.ReplaceValue(Promoted, "", null, Replacer.ReplaceValue, Table.ColumnNames(Promoted)),
+				    Typed = Table.TransformColumnTypes(Nulls, {
+				        {"snapshot_id", Int64.Type},
+				        {"interface_id", type text},
+				        {"giver_id", type text},
+				        {"receiver_id", type text},
+				        {"description", type text},
+				        {"giver_owner", type text},
+				        {"receiver_owner", type text},
+				        {"giver_asset", type text},
+				        {"receiver_asset", type text},
+				        {"giver_ws", type text},
+				        {"receiver_ws", type text},
+				        {"need_by", type datetime},
+				        {"giver_forecast", type datetime},
+				        {"gap_days", Int64.Type},
+				        {"status", type text},
+				        {"giver_tf_d", type number}
+				    }, "en-GB"),
+				    Dates = Table.TransformColumnTypes(Typed, {
+				        {"need_by", type date},
+				        {"giver_forecast", type date}
+				    })
+				in
+				    Dates
+				```
+
+	annotation PBI_ResultType = Table

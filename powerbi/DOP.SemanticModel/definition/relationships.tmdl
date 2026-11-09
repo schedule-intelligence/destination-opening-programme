@@ -1,0 +1,105 @@
+relationship 9d02422c-3893-54db-aa35-9922688da911
+	fromColumn: fact_activity_snapshot.snapshot_id
+	toColumn: dim_snapshot.snapshot_id
+
+relationship 7a5e1faf-5432-5b1c-bb40-d2e49f91fbc9
+	fromColumn: fact_activity_snapshot.activity_id
+	toColumn: dim_activity.activity_id
+
+relationship 0f320522-68da-581d-966c-afb88212d98c
+	fromColumn: fact_activity_snapshot.finish
+	toColumn: dim_date.date
+
+relationship 540eb47d-2fd1-5581-b6e2-9001edb9358c
+	isActive: false
+	fromColumn: fact_activity_snapshot.bl0_finish
+	toColumn: dim_date.date
+
+relationship 7243bb52-1644-5f71-9c41-55ff18a7fa77
+	isActive: false
+	fromColumn: fact_activity_snapshot.bl1_finish
+	toColumn: dim_date.date
+
+relationship 30539397-3400-5def-8044-0ed288efb7ca
+	fromColumn: fact_snapshot_summary.snapshot_id
+	toColumn: dim_snapshot.snapshot_id
+
+relationship 2c3eb684-77fc-5f99-a956-682c76c63740
+	fromColumn: fact_milestone_trend.snapshot_id
+	toColumn: dim_snapshot.snapshot_id
+
+relationship 40ae5759-8719-56e0-a82e-0d6643c4ffc3
+	fromColumn: fact_milestone_trend.activity_id
+	toColumn: dim_activity.activity_id
+
+relationship 6122b6d1-6d58-513f-8b3b-22e38702660c
+	fromColumn: fact_relationship.snapshot_id
+	toColumn: dim_snapshot.snapshot_id
+
+relationship 903a9e69-c16a-5472-a093-19db9084dcf5
+	fromColumn: fact_relationship.succ_id
+	toColumn: dim_activity.activity_id
+
+relationship f97b8c9c-b1b6-561e-9c57-894e48324e95
+	fromColumn: fact_interface.snapshot_id
+	toColumn: dim_snapshot.snapshot_id
+
+relationship 9970ff94-74e4-5b81-9095-6698288608a7
+	fromColumn: fact_interface.giver_id
+	toColumn: dim_activity.activity_id
+
+relationship 02ffab12-6662-5464-a3ba-3e116e2ddab2
+	fromColumn: fact_readiness.snapshot_id
+	toColumn: dim_snapshot.snapshot_id
+
+relationship 16dca6a3-ab5e-51a8-b818-3994c5db43c6
+	fromColumn: fact_readiness.activity_id
+	toColumn: dim_activity.activity_id
+
+relationship 5f657299-7cf0-5350-b19e-fad71b1bc3d8
+	fromColumn: fact_dcma_check.snapshot_id
+	toColumn: dim_snapshot.snapshot_id
+
+relationship 907d84a0-e267-5514-ac58-f01aa17b3715
+	fromColumn: fact_dcma_offender.snapshot_id
+	toColumn: dim_snapshot.snapshot_id
+
+relationship 829f09b7-4e50-5963-be00-ca8ece06e8f8
+	fromColumn: fact_dcma_offender.activity_id
+	toColumn: dim_activity.activity_id
+
+relationship 8d02ab84-80d1-574b-80d8-78550adbeea2
+	fromColumn: fact_owner_scorecard.snapshot_id
+	toColumn: dim_snapshot.snapshot_id
+
+relationship 2a0a911b-b231-520c-bdb1-7809245c60af
+	fromColumn: fact_owner_scorecard.owner_code
+	toColumn: dim_owner.owner_code
+
+relationship 9503888c-37b2-568f-9d30-4ea74e8c07da
+	fromColumn: fact_reconciliation.snapshot_id
+	toColumn: dim_snapshot.snapshot_id
+
+relationship 0f757c98-95ec-5589-b1af-b8211899cedc
+	fromColumn: fact_risk.snapshot_id
+	toColumn: dim_snapshot.snapshot_id
+
+relationship 378ae0ff-efd8-5061-afce-44b3707785e8
+	fromColumn: fact_risk.owner_code
+	toColumn: dim_owner.owner_code
+
+relationship 9a8f61dc-6ebb-5044-ac72-ac8fb37cc633
+	fromColumn: fact_s_curve.date
+	toColumn: dim_date.date
+
+relationship 4a647204-6843-5eea-b16e-f171f169f79f
+	fromColumn: dim_activity.wbs_id
+	toColumn: dim_wbs.wbs_id
+
+relationship 349deadb-1403-5e41-879c-874c1bd799cf
+	fromColumn: dim_activity.owner_code
+	toColumn: dim_owner.owner_code
+
+relationship 5a5eec67-8d5f-5463-a296-7b24b5e477a2
+	fromColumn: dim_activity.calendar_id
+	toColumn: dim_calendar.calendar_id

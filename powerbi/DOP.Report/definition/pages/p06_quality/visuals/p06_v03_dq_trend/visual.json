@@ -192,8 +192,9 @@
               "solid": {
                 "color": {
                   "expr": {
-                    "Literal": {
-                      "Value": "'#1E8449'"
+                    "ThemeDataColor": {
+                      "ColorId": 7,
+                      "Percent": 0
                     }
                   }
                 }
@@ -238,8 +239,9 @@
               "solid": {
                 "color": {
                   "expr": {
-                    "Literal": {
-                      "Value": "'#1E8449'"
+                    "ThemeDataColor": {
+                      "ColorId": 7,
+                      "Percent": 0
                     }
                   }
                 }
@@ -277,8 +279,9 @@
               "solid": {
                 "color": {
                   "expr": {
-                    "Literal": {
-                      "Value": "'#1E8449'"
+                    "ThemeDataColor": {
+                      "ColorId": 7,
+                      "Percent": 0
                     }
                   }
                 }
@@ -323,8 +326,9 @@
               "solid": {
                 "color": {
                   "expr": {
-                    "Literal": {
-                      "Value": "'#D68910'"
+                    "ThemeDataColor": {
+                      "ColorId": 6,
+                      "Percent": 0
                     }
                   }
                 }
@@ -369,8 +373,9 @@
               "solid": {
                 "color": {
                   "expr": {
-                    "Literal": {
-                      "Value": "'#D68910'"
+                    "ThemeDataColor": {
+                      "ColorId": 6,
+                      "Percent": 0
                     }
                   }
                 }
@@ -408,8 +413,9 @@
               "solid": {
                 "color": {
                   "expr": {
-                    "Literal": {
-                      "Value": "'#D68910'"
+                    "ThemeDataColor": {
+                      "ColorId": 6,
+                      "Percent": 0
                     }
                   }
                 }
@@ -511,24 +517,6 @@
               "expr": {
                 "Literal": {
                   "Value": "'Good at 85 or more, fair from 70 to 85'"
-                }
-              }
-            },
-            "fontSize": {
-              "expr": {
-                "Literal": {
-                  "Value": "9D"
-                }
-              }
-            },
-            "fontColor": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Literal": {
-                      "Value": "'#4A5568'"
-                    }
-                  }
                 }
               }
             }

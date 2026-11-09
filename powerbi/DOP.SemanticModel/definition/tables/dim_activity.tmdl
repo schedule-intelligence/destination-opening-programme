@@ -1,0 +1,219 @@
+table dim_activity
+	lineageTag: f814f79c-e9cb-5540-960d-32188d315684
+
+	column activity_id
+		dataType: string
+		lineageTag: 858cddd9-5004-5f03-87b6-43bde13ad0a6
+		sourceColumn: activity_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column activity_name
+		dataType: string
+		lineageTag: e09e415b-83e1-529e-ad15-f8884b242766
+		sourceColumn: activity_name
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column activity_type
+		dataType: string
+		lineageTag: 9cc99687-841d-586e-b0af-516eccf6cecd
+		sourceColumn: activity_type
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_milestone
+		dataType: boolean
+		lineageTag: df1b598e-ce85-55d8-b97d-2f8dd4a42371
+		sourceColumn: is_milestone
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column calendar_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 33ef0a6d-95db-5eae-8329-27fe54f2c720
+		sourceColumn: calendar_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column wbs_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 49f0ead1-d638-5cf8-8f30-050bbb320432
+		sourceColumn: wbs_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column wbs_path
+		dataType: string
+		lineageTag: 4fdf129f-b1cd-5b5a-859b-a119a8578ab1
+		sourceColumn: wbs_path
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column asset_code
+		dataType: string
+		lineageTag: 0d46c57e-ff10-5afc-bd86-8dee00877b22
+		sourceColumn: asset_code
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column asset_name
+		dataType: string
+		lineageTag: 7a8fc526-07bf-5a9b-981f-f9417b69ad00
+		sourceColumn: asset_name
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column workstream_code
+		dataType: string
+		lineageTag: b10d5076-4ce6-585d-8ae7-61b31bdc0b74
+		sourceColumn: workstream_code
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column workstream_name
+		dataType: string
+		lineageTag: d33c7223-77dd-5619-923a-4bb250221d55
+		sourceColumn: workstream_name
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column package_code
+		dataType: string
+		lineageTag: 5aef15da-e1b6-589d-a9ef-b2ee453fcb35
+		sourceColumn: package_code
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column package_name
+		dataType: string
+		lineageTag: 53086df9-f99f-56c1-8182-56f1d3d972fa
+		sourceColumn: package_name
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column owner_code
+		dataType: string
+		lineageTag: dba5bd96-476a-5743-90ef-2cde23d28551
+		sourceColumn: owner_code
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column phase
+		dataType: string
+		lineageTag: ee87d426-540a-5157-a470-1197a9715d11
+		sourceColumn: phase
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column interface_role
+		dataType: string
+		lineageTag: a99fe3e0-e711-5cb5-8165-87f7bf591775
+		sourceColumn: interface_role
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column readiness_gate
+		dataType: string
+		lineageTag: 4a8869fb-0f45-555c-a553-675ea2fab685
+		sourceColumn: readiness_gate
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column first_snapshot_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 9e436355-1780-592d-bc37-4e0c71ccb703
+		sourceColumn: first_snapshot_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column in_bl0
+		dataType: boolean
+		lineageTag: 61736453-ef19-568d-b7cd-dc38ec03c28c
+		sourceColumn: in_bl0
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column in_bl1
+		dataType: boolean
+		lineageTag: 141f977a-f239-5625-ad84-b08bd110d130
+		sourceColumn: in_bl1
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	hierarchy Programme
+		lineageTag: e7871776-b1a1-5c05-9b24-a920da0977ab
+
+		level asset_name
+			lineageTag: 19b071df-8f3a-5d30-a268-740b58fbc5a5
+			column: asset_name
+
+		level workstream_name
+			lineageTag: 8bfc201d-03ae-5fbd-92c4-874328bcadf7
+			column: workstream_name
+
+		level package_name
+			lineageTag: 3653abd1-8698-5665-96b1-58e4859532f7
+			column: package_name
+
+		level activity_name
+			lineageTag: 920ffda4-9fcd-55f8-ae55-9a1b5d2fff04
+			column: activity_name
+
+	partition dim_activity-fbb248a5-c548-5426-a1df-27657161139c = m
+		mode: import
+		source = ```
+				let
+				    Source = Csv.Document(File.Contents(CsvFolder & "\dim_activity.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Nulls = Table.ReplaceValue(Promoted, "", null, Replacer.ReplaceValue, Table.ColumnNames(Promoted)),
+				    Typed = Table.TransformColumnTypes(Nulls, {
+				        {"activity_id", type text},
+				        {"activity_name", type text},
+				        {"activity_type", type text},
+				        {"is_milestone", type logical},
+				        {"calendar_id", Int64.Type},
+				        {"wbs_id", Int64.Type},
+				        {"wbs_path", type text},
+				        {"asset_code", type text},
+				        {"asset_name", type text},
+				        {"workstream_code", type text},
+				        {"workstream_name", type text},
+				        {"package_code", type text},
+				        {"package_name", type text},
+				        {"owner_code", type text},
+				        {"phase", type text},
+				        {"interface_role", type text},
+				        {"readiness_gate", type text},
+				        {"first_snapshot_id", Int64.Type},
+				        {"in_bl0", type logical},
+				        {"in_bl1", type logical}
+				    }, "en-GB")
+				in
+				    Typed
+				```
+
+	annotation PBI_ResultType = Table

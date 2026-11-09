@@ -12,6 +12,7 @@
 // Prerequisites in the model (POWERBI.md section 4):
 //   '_Measures'                 empty table that hosts the measures
 //   'Near-critical threshold'   what-if parameter, GENERATESERIES ( 0, 30, 1 ), default 10
+//   compatibility level 1702    for the DAX user-defined functions of section 0 (Desktop sets it for new models)
 //
 // "Selected data date" = SELECTEDVALUE of the data-date slicer (dim_snapshot). With the single-select
 // slicer that is the chosen update; on a trend axis it is the update of each point; with no selection
@@ -21,6 +22,69 @@
 // =====================================================================================================
 
 DEFINE
+
+    // -------------------------------------------------------------------------------------------------
+    // 0. Functions (DAX user-defined functions, compatibility level 1702): the patterns the measures repeat,
+    //    written once. DOP.AtUpdate evaluates a value at one update whatever the data-date slicer says;
+    //    DOP.TrendSvg draws a KPI at every update up to the selected one as an SVG picture (the trend lines
+    //    in the KPI cards). A parameter typed EXPR is evaluated where the function uses it, so a measure
+    //    passed in takes the filter the function sets. The sparkline measures of section 15 do not call a
+    //    function: a table sparkline rewrites its measure per point and loses the reference (Missing_References
+    //    in Desktop 2.159), so they carry the pattern inline.
+    // -------------------------------------------------------------------------------------------------
+    // The value at update snapshotId: the data-date slicer lifted, that one update kept
+    FUNCTION DOP.AtUpdate = ( value : SCALAR EXPR, snapshotId : INT64 VAL ) =>
+        CALCULATE ( value, REMOVEFILTERS ( dim_snapshot ), dim_snapshot[snapshot_id] = snapshotId )
+
+    // The KPI at every update up to the selected one as an SVG data URI: a teal line over a light fill, the
+    // last update marked, and a dashed red zero line where the values cross zero
+    FUNCTION DOP.TrendSvg = ( value : SCALAR EXPR ) =>
+        VAR _sid = [Selected snapshot id]
+        VAR _pts =
+            FILTER (
+                ADDCOLUMNS (
+                    CALCULATETABLE (
+                        VALUES ( dim_snapshot[snapshot_id] ),
+                        REMOVEFILTERS ( dim_snapshot ),
+                        dim_snapshot[snapshot_id] <= _sid
+                    ),
+                    "@v", DOP.AtUpdate ( value, dim_snapshot[snapshot_id] )
+                ),
+                NOT ISBLANK ( [@v] )
+            )
+        VAR _n = COUNTROWS ( _pts )
+        VAR _lo = MINX ( _pts, [@v] )
+        VAR _hi = MAXX ( _pts, [@v] )
+        VAR _xy =
+            ADDCOLUMNS (
+                _pts,
+                "@x", IF ( _n <= 1, 60, 7 + ( RANKX ( _pts, dim_snapshot[snapshot_id], , ASC ) - 1 ) * 106 / ( _n - 1 ) ),
+                "@y", IF ( _hi = _lo, 19, 7 + ( _hi - [@v] ) * 24 / ( _hi - _lo ) )
+            )
+        VAR _line =
+            CONCATENATEX ( _xy, FORMAT ( [@x], "0.0" ) & "," & FORMAT ( [@y], "0.0" ), " ", dim_snapshot[snapshot_id], ASC )
+        VAR _end = TOPN ( 1, _xy, dim_snapshot[snapshot_id], DESC )
+        VAR _x1 = FORMAT ( MINX ( _xy, [@x] ), "0.0" )
+        VAR _x2 = FORMAT ( MAXX ( _end, [@x] ), "0.0" )
+        VAR _y2 = FORMAT ( MAXX ( _end, [@y] ), "0.0" )
+        VAR _y0 = FORMAT ( 7 + _hi * 24 / ( _hi - _lo ), "0.0" )
+        VAR _zero =
+            IF (
+                _lo < 0 && _hi > 0,
+                "<line x1='0' x2='120' y1='" & _y0 & "' y2='" & _y0
+                    & "' stroke='%23C0392B' stroke-width='1.2' stroke-dasharray='3 2' vector-effect='non-scaling-stroke'/>"
+            )
+        RETURN
+            IF (
+                _n > 0,
+                "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='40' viewBox='0 0 120 40'>" & _zero
+                    & "<polygon points='" & _x1 & ",38 " & _line & " " & _x2
+                    & ",38' fill='%232B7A78' fill-opacity='0.14'/>"
+                    & "<polyline points='" & _line
+                    & "' fill='none' stroke='%232B7A78' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'"
+                    & " vector-effect='non-scaling-stroke'/>"
+                    & "<circle cx='" & _x2 & "' cy='" & _y2 & "' r='5.5' fill='%231F3A5F'/></svg>"
+            )
 
     // -------------------------------------------------------------------------------------------------
     // 1. Context: selected data date, previous update, baseline in force
@@ -872,159 +936,84 @@ DEFINE
         )
 
     // -------------------------------------------------------------------------------------------------
-    // 14. Trend lines for the KPI cards: an SVG picture (data category Image URL). [Trend line] draws the
-    //     KPI named in 'Trend KPI'[KPI] at every update up to the selected one, and each Trend - measure
-    //     names its KPI. The data-date slicer is lifted only to read the history, so a card's value and
-    //     its line end at the same update. A dashed red line marks zero where the values cross it.
+    // 14. Trend lines for the KPI cards: an SVG picture (data category Image URL) that DOP.TrendSvg draws
+    //     for the KPI at every update up to the selected one. The data-date slicer is lifted only to read
+    //     the history, so a card's value and its line end at the same update. A dashed red line marks
+    //     zero where the values cross it.
     // -------------------------------------------------------------------------------------------------
-    // The KPI named in 'Trend KPI' by update up to the selected one: a teal line over a light fill, the last update marked
-    MEASURE '_Measures'[Trend line] =
-        VAR _k = SELECTEDVALUE ( 'Trend KPI'[KPI] )
-        VAR _sid = [Selected snapshot id]
-        VAR _pts =
-            FILTER (
-                ADDCOLUMNS (
-                    CALCULATETABLE (
-                        VALUES ( dim_snapshot[snapshot_id] ),
-                        REMOVEFILTERS ( dim_snapshot ),
-                        dim_snapshot[snapshot_id] <= _sid
-                    ),
-                    "@v",
-                        VAR _s = dim_snapshot[snapshot_id]
-                        RETURN
-                            CALCULATE (
-                                SWITCH (
-                                    _k,
-                                    "Day 1 variance vs BL1", [Day 1 variance vs BL1],
-                                    "Day 1 total float", [Day 1 total float],
-                                    "Weighted % complete (actual)", [Weighted % complete (actual)],
-                                    "DQ score", [DQ score],
-                                    "Milestones later than baseline in force", [Milestones later than baseline in force],
-                                    "Milestones slipped vs previous period", [Milestones slipped vs previous period],
-                                    "Day 1 movement vs previous period", [Day 1 movement vs previous period],
-                                    "Critical count", [Critical count],
-                                    "Near-critical count", [Near-critical count],
-                                    "Negative float count", [Negative float count],
-                                    "Total float (min)", [Total float (min)],
-                                    "Look-ahead items", [Look-ahead items],
-                                    "Look-back hit rate", [Look-back hit rate],
-                                    "DCMA pass count", [DCMA pass count],
-                                    "CPLI", [CPLI],
-                                    "BEI", [BEI]
-                                ),
-                                REMOVEFILTERS ( dim_snapshot ),
-                                dim_snapshot[snapshot_id] = _s
-                            )
-                ),
-                NOT ISBLANK ( [@v] )
-            )
-        VAR _n = COUNTROWS ( _pts )
-        VAR _lo = MINX ( _pts, [@v] )
-        VAR _hi = MAXX ( _pts, [@v] )
-        VAR _xy =
-            ADDCOLUMNS (
-                _pts,
-                "@x", IF ( _n <= 1, 60, 7 + ( RANKX ( _pts, dim_snapshot[snapshot_id], , ASC ) - 1 ) * 106 / ( _n - 1 ) ),
-                "@y", IF ( _hi = _lo, 19, 7 + ( _hi - [@v] ) * 24 / ( _hi - _lo ) )
-            )
-        VAR _line =
-            CONCATENATEX ( _xy, FORMAT ( [@x], "0.0" ) & "," & FORMAT ( [@y], "0.0" ), " ", dim_snapshot[snapshot_id], ASC )
-        VAR _end = TOPN ( 1, _xy, dim_snapshot[snapshot_id], DESC )
-        VAR _x1 = FORMAT ( MINX ( _xy, [@x] ), "0.0" )
-        VAR _x2 = FORMAT ( MAXX ( _end, [@x] ), "0.0" )
-        VAR _y2 = FORMAT ( MAXX ( _end, [@y] ), "0.0" )
-        VAR _y0 = FORMAT ( 7 + _hi * 24 / ( _hi - _lo ), "0.0" )
-        VAR _zero =
-            IF (
-                _lo < 0 && _hi > 0,
-                "<line x1='0' x2='120' y1='" & _y0 & "' y2='" & _y0
-                    & "' stroke='%23C0392B' stroke-width='1.2' stroke-dasharray='3 2' vector-effect='non-scaling-stroke'/>"
-            )
-        RETURN
-            IF (
-                _n > 0,
-                "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='40' viewBox='0 0 120 40'>" & _zero
-                    & "<polygon points='" & _x1 & ",38 " & _line & " " & _x2
-                    & ",38' fill='%232B7A78' fill-opacity='0.14'/>"
-                    & "<polyline points='" & _line
-                    & "' fill='none' stroke='%232B7A78' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'"
-                    & " vector-effect='non-scaling-stroke'/>"
-                    & "<circle cx='" & _x2 & "' cy='" & _y2 & "' r='5.5' fill='%231F3A5F'/></svg>"
-            )
-
     // Card trend: calendar days of the Day 1 forecast against BL1, by update
     MEASURE '_Measures'[Trend - Day 1 variance vs BL1] =
-        CALCULATE ( [Trend line], 'Trend KPI'[KPI] = "Day 1 variance vs BL1" )
+        DOP.TrendSvg ( [Day 1 variance vs BL1] )
 
     // Card trend: working days of Day 1 total float, by update
     MEASURE '_Measures'[Trend - Day 1 total float] =
-        CALCULATE ( [Trend line], 'Trend KPI'[KPI] = "Day 1 total float" )
+        DOP.TrendSvg ( [Day 1 total float] )
 
     // Card trend: duration-weighted % complete, by update
     MEASURE '_Measures'[Trend - Weighted % complete (actual)] =
-        CALCULATE ( [Trend line], 'Trend KPI'[KPI] = "Weighted % complete (actual)" )
+        DOP.TrendSvg ( [Weighted % complete (actual)] )
 
     // Card trend: DQ score out of 100, by update
     MEASURE '_Measures'[Trend - DQ score] =
-        CALCULATE ( [Trend line], 'Trend KPI'[KPI] = "DQ score" )
+        DOP.TrendSvg ( [DQ score] )
 
     // Card trend: milestones later than the baseline in force, by update
     MEASURE '_Measures'[Trend - Milestones later than baseline in force] =
-        CALCULATE ( [Trend line], 'Trend KPI'[KPI] = "Milestones later than baseline in force" )
+        DOP.TrendSvg ( [Milestones later than baseline in force] )
 
     // Card trend: milestones that slipped against the previous update, by update
     MEASURE '_Measures'[Trend - Milestones slipped vs previous period] =
-        CALCULATE ( [Trend line], 'Trend KPI'[KPI] = "Milestones slipped vs previous period" )
+        DOP.TrendSvg ( [Milestones slipped vs previous period] )
 
     // Card trend: calendar days the Day 1 forecast moved, by update
     MEASURE '_Measures'[Trend - Day 1 movement vs previous period] =
-        CALCULATE ( [Trend line], 'Trend KPI'[KPI] = "Day 1 movement vs previous period" )
+        DOP.TrendSvg ( [Day 1 movement vs previous period] )
 
     // Card trend: critical activities, by update
     MEASURE '_Measures'[Trend - Critical count] =
-        CALCULATE ( [Trend line], 'Trend KPI'[KPI] = "Critical count" )
+        DOP.TrendSvg ( [Critical count] )
 
     // Card trend: near-critical activities at the selected threshold, by update
     MEASURE '_Measures'[Trend - Near-critical count] =
-        CALCULATE ( [Trend line], 'Trend KPI'[KPI] = "Near-critical count" )
+        DOP.TrendSvg ( [Near-critical count] )
 
     // Card trend: activities with negative float, by update
     MEASURE '_Measures'[Trend - Negative float count] =
-        CALCULATE ( [Trend line], 'Trend KPI'[KPI] = "Negative float count" )
+        DOP.TrendSvg ( [Negative float count] )
 
     // Card trend: lowest total float in working days, by update
     MEASURE '_Measures'[Trend - Total float (min)] =
-        CALCULATE ( [Trend line], 'Trend KPI'[KPI] = "Total float (min)" )
+        DOP.TrendSvg ( [Total float (min)] )
 
     // Card trend: activities in the 14-day look-ahead, by update
     MEASURE '_Measures'[Trend - Look-ahead items] =
-        CALCULATE ( [Trend line], 'Trend KPI'[KPI] = "Look-ahead items" )
+        DOP.TrendSvg ( [Look-ahead items] )
 
     // Card trend: share of look-back items achieved, by update
     MEASURE '_Measures'[Trend - Look-back hit rate] =
-        CALCULATE ( [Trend line], 'Trend KPI'[KPI] = "Look-back hit rate" )
+        DOP.TrendSvg ( [Look-back hit rate] )
 
     // Card trend: DCMA checks passed, by update
     MEASURE '_Measures'[Trend - DCMA pass count] =
-        CALCULATE ( [Trend line], 'Trend KPI'[KPI] = "DCMA pass count" )
+        DOP.TrendSvg ( [DCMA pass count] )
 
     // Card trend: critical path length index, by update
     MEASURE '_Measures'[Trend - CPLI] =
-        CALCULATE ( [Trend line], 'Trend KPI'[KPI] = "CPLI" )
+        DOP.TrendSvg ( [CPLI] )
 
     // Card trend: baseline execution index, by update
     MEASURE '_Measures'[Trend - BEI] =
-        CALCULATE ( [Trend line], 'Trend KPI'[KPI] = "BEI" )
+        DOP.TrendSvg ( [BEI] )
 
     // -------------------------------------------------------------------------------------------------
     // 15. Sparklines in the tables, and the float bridge: a measure at the update of the 'Update axis' row,
     //     for each update up to the selected one. A table sparkline (Add a sparkline, X-axis
     //     'Update axis'[data_date]) draws it per row; the bridge's waterfall has 'Update axis'[update] as its
     //     category. 'Update axis' is not related to the model, so the data-date slicer leaves every update on
-    //     the axis; each measure lifts the slicer only to read its row's update. A table pairs the values of its
-    //     columns and keeps the pairs where a measure is not blank, so each measure is blank unless the
-    //     selected update has the row in the table's own fact table: otherwise a milestone would also be
-    //     listed beside the dates of another milestone.
+    //     the axis; each measure lifts the slicer only to read its row's update, and is blank unless the
+    //     selected update has the row in the table's own fact table (a table pairs the values of its
+    //     columns: without the test a milestone would be listed beside the dates of another milestone).
+    //     Written out in full: a sparkline cannot follow its measure into a DAX function (see section 0).
     // -------------------------------------------------------------------------------------------------
     // Sparkline: the owner's DQ (share of activities not flagged), by update
     MEASURE '_Measures'[Owner DQ by update] =

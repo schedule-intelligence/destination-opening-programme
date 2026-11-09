@@ -196,7 +196,7 @@
         "visualContainers": {
           "p02_h3_compare": {
             "singleVisual": {
-              "visualType": "slicer",
+              "visualType": "advancedSlicerVisual",
               "objects": {
                 "merge": {
                   "general": [

@@ -1,0 +1,129 @@
+table dim_wbs
+	lineageTag: f4e8b400-6b20-57ae-a259-0b9e920d2ea7
+
+	column wbs_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 323cab58-e90c-5add-8573-a9d04b7b4175
+		sourceColumn: wbs_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column wbs_code
+		dataType: string
+		lineageTag: a9814bd1-cdda-55a0-8699-0b4ce95c8e39
+		sourceColumn: wbs_code
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column wbs_name
+		dataType: string
+		lineageTag: fd2af832-a8cd-54e6-bb0f-4219041236b8
+		sourceColumn: wbs_name
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column level
+		dataType: int64
+		formatString: 0
+		lineageTag: a334eeef-0c4b-55a9-b738-99941504ba66
+		sourceColumn: level
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column parent_wbs_id
+		dataType: int64
+		formatString: 0
+		lineageTag: fe201f7e-6ada-5843-a746-5d27af70eab4
+		sourceColumn: parent_wbs_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column path
+		dataType: string
+		lineageTag: 8312d171-7ea3-5c0d-a662-7e3a0fe8dfdb
+		sourceColumn: path
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column level1
+		dataType: string
+		lineageTag: 94427c2d-ce76-5323-ad01-b75990718d14
+		sourceColumn: level1
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column level2
+		dataType: string
+		lineageTag: 1ecafc20-0680-5950-a386-95b50c485017
+		sourceColumn: level2
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column level3
+		dataType: string
+		lineageTag: f5cf4883-54d5-5db9-a96c-a7bd62148b04
+		sourceColumn: level3
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column proj_node
+		dataType: boolean
+		lineageTag: b700e8ca-ecda-55bf-b790-b44628ff3245
+		sourceColumn: proj_node
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	hierarchy 'P6 WBS'
+		lineageTag: cf0b8954-a092-59be-acff-37a1b2e87071
+
+		level level1
+			lineageTag: aae0a808-636d-5b82-a961-f4a63a9b39aa
+			column: level1
+
+		level level2
+			lineageTag: 77a93f81-17b9-5d88-bd03-06c16ff75f4e
+			column: level2
+
+		level level3
+			lineageTag: f96d163d-4d8d-5fb1-b36d-955b8f7cce1e
+			column: level3
+
+		level wbs_name
+			lineageTag: 819e069c-4417-539e-94c5-e2271ab66871
+			column: wbs_name
+
+	partition dim_wbs-5abe07a0-92d4-5959-8462-0c9ff7446175 = m
+		mode: import
+		source = ```
+				let
+				    Source = Csv.Document(File.Contents(CsvFolder & "\dim_wbs.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Nulls = Table.ReplaceValue(Promoted, "", null, Replacer.ReplaceValue, Table.ColumnNames(Promoted)),
+				    Typed = Table.TransformColumnTypes(Nulls, {
+				        {"wbs_id", Int64.Type},
+				        {"wbs_code", type text},
+				        {"wbs_name", type text},
+				        {"level", Int64.Type},
+				        {"parent_wbs_id", Int64.Type},
+				        {"path", type text},
+				        {"level1", type text},
+				        {"level2", type text},
+				        {"level3", type text},
+				        {"proj_node", type logical}
+				    }, "en-GB")
+				in
+				    Typed
+				```
+
+	annotation PBI_ResultType = Table

@@ -1,0 +1,422 @@
+table fact_activity_snapshot
+	lineageTag: f4b19563-7903-5dd9-8bfa-5b5f66132dd4
+
+	column snapshot_id
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 7b6184c9-1efc-5821-a3fd-a2ebf175d2ec
+		sourceColumn: snapshot_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column activity_id
+		dataType: string
+		lineageTag: 5fb061a2-232b-5d4e-8f00-8d144e6bbb35
+		sourceColumn: activity_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column status
+		dataType: string
+		lineageTag: 46b273e0-bab0-5b39-b1d7-1dd5b75db49a
+		sourceColumn: status
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column pct_duration
+		dataType: double
+		lineageTag: a2ce9337-9dea-5d6c-b67e-05743ea81806
+		sourceColumn: pct_duration
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column pct_physical
+		dataType: double
+		lineageTag: ba4db56e-c5f1-5278-a9f9-16f7b4d47f99
+		sourceColumn: pct_physical
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column orig_dur_d
+		dataType: double
+		formatString: 0
+		lineageTag: 739f3335-f434-5706-ad28-460d19251826
+		sourceColumn: orig_dur_d
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column rem_dur_d
+		dataType: double
+		formatString: 0
+		lineageTag: 6ffc8b16-92cd-51cc-8da1-fb34029e737e
+		sourceColumn: rem_dur_d
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column actual_start
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: 4b3a4fbd-9fb9-5bb6-8608-947586895156
+		sourceColumn: actual_start
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column actual_finish
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: c8aca248-3e19-5996-aa43-5a653b4da7a6
+		sourceColumn: actual_finish
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column start
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: 1fe83a10-0355-5b34-adc8-45b404ed1fd2
+		sourceColumn: start
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column finish
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: b4ac5f4c-a1b4-5c0e-b958-0fb68c1bce2c
+		sourceColumn: finish
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column late_start
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: 717223c3-abcf-5a8e-907e-10522ed18ebd
+		sourceColumn: late_start
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column late_finish
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: ab5188b2-ec74-5af1-8f75-68823c39bd7e
+		sourceColumn: late_finish
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column total_float_d
+		dataType: double
+		formatString: 0
+		lineageTag: 00f17109-5248-52da-a93e-0833adf67c74
+		sourceColumn: total_float_d
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column free_float_d
+		dataType: double
+		formatString: 0
+		lineageTag: a065b20a-c187-5629-afc5-3aca7fed4bc1
+		sourceColumn: free_float_d
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_critical
+		dataType: boolean
+		lineageTag: 09caae9e-7457-5426-a3e3-246d50893e10
+		sourceColumn: is_critical
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_near_critical
+		dataType: boolean
+		lineageTag: a317be68-0f9e-538c-a356-89b81ee0c114
+		sourceColumn: is_near_critical
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_longest_path
+		dataType: boolean
+		lineageTag: e178f9fa-611f-5e6c-831d-48aaad0e803b
+		sourceColumn: is_longest_path
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column bl0_start
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: 731053e2-e9a4-5f40-a31c-9b9a244b61f7
+		sourceColumn: bl0_start
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column bl0_finish
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: b05687b7-b3fb-5d74-998c-2be7f7668474
+		sourceColumn: bl0_finish
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column bl1_start
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: 8887e4b4-eca4-55b4-827e-2b69e556d4bd
+		sourceColumn: bl1_start
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column bl1_finish
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: fb116322-7c91-51e7-9066-36d811031b7a
+		sourceColumn: bl1_finish
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column bl_start
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: 26bc9836-96c9-50de-b26b-3a6e5efccad1
+		sourceColumn: bl_start
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column bl_finish
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: c4f9be69-d185-5f0d-a810-0518b8649d30
+		sourceColumn: bl_finish
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column var_finish_bl0_d
+		dataType: double
+		formatString: +0;-0;0
+		lineageTag: 2b07b81c-f8e0-5010-93ee-f264f52463bc
+		sourceColumn: var_finish_bl0_d
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column var_finish_bl1_d
+		dataType: double
+		formatString: +0;-0;0
+		lineageTag: d2dc65ca-4bb1-5bae-8e9a-16eb3064d447
+		sourceColumn: var_finish_bl1_d
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column var_finish_bl_d
+		dataType: double
+		formatString: +0;-0;0
+		lineageTag: 9e38192c-e8aa-5363-9113-73aa94407cba
+		sourceColumn: var_finish_bl_d
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column prev_finish
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: 5dfcbbad-89a6-5279-a3da-6754a07ce77f
+		sourceColumn: prev_finish
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column slip_vs_prev_d
+		dataType: double
+		formatString: +0;-0;0
+		lineageTag: 01f80248-fc08-5cc3-adad-3655f387c29a
+		sourceColumn: slip_vs_prev_d
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column lookback_event
+		dataType: string
+		lineageTag: 9be0589d-bff5-5854-8fec-c172e47ea6f3
+		sourceColumn: lookback_event
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column lookback_achieved
+		dataType: boolean
+		lineageTag: 80e0eb98-ece7-5abb-ab95-ec1cb04bb829
+		sourceColumn: lookback_achieved
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column lookahead_start
+		dataType: boolean
+		lineageTag: e66fcfd8-a795-57c5-94bf-770b5487a482
+		sourceColumn: lookahead_start
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column lookahead_finish
+		dataType: boolean
+		lineageTag: c0ecbd09-506c-552e-981c-a6e899a8cc36
+		sourceColumn: lookahead_finish
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column lookahead
+		dataType: boolean
+		lineageTag: eb51a123-7ad7-501d-bfab-e238c7136a49
+		sourceColumn: lookahead
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column planned_pct_bl
+		dataType: double
+		lineageTag: e722973e-c848-5e59-a970-d0136244565d
+		sourceColumn: planned_pct_bl
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column constraint_type
+		dataType: string
+		lineageTag: 35efe584-3124-5f93-a8c6-334594657c00
+		sourceColumn: constraint_type
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column constraint_date
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: 3ca1618a-bef2-54e6-89dd-f094c6646935
+		sourceColumn: constraint_date
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column dq_flags
+		dataType: string
+		lineageTag: f92f9702-f47f-523e-bbd4-48445e2e8d72
+		sourceColumn: dq_flags
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column lookback_achieved_label
+		dataType: string
+		lineageTag: c431fbfe-dc75-586d-a99d-93266152f915
+		sourceColumn: lookback_achieved_label
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_activity_snapshot-6dee849e-c3d1-5c59-abae-dd0bb34c7093 = m
+		mode: import
+		source = ```
+				let
+				    Source = Csv.Document(File.Contents(CsvFolder & "\fact_activity_snapshot.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Nulls = Table.ReplaceValue(Promoted, "", null, Replacer.ReplaceValue, Table.ColumnNames(Promoted)),
+				    Typed = Table.TransformColumnTypes(Nulls, {
+				        {"snapshot_id", Int64.Type},
+				        {"activity_id", type text},
+				        {"status", type text},
+				        {"pct_duration", type number},
+				        {"pct_physical", type number},
+				        {"orig_dur_d", type number},
+				        {"rem_dur_d", type number},
+				        {"actual_start", type datetime},
+				        {"actual_finish", type datetime},
+				        {"start", type datetime},
+				        {"finish", type datetime},
+				        {"late_start", type datetime},
+				        {"late_finish", type datetime},
+				        {"total_float_d", type number},
+				        {"free_float_d", type number},
+				        {"is_critical", type logical},
+				        {"is_near_critical", type logical},
+				        {"is_longest_path", type logical},
+				        {"bl0_start", type datetime},
+				        {"bl0_finish", type datetime},
+				        {"bl1_start", type datetime},
+				        {"bl1_finish", type datetime},
+				        {"bl_start", type datetime},
+				        {"bl_finish", type datetime},
+				        {"var_finish_bl0_d", type number},
+				        {"var_finish_bl1_d", type number},
+				        {"var_finish_bl_d", type number},
+				        {"prev_finish", type datetime},
+				        {"slip_vs_prev_d", type number},
+				        {"lookback_event", type text},
+				        {"lookback_achieved", type logical},
+				        {"lookahead_start", type logical},
+				        {"lookahead_finish", type logical},
+				        {"lookahead", type logical},
+				        {"planned_pct_bl", type number},
+				        {"constraint_type", type text},
+				        {"constraint_date", type datetime},
+				        {"dq_flags", type text}
+				    }, "en-GB"),
+				    Dates = Table.TransformColumnTypes(Typed, {
+				        {"actual_start", type date},
+				        {"actual_finish", type date},
+				        {"start", type date},
+				        {"finish", type date},
+				        {"late_start", type date},
+				        {"late_finish", type date},
+				        {"bl0_start", type date},
+				        {"bl0_finish", type date},
+				        {"bl1_start", type date},
+				        {"bl1_finish", type date},
+				        {"bl_start", type date},
+				        {"bl_finish", type date},
+				        {"prev_finish", type date},
+				        {"constraint_date", type date}
+				    }),
+				    Label_lookback_achieved = Table.AddColumn(Dates, "lookback_achieved_label", each if [lookback_achieved] = null then null else if [lookback_achieved] then "Yes" else "No", type text)
+				in
+				    Label_lookback_achieved
+				```
+
+	annotation PBI_ResultType = Table

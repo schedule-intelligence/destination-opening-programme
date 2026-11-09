@@ -1,0 +1,133 @@
+table fact_milestone_trend
+	lineageTag: 25a633f3-626d-5423-a05f-11796e3c6980
+
+	column snapshot_id
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 84c2a77f-48de-579e-b238-8d6dfd512cc6
+		sourceColumn: snapshot_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column activity_id
+		dataType: string
+		lineageTag: 9a506338-da94-5f9a-ba4d-2a876c7e2445
+		sourceColumn: activity_id
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column forecast_finish
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: cba69bca-00e0-5006-ab9e-5f0d2160690a
+		sourceColumn: forecast_finish
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column bl0_finish
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: 9f867f45-45ed-59f2-af19-3ae66798e331
+		sourceColumn: bl0_finish
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column bl1_finish
+		dataType: dateTime
+		formatString: dd-mmm-yyyy
+		lineageTag: d45a4dec-c036-558a-b1a7-5f1a02c762b6
+		sourceColumn: bl1_finish
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+		annotation UnderlyingDateTimeDataType = Date
+
+	column var_bl0_d
+		dataType: double
+		formatString: +0;-0;0
+		lineageTag: 2957cde5-f35b-5707-9319-3953893fa133
+		sourceColumn: var_bl0_d
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column var_bl1_d
+		dataType: double
+		formatString: +0;-0;0
+		lineageTag: 1b60a5a9-e425-5165-ba88-c0a5fc184a50
+		sourceColumn: var_bl1_d
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column movement_vs_prev_d
+		dataType: double
+		formatString: +0;-0;0
+		lineageTag: f87aa131-4d86-50b5-a868-81c788d9cadd
+		sourceColumn: movement_vs_prev_d
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column total_float_d
+		dataType: double
+		formatString: 0
+		lineageTag: 5139d7cb-e3c3-5716-b2f3-e61c3ebd5787
+		sourceColumn: total_float_d
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column status
+		dataType: string
+		lineageTag: e3306d53-c39b-5d24-a8fd-9e71fe5cd186
+		sourceColumn: status
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column owner_code
+		dataType: string
+		lineageTag: b92c9964-d0b1-5bf7-9d1f-026472726aeb
+		sourceColumn: owner_code
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_milestone_trend-4ede02d3-c6a6-5ad9-8de1-2f6aca1cac77 = m
+		mode: import
+		source = ```
+				let
+				    Source = Csv.Document(File.Contents(CsvFolder & "\fact_milestone_trend.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Nulls = Table.ReplaceValue(Promoted, "", null, Replacer.ReplaceValue, Table.ColumnNames(Promoted)),
+				    Typed = Table.TransformColumnTypes(Nulls, {
+				        {"snapshot_id", Int64.Type},
+				        {"activity_id", type text},
+				        {"forecast_finish", type datetime},
+				        {"bl0_finish", type datetime},
+				        {"bl1_finish", type datetime},
+				        {"var_bl0_d", type number},
+				        {"var_bl1_d", type number},
+				        {"movement_vs_prev_d", type number},
+				        {"total_float_d", type number},
+				        {"status", type text},
+				        {"owner_code", type text}
+				    }, "en-GB"),
+				    Dates = Table.TransformColumnTypes(Typed, {
+				        {"forecast_finish", type date},
+				        {"bl0_finish", type date},
+				        {"bl1_finish", type date}
+				    })
+				in
+				    Dates
+				```
+
+	annotation PBI_ResultType = Table
