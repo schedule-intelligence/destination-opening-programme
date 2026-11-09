@@ -259,8 +259,18 @@ serves the new version. The report id does not change, so bookmarks and the app 
 **What the trial allows here.** The Power BI individual trial grants PPU-level features for 60 days: workspaces
 and apps, sharing to licensed users, the XMLA endpoint (read and write) on the published model, deployment
 pipelines, paginated reports and subscriptions. It is not a Fabric capacity: no Copilot, no Fabric items. Content
-in a Pro or PPU workspace is visible only to licensed users, so sharing with the public would need the tenant
-setting *Publish to web* (an embed code, viewable by anyone with the link) or a capacity.
+in a Pro or PPU workspace is visible only to licensed users; the public sees the report through *Publish to web*.
+
+**Publish to web (09-Nov-2026).** The report has a public embed code, shown on the GitHub Pages site at
+`https://schedule-intelligence.github.io/destination-opening-programme/powerbi.html` (`docs/powerbi.html`, an
+iframe on `https://app.powerbi.com/view?r=...&pageName=p01_exec`). Anyone with the link can read it without a
+sign-in; the embed stays synchronised with the published report, so a re-publish updates it. Two tenant steps
+were needed first: the tenant was unmanaged (self-service sign-up), so *Get admin access* in the Microsoft 365
+admin center verified the domain with a TXT record (`MS=...` at the DNS host) and made the account its admin;
+then in the Fabric admin portal, Tenant settings > Export and sharing settings > *Publish to web*, the switch
+*Allow users to create new embed codes* was turned on (the setting itself was already enabled, and *Block Public
+Internet Access* already off). Embed codes are listed under Admin portal > Embed Codes, where one can be
+deleted to take the report offline. The data is fictional, so there is nothing confidential in it.
 
 ## Still built by hand (about 10 minutes each)
 

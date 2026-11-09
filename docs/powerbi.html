@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DOP Power BI report</title>
+<meta name="description" content="The Destination Opening Programme Power BI report, embedded live: the same reconciled schedule data as the dashboard, in Power BI.">
+<meta name="theme-color" content="#1F3A5F" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16213A" media="(prefers-color-scheme: dark)">
+<link rel="canonical" href="https://schedule-intelligence.github.io/destination-opening-programme/powerbi.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="DOP Schedule Intelligence">
+<meta property="og:title" content="Destination Opening Programme: Power BI report">
+<meta property="og:description" content="The DOP schedule-intelligence report in Power BI, embedded live from the service.">
+<meta property="og:url" content="https://schedule-intelligence.github.io/destination-opening-programme/powerbi.html">
+<meta property="og:image" content="https://schedule-intelligence.github.io/destination-opening-programme/screenshots/pbi_page_1_exec.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231F3A5F'/%3E%3Cpath d='M7 24h4V14H7zm7 0h4V6h-4zm7 0h4v-6h-4z' fill='%235FB8B3'/%3E%3C/svg%3E">
+<style>
+:root{color-scheme:light;--bg:#F7F8FA;--surface:#FFFFFF;--border:#E2E8F0;--text:#1A202C;--muted:#4A5568;--brand:#1F3A5F;--brand-ink:#FFFFFF;--brand-muted:#C9D5E6;--accent:#2B7A78;--accent-ink:#5FB8B3}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#0F172A;--surface:#1E293B;--border:#334155;--text:#E2E8F0;--muted:#94A3B8;--brand:#16213A;--brand-ink:#E2E8F0;--brand-muted:#94A3B8;--accent:#5FB8B3}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 "Segoe UI",system-ui,-apple-system,sans-serif}
+header{background:var(--brand);color:var(--brand-ink);border-top:4px solid var(--accent-ink);padding:18px 24px}
+.wrap{max-width:1280px;margin:0 auto}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--brand-muted);margin:0 0 4px}
+h1{font-size:22px;font-weight:600;margin:0}
+header p{margin:6px 0 0;color:var(--brand-muted);font-size:14px}
+header a{color:var(--brand-ink)}
+nav{display:flex;flex-wrap:wrap;gap:8px 20px;margin:0 auto;padding:12px 24px;max-width:1280px;font-size:14px}
+nav a{color:var(--accent);text-decoration:none;font-weight:600}
+nav a:hover{text-decoration:underline}
+main{padding:0 24px 32px}
+.frame{position:relative;width:100%;aspect-ratio:16/9.6;background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.05)}
+.frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.note{color:var(--muted);font-size:13px;margin:12px 0 0}
+.note code{font-family:Consolas,"Cascadia Mono",monospace;font-size:12px}
+@media (max-width:720px){.frame{aspect-ratio:3/4}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <p class="eyebrow">Schedule intelligence · Programme controls</p>
+    <h1>Destination Opening Programme: Power BI report</h1>
+    <p>The same reconciled schedule data as the <a href="./">web dashboard</a>, as a Power BI report served live from the Power BI service. Fictional programme, fictional data.</p>
+  </div>
+</header>
+<nav>
+  <a href="./">Web dashboard</a>
+  <a href="downloads/DOP.pbix">Download DOP.pbix</a>
+  <a href="https://github.com/schedule-intelligence/destination-opening-programme/blob/main/powerbi/README_PBIP.md">How the report is built</a>
+  <a href="https://github.com/schedule-intelligence/destination-opening-programme">Repository</a>
+</nav>
+<main>
+  <div class="wrap">
+    <div class="frame">
+      <iframe title="Destination Opening Programme: Power BI report" src="https://app.powerbi.com/view?r=eyJrIjoiYWNhMWY5YjEtZjlhMy00NmZmLTk3MzctZmYxYTBiYzgwZjk0IiwidCI6ImNlY2RiNWU2LWMwZjQtNDMyMy05YzA4LWU5YjJkNDQyZGQxNSJ9&pageName=p01_exec" allowfullscreen loading="lazy"></iframe>
+    </div>
+    <p class="note">Eight pages: executive summary, milestones and slippage, critical path and look-ahead, critical path Gantt, interfaces and readiness, risks, decisions and recovery, schedule quality (DCMA), reconciliation and lineage. Use the page strip at the bottom of the report, or the rail on its left. The report is published with <em>Publish to web</em>, so it needs no sign-in; it carries the data of the 29-Oct-2026 update.</p>
+  </div>
+</main>
+</body>
+</html>

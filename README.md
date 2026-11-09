@@ -97,6 +97,9 @@ and toggle was checked again in reading view. For the latest update it shows the
 | **Schedule quality (DCMA)** | **Activity details (drill-through)** |
 | ![Power BI schedule quality](docs/screenshots/pbi_page_6_quality.png) | ![Power BI activity details](docs/screenshots/pbi_page_8_activity.png) |
 
+**Live report:** https://schedule-intelligence.github.io/destination-opening-programme/powerbi.html (the published
+report embedded from the Power BI service; no sign-in needed).
+
 Other pages: [milestones](docs/screenshots/pbi_page_2_milestones.png) ·
 [interfaces and readiness](docs/screenshots/pbi_page_4_interfaces.png) ·
 [risks and recovery](docs/screenshots/pbi_page_5_risks.png) ·
