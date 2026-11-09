@@ -5,7 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DOP Schedule Intelligence</title>
 <meta name="description" content="Decision-ready view of the fictional Destination Opening Programme: P6-format schedules, schedule quality, readiness, risks and recovery.">
-<link rel="icon" href="data:,">
+<meta name="theme-color" content="#1F3A5F" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16213A" media="(prefers-color-scheme: dark)">
+<link rel="canonical" href="https://schedule-intelligence.github.io/destination-opening-programme/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="DOP Schedule Intelligence">
+<meta property="og:title" content="Destination Opening Programme: schedule intelligence">
+<meta property="og:description" content="Decision-ready view of programme delivery: P6 schedules reconciled into one dashboard, with schedule quality, readiness, risks and recovery.">
+<meta property="og:url" content="https://schedule-intelligence.github.io/destination-opening-programme/">
+<meta property="og:image" content="https://schedule-intelligence.github.io/destination-opening-programme/screenshots/social_preview.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta property="og:image:alt" content="Destination Opening Programme dashboard: Day 1 forecast, variance tiles and RAG matrix">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Destination Opening Programme: schedule intelligence">
+<meta name="twitter:description" content="P6 schedules reconciled into one decision-ready dashboard, with schedule quality, readiness, risks and recovery.">
+<meta name="twitter:image" content="https://schedule-intelligence.github.io/destination-opening-programme/screenshots/social_preview.png">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231F3A5F'/%3E%3Cpath d='M7 24h4V14H7zm7 0h4V6h-4zm7 0h4v-6h-4z' fill='%235FB8B3'/%3E%3C/svg%3E">
 <script>
   /* Apply the stored theme before first paint (storage may be blocked: fail quietly). */
   (function () { try { var t = localStorage.getItem('dop-theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {} })();
@@ -367,7 +383,7 @@ footer .wrap{padding-top:14px;padding-bottom:18px}
 <div class="backdrop" id="backdrop" hidden></div>
 <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dr-title" hidden tabindex="-1"></aside>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" integrity="sha512-CQBWl4fJHWbryGE+Pc7UAxWMUMNMWzWxF4SQo9CgkJIN1kx6djDQZjh3Y8SZ1d+6I+1zze6Z7kHXO7q3UyZAWw==" crossorigin="anonymous"></script>
 <script>
 'use strict';
 (function () {

@@ -1,15 +1,27 @@
 # Destination Opening Programme: schedule intelligence
 
+[![Tests](https://github.com/schedule-intelligence/destination-opening-programme/actions/workflows/tests.yml/badge.svg)](https://github.com/schedule-intelligence/destination-opening-programme/actions/workflows/tests.yml)
+[![Dashboard](https://github.com/schedule-intelligence/destination-opening-programme/actions/workflows/pages.yml/badge.svg)](https://schedule-intelligence.github.io/destination-opening-programme/)
+[![Python 3.12](https://img.shields.io/badge/python-3.12-1F3A5F.svg)](requirements.txt)
+[![Licence: MIT](https://img.shields.io/badge/licence-MIT-2B7A78.svg)](LICENSE)
+
 **One decision-ready view of programme delivery: Primavera P6 schedules (XER) reconciled into a web dashboard,
 a Power BI model and executive PowerPoint packs, with schedule-quality and reconciliation controls built in.**
 
 **Live dashboard:** https://schedule-intelligence.github.io/destination-opening-programme/
 
-![48-second walkthrough of the dashboard](docs/screenshots/tour.gif)
+<p align="center">
+  <a href="https://schedule-intelligence.github.io/destination-opening-programme/">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/exec_dark.png">
+      <img alt="Executive summary of the dashboard at 29-Oct-2026: Day 1 forecast, variance tiles, RAG matrix and open decisions" src="docs/screenshots/tab1_exec.png" width="960">
+    </picture>
+  </a>
+</p>
 
-*48-second walkthrough: the executive summary, float eroding across four updates, then the critical path, readiness,
-recovery, schedule quality and reconciliation tabs ([MP4 version](docs/screenshots/tour.mp4)).*
+*48-second walkthrough of every tab: [MP4 (1.6 MB)](docs/screenshots/tour.mp4) · [GIF (6.6 MB)](docs/screenshots/tour.gif).*
 
+> [!NOTE]
 > Fictional programme, fictional data. Schedules are produced by a custom CPM engine that follows Primavera P6
 > conventions and are exported in genuine P6 XER format. No P6 licence was used (see [Transparency](#transparency)).
 
@@ -36,15 +48,16 @@ fails if any control breaks.
 
 ## Screenshots
 
-| Executive summary | Critical path & look-ahead |
+| Milestones & slippage trend | Critical path & look-ahead |
 |---|---|
-| ![Executive summary](docs/screenshots/tab1_exec.png) | ![Critical path](docs/screenshots/tab3_critical.png) |
+| ![Milestones](docs/screenshots/tab2_milestones.png) | ![Critical path](docs/screenshots/tab3_critical.png) |
 | **Interfaces & readiness gap** | **Schedule quality (DCMA)** |
 | ![Readiness](docs/screenshots/tab4_interfaces.png) | ![DCMA](docs/screenshots/tab6_dq.png) |
-| **Reconciliation & lineage** | **Dark mode** |
-| ![Reconciliation](docs/screenshots/tab7_recon.png) | ![Dark](docs/screenshots/exec_dark.png) |
+| **Risks, decisions & recovery** | **Reconciliation & lineage** |
+| ![Risks and recovery](docs/screenshots/tab5_risks.png) | ![Reconciliation](docs/screenshots/tab7_recon.png) |
 
-Mobile (360 px): [exec_mobile.png](docs/screenshots/exec_mobile.png) · other tabs: [milestones](docs/screenshots/tab2_milestones.png), [risks & recovery](docs/screenshots/tab5_risks.png), [about & method](docs/screenshots/tab8_about.png)
+Also: [executive summary, light](docs/screenshots/tab1_exec.png) · [dark mode](docs/screenshots/exec_dark.png) ·
+[mobile (360 px)](docs/screenshots/exec_mobile.png) · [about & method](docs/screenshots/tab8_about.png)
 
 ## Executive packs
 
@@ -145,18 +158,19 @@ flowchart LR
 ## Repo layout
 
 ```
-dop/                  CPM engine, calendars, fictional programme, storyline, simulator, XER writer/parser
-dop/pipeline/         loader, quality (DCMA), star schema, narrative, reconciliation gate, exports, Excel
-dop/pptx_gen.py       monthly and fortnightly executive packs
-data/xer/             DOP_BL0.xer, DOP_BL1.xer, DOP_UPD_<date>.xer x6 (genuine XER structure)
-data/registers/       risks, decisions, changes, interfaces, recovery options, reporting calendar
-data/truth/           injected-issue truth files used by the tests
-output/csv|xlsx|pptx|reports/
-docs/                 GitHub Pages site (index.html, data/dashboard.json, downloads/, screenshots/)
-governance/           scheduling framework, reporting calendar, RACI, reporting standards, owner playbook
-powerbi/              Power BI project DOP.pbip (semantic model + 7 report pages), DAX measures and theme
-tests/                pytest: hand-calculated CPM networks, invariants, XER round trip, truth, gate, integrity, outputs
-scripts/              dashboard verification (Playwright), DAX column check, confidentiality check
+dop/              CPM engine, calendars, programme, storyline, simulator, XER writer/parser
+dop/pipeline/     loader, quality (DCMA), star schema, narrative, reconciliation gate, exports
+dop/pptx_gen.py   monthly and fortnightly executive packs
+dop/pbip.py       Power BI project generator (report pages, TMDL model via dop/tmdl.py)
+data/xer/         DOP_BL0.xer, DOP_BL1.xer, DOP_UPD_<date>.xer x6 (genuine XER structure)
+data/registers/   risks, decisions, changes, interfaces, recovery options, calendar
+data/truth/       injected-issue truth files used by the tests
+output/           csv/ xlsx/ pptx/ reports/
+docs/             GitHub Pages site: index.html, data/dashboard.json, downloads/, screenshots/
+governance/       scheduling framework, reporting calendar, RACI, standards, owner playbook
+powerbi/          DOP.pbip (TMDL semantic model + report pages), measures.dax, dop_theme.json
+tests/            pytest: CPM networks, invariants, XER round trip, truth, gate, outputs, PBIP
+scripts/          dashboard verification (Playwright), PBIP and DAX checks, confidentiality
 ```
 
 Design: [DESIGN.md](DESIGN.md) (programme, storyline, data model, engine conventions, checks, controls, outputs) ·
