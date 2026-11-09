@@ -241,7 +241,10 @@ individual trial; the public GitHub Pages dashboard remains the view for everyon
 |---|---|
 | Workspace | `https://app.powerbi.com/groups/8cb3bd05-0fc7-4951-8bc2-30a6388484de` |
 | Report | `https://app.powerbi.com/groups/8cb3bd05-0fc7-4951-8bc2-30a6388484de/reports/02967d29-fc0a-499d-baec-04f2d4155b22` |
-| App | `https://app.powerbi.com/Redirect?action=OpenApp&appId=d764a28e-283d-4c67-b17e-3fdf82be88cc` |
+| App (report + scorecard) | `https://app.powerbi.com/Redirect?action=OpenApp&appId=d764a28e-283d-4c67-b17e-3fdf82be88cc` |
+| Scorecard | `https://app.powerbi.com/groups/8cb3bd05-0fc7-4951-8bc2-30a6388484de/scorecards/058f9984-4fdc-4d1b-b1bb-fbe0e4274183` |
+| Deployment pipeline | `https://app.powerbi.com/pipelines/e12a98c5-1fb8-41d1-af2a-52d3b0ecf3d1` |
+| Public embed (no sign-in) | `https://schedule-intelligence.github.io/destination-opening-programme/powerbi.html` |
 
 **How it was published (09-Nov-2026).** Desktop opened `powerbi/DOP.pbip`, Home > Refresh loaded the CSVs, File >
 Save as wrote `docs/downloads/DOP.pbix`, and Home > Publish sent the report and model, with their data, to the
@@ -260,6 +263,31 @@ serves the new version. The report id does not change, so bookmarks and the app 
 and apps, sharing to licensed users, the XMLA endpoint (read and write) on the published model, deployment
 pipelines, paginated reports and subscriptions. It is not a Fabric capacity: no Copilot, no Fabric items. Content
 in a Pro or PPU workspace is visible only to licensed users; the public sees the report through *Publish to web*.
+The workspace type was changed from Power BI Pro to **Premium Per-User** (Workspace settings > Workspace type),
+which the pipeline and the XMLA endpoint need; the public embed and the app were unaffected.
+
+**Deployment pipeline (09-Nov-2026).** The pipeline *DOP Schedule Intelligence* has two stages. *Production* is
+the workspace above (the app and the public embed read from it). *Development* is the workspace *DOP Schedule
+Intelligence [Development]*, created by deploying backward from Production and then given data by publishing
+`DOP.pbix` into it from Desktop. The working cycle for a new data date: publish from Desktop to Development,
+open the pipeline, read the compare column (changed, new, missing items), deploy to Production with a note, then
+*Update app*. A pipeline deployment carries report and model definitions, not data; Production keeps the data of
+its last Desktop publish, so a model change (new column, new table) is published to Production from Desktop
+rather than deployed.
+
+**Scorecard (09-Nov-2026).** *DOP programme goals*, in the same workspace, holds three goals connected to the
+report's KPI cards, so their current values follow the published data: *Day 1 total float (working days)*
+(−7 against a target of +5, Behind), *Schedule quality: DQ score* (75.3 against 85, At risk) and *Interfaces
+late against the receiver's need date* (9 against 0, Behind). Start date 28-May-2026 (first update), due date
+14-Oct-2027 (Day 1 target). Each goal keeps a history of check-ins and notes, so the scorecard is where the
+owners' commitments can be recorded between updates.
+
+**Service check.** `python scripts/check_service.py` runs one DAX query against the published semantic model
+through the Power BI REST API (Execute Queries) and compares twenty headline measures for a data date with
+`docs/data/dashboard.json`: Day 1 forecast and float, the variances, the criticality counts, progress counts,
+DQ, CPLI, BEI and the control counts. It signs in with a device code (`pip install msal`) or takes a token from
+`PBI_TOKEN`, and exits 1 on any difference. With it the chain XER = model = dashboard (the reconciliation gate)
+extends to the published report. `tests/test_service_check.py` covers the query and the comparison offline.
 
 **Publish to web (09-Nov-2026).** The report has a public embed code, shown on the GitHub Pages site at
 `https://schedule-intelligence.github.io/destination-opening-programme/powerbi.html` (`docs/powerbi.html`, an

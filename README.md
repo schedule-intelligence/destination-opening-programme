@@ -208,8 +208,9 @@ Individual steps: `python -m dop generate`, `python -m dop pipeline [--near-crit
 Verification tools: `python scripts/verify_dashboard.py` (headless Chromium over every data date, compare mode and
 tab), `python scripts/render_pptx_previews.py` (renders both packs with LibreOffice for visual review and refreshes
 the slide previews), `python scripts/check_pbip.py` (validates the Power BI project offline against the published
-schemas and the model), `python scripts/record_tour.py` (re-records the walkthrough GIF and MP4) and
-`python scripts/check_confidentiality.py`.
+schemas and the model), `python scripts/check_service.py` (queries the published semantic model in the Power BI
+service and compares its headline measures with `dashboard.json`), `python scripts/record_tour.py` (re-records
+the walkthrough GIF and MP4) and `python scripts/check_confidentiality.py`.
 
 ## Outputs
 
