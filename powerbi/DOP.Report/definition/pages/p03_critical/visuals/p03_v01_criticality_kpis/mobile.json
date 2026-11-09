@@ -1,0 +1,156 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainerMobileState/2.7.0/schema.json",
+  "objects": {
+    "layout": [
+      {
+        "properties": {
+          "autoGrid": {
+            "expr": {
+              "Literal": {
+                "Value": "true"
+              }
+            }
+          },
+          "maxTiles": {
+            "expr": {
+              "Literal": {
+                "Value": "2L"
+              }
+            }
+          },
+          "orientation": {
+            "expr": {
+              "Literal": {
+                "Value": "0D"
+              }
+            }
+          },
+          "columnCount": {
+            "expr": {
+              "Literal": {
+                "Value": "2L"
+              }
+            }
+          },
+          "rowCount": {
+            "expr": {
+              "Literal": {
+                "Value": "3L"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "value": [
+      {
+        "properties": {
+          "fontSize": {
+            "expr": {
+              "Literal": {
+                "Value": "14D"
+              }
+            }
+          }
+        },
+        "selector": {
+          "id": "default"
+        }
+      }
+    ],
+    "image": [
+      {
+        "properties": {
+          "show": {
+            "expr": {
+              "Literal": {
+                "Value": "false"
+              }
+            }
+          }
+        },
+        "selector": {
+          "metadata": "_Measures.Critical count"
+        }
+      },
+      {
+        "properties": {
+          "show": {
+            "expr": {
+              "Literal": {
+                "Value": "false"
+              }
+            }
+          }
+        },
+        "selector": {
+          "metadata": "_Measures.Near-critical count"
+        }
+      },
+      {
+        "properties": {
+          "show": {
+            "expr": {
+              "Literal": {
+                "Value": "false"
+              }
+            }
+          }
+        },
+        "selector": {
+          "metadata": "_Measures.Negative float count"
+        }
+      },
+      {
+        "properties": {
+          "show": {
+            "expr": {
+              "Literal": {
+                "Value": "false"
+              }
+            }
+          }
+        },
+        "selector": {
+          "metadata": "_Measures.Total float (min)"
+        }
+      },
+      {
+        "properties": {
+          "show": {
+            "expr": {
+              "Literal": {
+                "Value": "false"
+              }
+            }
+          }
+        },
+        "selector": {
+          "metadata": "_Measures.Look-ahead items"
+        }
+      },
+      {
+        "properties": {
+          "show": {
+            "expr": {
+              "Literal": {
+                "Value": "false"
+              }
+            }
+          }
+        },
+        "selector": {
+          "metadata": "_Measures.Look-back hit rate"
+        }
+      }
+    ]
+  },
+  "position": {
+    "x": 0,
+    "y": 234,
+    "z": 11000,
+    "height": 508,
+    "width": 324,
+    "tabOrder": 11000
+  }
+}

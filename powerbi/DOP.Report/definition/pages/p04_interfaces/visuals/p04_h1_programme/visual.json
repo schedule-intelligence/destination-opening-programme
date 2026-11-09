@@ -3,10 +3,10 @@
   "name": "p04_h1_programme",
   "position": {
     "x": 16,
-    "y": 8,
+    "y": 16,
     "z": 1000,
-    "height": 56,
-    "width": 1032,
+    "height": 64,
+    "width": 160,
     "tabOrder": 1000
   },
   "visual": {
@@ -22,7 +22,7 @@
                     "value": "Destination Opening Programme",
                     "textStyle": {
                       "fontFamily": "Segoe UI Semibold",
-                      "fontSize": "15px",
+                      "fontSize": "14px",
                       "color": "#FFFFFF",
                       "fontWeight": "bold"
                     }
@@ -33,7 +33,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Schedule intelligence | Interfaces & readiness",
+                    "value": "Schedule intelligence",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "11px",

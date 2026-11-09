@@ -50,7 +50,7 @@
   "visualInteractions": [
     {
       "source": "p02_h4_dd_slicer",
-      "target": "p02_v01_gate_forecasts",
+      "target": "p02_v02_gate_forecasts",
       "type": "NoFilter"
     }
   ]

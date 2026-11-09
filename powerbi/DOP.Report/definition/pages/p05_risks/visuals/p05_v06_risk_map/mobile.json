@@ -1,0 +1,49 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainerMobileState/2.7.0/schema.json",
+  "objects": {
+    "columnWidth": [
+      {
+        "properties": {
+          "value": {
+            "expr": {
+              "Literal": {
+                "Value": "49D"
+              }
+            }
+          }
+        },
+        "selector": {
+          "metadata": "_Measures.Risks in cell"
+        }
+      }
+    ],
+    "values": [
+      {
+        "properties": {
+          "wordWrap": {
+            "expr": {
+              "Literal": {
+                "Value": "true"
+              }
+            }
+          },
+          "fontSize": {
+            "expr": {
+              "Literal": {
+                "Value": "8D"
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "position": {
+    "x": 0,
+    "y": 1472,
+    "z": 15000,
+    "height": 288,
+    "width": 324,
+    "tabOrder": 15000
+  }
+}

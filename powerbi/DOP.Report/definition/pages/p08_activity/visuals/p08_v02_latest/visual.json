@@ -2,18 +2,18 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
   "name": "p08_v02_latest",
   "position": {
-    "x": 864,
-    "y": 144,
-    "z": 5000,
-    "height": 126,
+    "x": 856,
+    "y": 96,
+    "z": 11000,
+    "height": 184,
     "width": 400,
-    "tabOrder": 5000
+    "tabOrder": 11000
   },
   "visual": {
-    "visualType": "multiRowCard",
+    "visualType": "cardVisual",
     "query": {
       "queryState": {
-        "Values": {
+        "Data": {
           "projections": [
             {
               "field": {
@@ -48,7 +48,7 @@
               },
               "queryRef": "Min(fact_activity_snapshot.total_float_d)",
               "nativeQueryRef": "Min of total_float_d",
-              "displayName": "Total float (d)"
+              "displayName": "Total float (wd)"
             },
             {
               "field": {
@@ -58,34 +58,19 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Finish variance vs BL1"
+                  "Property": "Slip vs previous period"
                 }
               },
-              "queryRef": "_Measures.Finish variance vs BL1",
-              "nativeQueryRef": "Finish variance vs BL1",
-              "displayName": "vs BL1 (days)"
-            },
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Criticality band"
-                }
-              },
-              "queryRef": "_Measures.Criticality band",
-              "nativeQueryRef": "Criticality band",
-              "displayName": "Criticality band"
+              "queryRef": "_Measures.Slip vs previous period",
+              "nativeQueryRef": "Slip vs previous period",
+              "displayName": "Movement (cd)"
             }
           ]
         }
       }
     },
     "objects": {
-      "dataLabels": [
+      "value": [
         {
           "properties": {
             "fontSize": {
@@ -94,11 +79,39 @@
                   "Value": "12D"
                 }
               }
+            },
+            "fontFamily": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Segoe UI Semibold'"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#1F3A5F'"
+                    }
+                  }
+                }
+              }
+            },
+            "horizontalAlignment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'left'"
+                }
+              }
             }
+          },
+          "selector": {
+            "id": "default"
           }
         }
       ],
-      "categoryLabels": [
+      "label": [
         {
           "properties": {
             "show": {
@@ -111,24 +124,222 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "8D"
+                  "Value": "10D"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#4A5568'"
+                    }
+                  }
+                }
+              }
+            },
+            "position": {
+              "expr": {
+                "Literal": {
+                  "Value": "'aboveValue'"
+                }
+              }
+            },
+            "horizontalAlignment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'left'"
                 }
               }
             }
+          },
+          "selector": {
+            "id": "default"
           }
         }
       ],
-      "card": [
+      "outline": [
         {
           "properties": {
-            "barShow": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          },
+          "selector": {
+            "id": "default"
+          }
+        }
+      ],
+      "accentBar": [
+        {
+          "properties": {
+            "show": {
               "expr": {
                 "Literal": {
                   "Value": "true"
                 }
               }
             },
-            "barColor": {
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#2B7A78'"
+                    }
+                  }
+                }
+              }
+            },
+            "width": {
+              "expr": {
+                "Literal": {
+                  "Value": "3D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "id": "default"
+          }
+        }
+      ],
+      "referenceLabelLayout": [
+        {
+          "properties": {
+            "arrangement": {
+              "expr": {
+                "Literal": {
+                  "Value": "'rows'"
+                }
+              }
+            },
+            "style": {
+              "expr": {
+                "Literal": {
+                  "Value": "'sentence'"
+                }
+              }
+            },
+            "horizontalAlignment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'left'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "referenceLabelTitle": [
+        {
+          "properties": {
+            "titleFontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
+                }
+              }
+            },
+            "titleFontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#4A5568'"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "selector": {
+            "id": "default"
+          }
+        },
+        {
+          "properties": {
+            "titleContentType": {
+              "expr": {
+                "Literal": {
+                  "Value": "'custom'"
+                }
+              }
+            },
+            "titleText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'vs BL1'"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Measures.Forecast finish",
+            "id": "ref-0-0"
+          }
+        },
+        {
+          "properties": {
+            "titleContentType": {
+              "expr": {
+                "Literal": {
+                  "Value": "'custom'"
+                }
+              }
+            },
+            "titleText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'threshold'"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "Min(fact_activity_snapshot.total_float_d)",
+            "id": "ref-1-0"
+          }
+        },
+        {
+          "properties": {
+            "titleContentType": {
+              "expr": {
+                "Literal": {
+                  "Value": "'custom'"
+                }
+              }
+            },
+            "titleText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'band'"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Measures.Slip vs previous period",
+            "id": "ref-2-0"
+          }
+        }
+      ],
+      "referenceLabelValue": [
+        {
+          "properties": {
+            "valueFontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
+                }
+              }
+            },
+            "valueFontColor": {
               "solid": {
                 "color": {
                   "expr": {
@@ -139,13 +350,102 @@
                 }
               }
             },
-            "barWeight": {
+            "valueBold": {
               "expr": {
                 "Literal": {
-                  "Value": "3D"
+                  "Value": "true"
                 }
               }
             }
+          },
+          "selector": {
+            "id": "default"
+          }
+        }
+      ],
+      "referenceLabel": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Finish variance vs BL1"
+                }
+              }
+            }
+          },
+          "selector": {
+            "data": [
+              {
+                "dataViewWildcard": {
+                  "matchingOption": 0
+                }
+              }
+            ],
+            "metadata": "_Measures.Forecast finish",
+            "id": "ref-0-0",
+            "order": 0
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Near-critical threshold (d)"
+                }
+              }
+            }
+          },
+          "selector": {
+            "data": [
+              {
+                "dataViewWildcard": {
+                  "matchingOption": 0
+                }
+              }
+            ],
+            "metadata": "Min(fact_activity_snapshot.total_float_d)",
+            "id": "ref-1-0",
+            "order": 0
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Criticality band"
+                }
+              }
+            }
+          },
+          "selector": {
+            "data": [
+              {
+                "dataViewWildcard": {
+                  "matchingOption": 0
+                }
+              }
+            ],
+            "metadata": "_Measures.Slip vs previous period",
+            "id": "ref-2-0",
+            "order": 0
           }
         }
       ]
@@ -157,21 +457,14 @@
             "show": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
                 }
               }
             },
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Latest update: forecast finish and float'"
-                }
-              }
-            },
-            "titleWrap": {
-              "expr": {
-                "Literal": {
-                  "Value": "true"
+                  "Value": "'Latest update'"
                 }
               }
             }
@@ -184,7 +477,20 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Latest update: forecast finish and float'"
+                  "Value": "'KPI strip: Latest update'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "visualHeader": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
                 }
               }
             }

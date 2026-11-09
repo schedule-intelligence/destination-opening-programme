@@ -1311,6 +1311,7 @@
           {
             "name": "orig_dur_d",
             "dataType": "double",
+            "formatString": "0",
             "lineageTag": "739f3335-f434-5706-ad28-460d19251826",
             "sourceColumn": "orig_dur_d",
             "summarizeBy": "sum",
@@ -1324,6 +1325,7 @@
           {
             "name": "rem_dur_d",
             "dataType": "double",
+            "formatString": "0",
             "lineageTag": "6ffc8b16-92cd-51cc-8da1-fb34029e737e",
             "sourceColumn": "rem_dur_d",
             "summarizeBy": "sum",
@@ -1445,6 +1447,7 @@
           {
             "name": "total_float_d",
             "dataType": "double",
+            "formatString": "0",
             "lineageTag": "00f17109-5248-52da-a93e-0833adf67c74",
             "sourceColumn": "total_float_d",
             "summarizeBy": "sum",
@@ -1458,6 +1461,7 @@
           {
             "name": "free_float_d",
             "dataType": "double",
+            "formatString": "0",
             "lineageTag": "a065b20a-c187-5629-afc5-3aca7fed4bc1",
             "sourceColumn": "free_float_d",
             "summarizeBy": "sum",
@@ -1618,6 +1622,7 @@
           {
             "name": "var_finish_bl0_d",
             "dataType": "double",
+            "formatString": "+0;-0;0",
             "lineageTag": "2b07b81c-f8e0-5010-93ee-f264f52463bc",
             "sourceColumn": "var_finish_bl0_d",
             "summarizeBy": "sum",
@@ -1631,6 +1636,7 @@
           {
             "name": "var_finish_bl1_d",
             "dataType": "double",
+            "formatString": "+0;-0;0",
             "lineageTag": "d2dc65ca-4bb1-5bae-8e9a-16eb3064d447",
             "sourceColumn": "var_finish_bl1_d",
             "summarizeBy": "sum",
@@ -1644,6 +1650,7 @@
           {
             "name": "var_finish_bl_d",
             "dataType": "double",
+            "formatString": "+0;-0;0",
             "lineageTag": "9e38192c-e8aa-5363-9113-73aa94407cba",
             "sourceColumn": "var_finish_bl_d",
             "summarizeBy": "sum",
@@ -1675,6 +1682,7 @@
           {
             "name": "slip_vs_prev_d",
             "dataType": "double",
+            "formatString": "+0;-0;0",
             "lineageTag": "01f80248-fc08-5cc3-adad-3655f387c29a",
             "sourceColumn": "slip_vs_prev_d",
             "summarizeBy": "sum",
@@ -1806,6 +1814,19 @@
                 "value": "Automatic"
               }
             ]
+          },
+          {
+            "name": "lookback_achieved_label",
+            "dataType": "string",
+            "lineageTag": "c431fbfe-dc75-586d-a99d-93266152f915",
+            "sourceColumn": "lookback_achieved_label",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
           }
         ],
         "partitions": [
@@ -1874,9 +1895,10 @@
                 "        {\"bl_finish\", type date},",
                 "        {\"prev_finish\", type date},",
                 "        {\"constraint_date\", type date}",
-                "    })",
+                "    }),",
+                "    Label_lookback_achieved = Table.AddColumn(Dates, \"lookback_achieved_label\", each if [lookback_achieved] = null then null else if [lookback_achieved] then \"Yes\" else \"No\", type text)",
                 "in",
-                "    Dates"
+                "    Label_lookback_achieved"
               ]
             }
           }
@@ -2158,6 +2180,7 @@
           {
             "name": "threshold",
             "dataType": "double",
+            "formatString": "0.##",
             "lineageTag": "839f4632-9796-539d-90ad-5333e76ddbde",
             "sourceColumn": "threshold",
             "summarizeBy": "sum",
@@ -2185,6 +2208,7 @@
           {
             "name": "value",
             "dataType": "double",
+            "formatString": "0.##",
             "lineageTag": "4ffce62f-1623-5180-b32c-77e5fada738c",
             "sourceColumn": "value",
             "summarizeBy": "sum",
@@ -2239,6 +2263,7 @@
           {
             "name": "score",
             "dataType": "double",
+            "formatString": "0.0",
             "lineageTag": "fef42ead-bde1-587c-89f7-302be1f0a1fd",
             "sourceColumn": "score",
             "summarizeBy": "sum",
@@ -2274,6 +2299,19 @@
                 "value": "Automatic"
               }
             ]
+          },
+          {
+            "name": "passed_label",
+            "dataType": "string",
+            "lineageTag": "ebac5460-73e2-5ad2-b112-793c79cd8283",
+            "sourceColumn": "passed_label",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
           }
         ],
         "partitions": [
@@ -2302,9 +2340,10 @@
                 "        {\"score\", type number},",
                 "        {\"definition\", type text},",
                 "        {\"playbook\", type text}",
-                "    }, \"en-GB\")",
+                "    }, \"en-GB\"),",
+                "    Label_passed = Table.AddColumn(Typed, \"passed_label\", each if [passed] = null then null else if [passed] then \"Pass\" else \"Fail\", type text)",
                 "in",
-                "    Typed"
+                "    Label_passed"
               ]
             }
           }
@@ -2563,6 +2602,7 @@
           {
             "name": "linked_tf_d",
             "dataType": "double",
+            "formatString": "0",
             "lineageTag": "4012c65c-1023-54a5-b6e4-ed3f645879d2",
             "sourceColumn": "linked_tf_d",
             "summarizeBy": "sum",
@@ -2612,6 +2652,19 @@
                 "value": "Automatic"
               }
             ]
+          },
+          {
+            "name": "overdue_label",
+            "dataType": "string",
+            "lineageTag": "ebefbf0a-f380-5e69-85f4-4e2423e9ec7e",
+            "sourceColumn": "overdue_label",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
           }
         ],
         "partitions": [
@@ -2642,9 +2695,10 @@
                 "    }, \"en-GB\"),",
                 "    Dates = Table.TransformColumnTypes(Typed, {",
                 "        {\"linked_forecast\", type date}",
-                "    })",
+                "    }),",
+                "    Label_overdue = Table.AddColumn(Dates, \"overdue_label\", each if [overdue] = null then null else if [overdue] then \"Yes\" else \"No\", type text)",
                 "in",
-                "    Dates"
+                "    Label_overdue"
               ]
             }
           }
@@ -2844,7 +2898,7 @@
           {
             "name": "gap_days",
             "dataType": "int64",
-            "formatString": "0",
+            "formatString": "+0;-0;0",
             "lineageTag": "301e3a2c-7025-57c7-a5a7-3018585f0cb9",
             "sourceColumn": "gap_days",
             "summarizeBy": "sum",
@@ -2871,6 +2925,7 @@
           {
             "name": "giver_tf_d",
             "dataType": "double",
+            "formatString": "0",
             "lineageTag": "6b6a98c9-44ed-54ea-ad62-b79a227f5630",
             "sourceColumn": "giver_tf_d",
             "summarizeBy": "sum",
@@ -3017,6 +3072,7 @@
           {
             "name": "var_bl0_d",
             "dataType": "double",
+            "formatString": "+0;-0;0",
             "lineageTag": "2957cde5-f35b-5707-9319-3953893fa133",
             "sourceColumn": "var_bl0_d",
             "summarizeBy": "sum",
@@ -3030,6 +3086,7 @@
           {
             "name": "var_bl1_d",
             "dataType": "double",
+            "formatString": "+0;-0;0",
             "lineageTag": "1b60a5a9-e425-5165-ba88-c0a5fc184a50",
             "sourceColumn": "var_bl1_d",
             "summarizeBy": "sum",
@@ -3043,6 +3100,7 @@
           {
             "name": "movement_vs_prev_d",
             "dataType": "double",
+            "formatString": "+0;-0;0",
             "lineageTag": "f87aa131-4d86-50b5-a868-81c788d9cadd",
             "sourceColumn": "movement_vs_prev_d",
             "summarizeBy": "sum",
@@ -3056,6 +3114,7 @@
           {
             "name": "total_float_d",
             "dataType": "double",
+            "formatString": "0",
             "lineageTag": "5139d7cb-e3c3-5716-b2f3-e61c3ebd5787",
             "sourceColumn": "total_float_d",
             "summarizeBy": "sum",
@@ -3626,6 +3685,7 @@
           {
             "name": "gap_d",
             "dataType": "double",
+            "formatString": "+0;-0;0",
             "lineageTag": "68414cc4-2410-5a46-b01e-2f71cc69ff32",
             "sourceColumn": "gap_d",
             "summarizeBy": "sum",
@@ -3639,6 +3699,7 @@
           {
             "name": "var_bl_d",
             "dataType": "double",
+            "formatString": "+0;-0;0",
             "lineageTag": "2d251148-a0f5-52b6-b998-a1225743251c",
             "sourceColumn": "var_bl_d",
             "summarizeBy": "sum",
@@ -3652,6 +3713,7 @@
           {
             "name": "span_from_prev_d",
             "dataType": "double",
+            "formatString": "0",
             "lineageTag": "9c2d05c1-8c2b-5630-a2e2-ee27bb997121",
             "sourceColumn": "span_from_prev_d",
             "summarizeBy": "sum",
@@ -3678,6 +3740,7 @@
           {
             "name": "total_float_d",
             "dataType": "double",
+            "formatString": "0",
             "lineageTag": "11fd03ec-2918-5dec-ac44-cab0c5e55c3c",
             "sourceColumn": "total_float_d",
             "summarizeBy": "sum",
@@ -3835,6 +3898,7 @@
           {
             "name": "delta",
             "dataType": "double",
+            "formatString": "0.##",
             "lineageTag": "051b3ed3-6bda-52df-af85-7ed9669d9635",
             "sourceColumn": "delta",
             "summarizeBy": "sum",
@@ -3850,6 +3914,19 @@
             "dataType": "boolean",
             "lineageTag": "5e28fdb0-2920-58cb-9d5a-6d598072cfe7",
             "sourceColumn": "passed",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "passed_label",
+            "dataType": "string",
+            "lineageTag": "6533e9b2-3fb8-5cd9-b2b5-4395da51c8e2",
+            "sourceColumn": "passed_label",
             "summarizeBy": "none",
             "annotations": [
               {
@@ -3879,9 +3956,10 @@
                 "        {\"dashboard_value\", type text},",
                 "        {\"delta\", type number},",
                 "        {\"passed\", type logical}",
-                "    }, \"en-GB\")",
+                "    }, \"en-GB\"),",
+                "    Label_passed = Table.AddColumn(Typed, \"passed_label\", each if [passed] = null then null else if [passed] then \"Pass\" else \"Fail\", type text)",
                 "in",
-                "    Typed"
+                "    Label_passed"
               ]
             }
           }
@@ -3954,6 +4032,7 @@
           {
             "name": "lag_d",
             "dataType": "double",
+            "formatString": "0",
             "lineageTag": "80d4c824-4591-5b95-94a3-661ee0040a64",
             "sourceColumn": "lag_d",
             "summarizeBy": "sum",
@@ -3980,9 +4059,23 @@
           {
             "name": "slack_d",
             "dataType": "double",
+            "formatString": "0",
             "lineageTag": "becf9b61-5bc4-59ed-b23e-e9a18182db89",
             "sourceColumn": "slack_d",
             "summarizeBy": "sum",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "is_driving_label",
+            "dataType": "string",
+            "lineageTag": "ec1d415c-d42b-57d2-a562-334943a70b65",
+            "sourceColumn": "is_driving_label",
+            "summarizeBy": "none",
             "annotations": [
               {
                 "name": "SummarizationSetBy",
@@ -4010,9 +4103,10 @@
                 "        {\"lag_d\", type number},",
                 "        {\"is_driving\", type logical},",
                 "        {\"slack_d\", type number}",
-                "    }, \"en-GB\")",
+                "    }, \"en-GB\"),",
+                "    Label_is_driving = Table.AddColumn(Typed, \"is_driving_label\", each if [is_driving] = null then null else if [is_driving] then \"Yes\" else \"No\", type text)",
                 "in",
-                "    Typed"
+                "    Label_is_driving"
               ]
             }
           }
@@ -4207,6 +4301,7 @@
           {
             "name": "min_linked_float_d",
             "dataType": "double",
+            "formatString": "0",
             "lineageTag": "c847ac24-c4dd-5807-bfe1-94a9b5084e94",
             "sourceColumn": "min_linked_float_d",
             "summarizeBy": "sum",
@@ -4441,6 +4536,7 @@
           {
             "name": "day1_impact_days",
             "dataType": "double",
+            "formatString": "0",
             "lineageTag": "60c75023-b135-51ec-93d0-e1fd31b57a5e",
             "sourceColumn": "day1_impact_days",
             "summarizeBy": "sum",
@@ -4454,6 +4550,7 @@
           {
             "name": "day1_tf_d",
             "dataType": "double",
+            "formatString": "+0;-0;0",
             "lineageTag": "9f53e4e7-df62-573d-9564-122505e0e71c",
             "sourceColumn": "day1_tf_d",
             "summarizeBy": "sum",
@@ -4467,6 +4564,7 @@
           {
             "name": "float_gain_d",
             "dataType": "double",
+            "formatString": "+0;-0;0",
             "lineageTag": "f871e281-9453-5d61-b76d-0813b3d1013f",
             "sourceColumn": "float_gain_d",
             "summarizeBy": "sum",
@@ -4569,6 +4667,19 @@
                 "value": "Automatic"
               }
             ]
+          },
+          {
+            "name": "recommended_label",
+            "dataType": "string",
+            "lineageTag": "1c89c7fd-fa64-54c4-b232-830179dae851",
+            "sourceColumn": "recommended_label",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
           }
         ],
         "partitions": [
@@ -4601,9 +4712,10 @@
                 "    }, \"en-GB\"),",
                 "    Dates = Table.TransformColumnTypes(Typed, {",
                 "        {\"day1_forecast\", type date}",
-                "    })",
+                "    }),",
+                "    Label_recommended = Table.AddColumn(Dates, \"recommended_label\", each if [recommended] = null then null else if [recommended] then \"Yes\" else \"No\", type text)",
                 "in",
-                "    Dates"
+                "    Label_recommended"
               ]
             }
           }
@@ -4699,6 +4811,7 @@
           {
             "name": "day1_tf_d",
             "dataType": "double",
+            "formatString": "+0;-0;0",
             "lineageTag": "68a40ea2-3a23-571d-b68e-5920c28dd8b4",
             "sourceColumn": "day1_tf_d",
             "summarizeBy": "sum",
@@ -4712,6 +4825,7 @@
           {
             "name": "day1_var_bl0_d",
             "dataType": "double",
+            "formatString": "+0;-0;0",
             "lineageTag": "7638205e-33e0-5fd9-948e-d91707fe6094",
             "sourceColumn": "day1_var_bl0_d",
             "summarizeBy": "sum",
@@ -4725,6 +4839,7 @@
           {
             "name": "day1_var_bl1_d",
             "dataType": "double",
+            "formatString": "+0;-0;0",
             "lineageTag": "0455d941-f624-54e1-a4a6-1ab50395ac2f",
             "sourceColumn": "day1_var_bl1_d",
             "summarizeBy": "sum",
@@ -4846,6 +4961,7 @@
           {
             "name": "min_float_d",
             "dataType": "double",
+            "formatString": "0",
             "lineageTag": "306f056c-40dd-525e-870a-ec51dd4659dd",
             "sourceColumn": "min_float_d",
             "summarizeBy": "sum",
@@ -4859,6 +4975,7 @@
           {
             "name": "avg_float_d",
             "dataType": "double",
+            "formatString": "0.0",
             "lineageTag": "1cf87bc7-bfef-54e4-af55-80381a2312c3",
             "sourceColumn": "avg_float_d",
             "summarizeBy": "sum",
@@ -4928,6 +5045,7 @@
           {
             "name": "float_erosion_d",
             "dataType": "double",
+            "formatString": "+0;-0;0",
             "lineageTag": "e481a667-2647-582f-9e06-99a81731b9ea",
             "sourceColumn": "float_erosion_d",
             "summarizeBy": "sum",
@@ -4941,6 +5059,7 @@
           {
             "name": "day1_movement_d",
             "dataType": "double",
+            "formatString": "+0;-0;0",
             "lineageTag": "0b41faae-0cdf-54d7-8f97-3c606302195f",
             "sourceColumn": "day1_movement_d",
             "summarizeBy": "sum",
@@ -5028,6 +5147,229 @@
             "source": {
               "type": "calculated",
               "expression": "GENERATESERIES ( 0, 30, 1 )"
+            }
+          }
+        ]
+      },
+      {
+        "name": "Compare against",
+        "lineageTag": "f76b778b-d5be-5773-b208-cd95c3aeef9d",
+        "columns": [
+          {
+            "type": "calculatedTableColumn",
+            "name": "Compare against",
+            "dataType": "string",
+            "isNameInferred": false,
+            "isDataTypeInferred": true,
+            "sourceColumn": "[Value1]",
+            "sortByColumn": "Compare against Order",
+            "relatedColumnDetails": {
+              "groupByColumns": [
+                {
+                  "groupingColumn": "Compare against Fields"
+                }
+              ]
+            },
+            "lineageTag": "4451ad92-6a27-5503-92ab-6916a4dde3b0",
+            "summarizeBy": "none"
+          },
+          {
+            "type": "calculatedTableColumn",
+            "name": "Compare against Fields",
+            "dataType": "string",
+            "isHidden": true,
+            "isNameInferred": false,
+            "isDataTypeInferred": true,
+            "sourceColumn": "[Value2]",
+            "lineageTag": "65eb7425-fb6b-5c16-bb93-322edfffa548",
+            "summarizeBy": "none",
+            "extendedProperties": [
+              {
+                "type": "json",
+                "name": "ParameterMetadata",
+                "value": {
+                  "version": 3,
+                  "kind": 2
+                }
+              }
+            ]
+          },
+          {
+            "type": "calculatedTableColumn",
+            "name": "Compare against Order",
+            "dataType": "int64",
+            "isHidden": true,
+            "isNameInferred": false,
+            "isDataTypeInferred": true,
+            "sourceColumn": "[Value3]",
+            "formatString": "0",
+            "lineageTag": "f137dd89-660b-58d2-add0-5d24d969c105",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Compare against",
+            "mode": "import",
+            "source": {
+              "type": "calculated",
+              "expression": [
+                "{",
+                "    ( \"vs BL1\", NAMEOF ( '_Measures'[Finish variance vs BL1] ), 0 ),",
+                "    ( \"vs BL0\", NAMEOF ( '_Measures'[Finish variance vs BL0] ), 1 ),",
+                "    ( \"vs previous\", NAMEOF ( '_Measures'[Slip vs previous period] ), 2 )",
+                "}"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "Trend KPI",
+        "lineageTag": "87aa1a76-a670-55c2-b55e-4b7053427c0f",
+        "isHidden": true,
+        "columns": [
+          {
+            "type": "calculatedTableColumn",
+            "name": "KPI",
+            "dataType": "string",
+            "isHidden": true,
+            "isNameInferred": false,
+            "isDataTypeInferred": true,
+            "sourceColumn": "[KPI]",
+            "lineageTag": "06d7df3d-bfff-5178-ab2f-9ae22a243945",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Trend KPI",
+            "mode": "import",
+            "source": {
+              "type": "calculated",
+              "expression": [
+                "DATATABLE ( \"KPI\", STRING, {",
+                "    { \"BEI\" },",
+                "    { \"CPLI\" },",
+                "    { \"Critical count\" },",
+                "    { \"DCMA pass count\" },",
+                "    { \"DQ score\" },",
+                "    { \"Day 1 movement vs previous period\" },",
+                "    { \"Day 1 total float\" },",
+                "    { \"Day 1 variance vs BL1\" },",
+                "    { \"Look-ahead items\" },",
+                "    { \"Look-back hit rate\" },",
+                "    { \"Milestones later than baseline in force\" },",
+                "    { \"Milestones slipped vs previous period\" },",
+                "    { \"Near-critical count\" },",
+                "    { \"Negative float count\" },",
+                "    { \"Total float (min)\" },",
+                "    { \"Weighted % complete (actual)\" }",
+                "} )"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "Update axis",
+        "lineageTag": "350a753e-9a09-5139-96e9-75022d8888d9",
+        "isHidden": true,
+        "columns": [
+          {
+            "type": "calculatedTableColumn",
+            "name": "snapshot_id",
+            "dataType": "int64",
+            "isHidden": true,
+            "isNameInferred": false,
+            "isDataTypeInferred": true,
+            "sourceColumn": "[snapshot_id]",
+            "lineageTag": "f458de06-b333-5478-9878-194531d07703",
+            "summarizeBy": "none"
+          },
+          {
+            "type": "calculatedTableColumn",
+            "name": "data_date",
+            "dataType": "dateTime",
+            "isHidden": true,
+            "isNameInferred": false,
+            "isDataTypeInferred": true,
+            "sourceColumn": "[data_date]",
+            "formatString": "dd-mmm-yyyy",
+            "lineageTag": "2110d69a-8eaf-59f9-8d70-65e222059a37",
+            "summarizeBy": "none"
+          },
+          {
+            "type": "calculatedTableColumn",
+            "name": "update",
+            "dataType": "string",
+            "isHidden": true,
+            "isNameInferred": false,
+            "isDataTypeInferred": true,
+            "sourceColumn": "[update]",
+            "sortByColumn": "snapshot_id",
+            "lineageTag": "22a4dbbd-7447-567d-8150-1d9b96a8d511",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Update axis",
+            "mode": "import",
+            "source": {
+              "type": "calculated",
+              "expression": [
+                "SELECTCOLUMNS (",
+                "    dim_snapshot,",
+                "    \"snapshot_id\", dim_snapshot[snapshot_id],",
+                "    \"data_date\", dim_snapshot[data_date],",
+                "    \"update\", FORMAT ( dim_snapshot[data_date], \"mmm yyyy\" )",
+                ")"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "Risk grid",
+        "lineageTag": "e84a8212-b59f-5ae7-8699-6b4074ec45c9",
+        "isHidden": true,
+        "columns": [
+          {
+            "type": "calculatedTableColumn",
+            "name": "probability",
+            "dataType": "int64",
+            "isHidden": true,
+            "isNameInferred": false,
+            "isDataTypeInferred": true,
+            "sourceColumn": "[probability]",
+            "lineageTag": "7c658dba-ff16-551a-bff1-fab1314133d5",
+            "summarizeBy": "none"
+          },
+          {
+            "type": "calculatedTableColumn",
+            "name": "impact",
+            "dataType": "int64",
+            "isHidden": true,
+            "isNameInferred": false,
+            "isDataTypeInferred": true,
+            "sourceColumn": "[impact]",
+            "lineageTag": "52a737ec-cf92-5d7b-bc89-944c5b23f625",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Risk grid",
+            "mode": "import",
+            "source": {
+              "type": "calculated",
+              "expression": [
+                "CROSSJOIN (",
+                "    SELECTCOLUMNS ( GENERATESERIES ( 1, 5, 1 ), \"probability\", [Value] ),",
+                "    SELECTCOLUMNS ( GENERATESERIES ( 1, 5, 1 ), \"impact\", [Value] )",
+                ")"
+              ]
             }
           }
         ]
@@ -5228,6 +5570,14 @@
             "displayFolder": "02 Day 1 headline",
             "description": "Float erosion: change in Day 1 total float since the previous update (negative = float lost). The first update has no previous update, so the pipeline value (vs BL0) is used.",
             "lineageTag": "1db1621d-49ca-5220-bb3f-a73a81d354df"
+          },
+          {
+            "name": "Float bridge",
+            "expression": "IF ( ISBLANK ( [Previous snapshot id] ), [Day 1 total float], [Float erosion] )",
+            "formatString": "+0;-0;0",
+            "displayFolder": "02 Day 1 headline",
+            "description": "Float bridge (the waterfall on page 3): the first update's Day 1 total float, then the change at each later update, so the bars add up to the float of the last update shown",
+            "lineageTag": "39a2aebe-cf12-58f5-9fc8-977fbe4fcb8e"
           },
           {
             "name": "Day 1 RAG colour",
@@ -5607,7 +5957,7 @@
               "        dim_activity[activity_type] <> \"TT_LOE\"",
               "    )"
             ],
-            "formatString": "0.0",
+            "formatString": "0",
             "displayFolder": "06 Float and criticality",
             "lineageTag": "9009ac91-d227-5043-939d-bf1bcc78a631"
           },
@@ -6071,6 +6421,37 @@
             "lineageTag": "808bd393-a9b0-56cc-925b-020ee19c9d35"
           },
           {
+            "name": "Risks in cell",
+            "expression": [
+              "VAR _sid = [Selected snapshot id]",
+              "VAR _p = SELECTEDVALUE ( 'Risk grid'[probability] )",
+              "VAR _i = SELECTEDVALUE ( 'Risk grid'[impact] )",
+              "VAR _risks =",
+              "    CALCULATETABLE (",
+              "        VALUES ( fact_risk[risk_id] ),",
+              "        dim_snapshot[snapshot_id] = _sid,",
+              "        fact_risk[probability] = _p,",
+              "        fact_risk[impact] = _i",
+              "    )",
+              "RETURN",
+              "    CONCATENATEX ( _risks, fact_risk[risk_id], \", \", fact_risk[risk_id], ASC ) & \"\""
+            ],
+            "displayFolder": "10 Risks, decisions and recovery",
+            "description": "Risk map (page 5): the risks in the cell of the 'Risk grid' row at the selected update, in risk order. An empty cell returns an empty text, not blank, so the matrix keeps all 25 cells",
+            "lineageTag": "fe99065e-e880-5750-8fd7-5e9bd99461e6"
+          },
+          {
+            "name": "Risk cell colour",
+            "expression": [
+              "VAR _score = SELECTEDVALUE ( 'Risk grid'[probability] ) * SELECTEDVALUE ( 'Risk grid'[impact] )",
+              "RETURN",
+              "    SWITCH ( TRUE (), _score >= 15, \"#F6D5D1\", _score >= 8, \"#FBE7C6\", \"#DDEFE3\" )"
+            ],
+            "displayFolder": "10 Risks, decisions and recovery",
+            "description": "Risk map (page 5): the cell's band by probability x impact, as the risk rating: high from 15, medium from 8",
+            "lineageTag": "502ae8c2-0945-594b-bf45-b1fe6b8bf5fc"
+          },
+          {
             "name": "Open decisions",
             "expression": "CALCULATE ( COUNTROWS ( fact_decision ), fact_decision[status] = \"Open\" ) + 0",
             "formatString": "0",
@@ -6328,7 +6709,7 @@
               "VAR _late =",
               "    CONCATENATEX (",
               "        _lateTbl,",
-              "        fact_decision[decision_id] & \" (\" & fact_decision[owner] & \", needed by \"",
+              "        fact_decision[decision_id] & \" (\" & fact_decision[owner] & \", due \"",
               "            & FORMAT ( fact_decision[needed_by], \"dd-mmm-yyyy\" ) & \")\",",
               "        \", \",",
               "        fact_decision[needed_by], ASC",
@@ -6370,6 +6751,274 @@
             ],
             "displayFolder": "13 Action titles and provenance",
             "lineageTag": "5c3e64b5-ddbb-5561-af13-3a1cfd26eb97"
+          },
+          {
+            "name": "Trend line",
+            "expression": [
+              "VAR _k = SELECTEDVALUE ( 'Trend KPI'[KPI] )",
+              "VAR _sid = [Selected snapshot id]",
+              "VAR _pts =",
+              "    FILTER (",
+              "        ADDCOLUMNS (",
+              "            CALCULATETABLE (",
+              "                VALUES ( dim_snapshot[snapshot_id] ),",
+              "                REMOVEFILTERS ( dim_snapshot ),",
+              "                dim_snapshot[snapshot_id] <= _sid",
+              "            ),",
+              "            \"@v\",",
+              "                VAR _s = dim_snapshot[snapshot_id]",
+              "                RETURN",
+              "                    CALCULATE (",
+              "                        SWITCH (",
+              "                            _k,",
+              "                            \"Day 1 variance vs BL1\", [Day 1 variance vs BL1],",
+              "                            \"Day 1 total float\", [Day 1 total float],",
+              "                            \"Weighted % complete (actual)\", [Weighted % complete (actual)],",
+              "                            \"DQ score\", [DQ score],",
+              "                            \"Milestones later than baseline in force\", [Milestones later than baseline in force],",
+              "                            \"Milestones slipped vs previous period\", [Milestones slipped vs previous period],",
+              "                            \"Day 1 movement vs previous period\", [Day 1 movement vs previous period],",
+              "                            \"Critical count\", [Critical count],",
+              "                            \"Near-critical count\", [Near-critical count],",
+              "                            \"Negative float count\", [Negative float count],",
+              "                            \"Total float (min)\", [Total float (min)],",
+              "                            \"Look-ahead items\", [Look-ahead items],",
+              "                            \"Look-back hit rate\", [Look-back hit rate],",
+              "                            \"DCMA pass count\", [DCMA pass count],",
+              "                            \"CPLI\", [CPLI],",
+              "                            \"BEI\", [BEI]",
+              "                        ),",
+              "                        REMOVEFILTERS ( dim_snapshot ),",
+              "                        dim_snapshot[snapshot_id] = _s",
+              "                    )",
+              "        ),",
+              "        NOT ISBLANK ( [@v] )",
+              "    )",
+              "VAR _n = COUNTROWS ( _pts )",
+              "VAR _lo = MINX ( _pts, [@v] )",
+              "VAR _hi = MAXX ( _pts, [@v] )",
+              "VAR _xy =",
+              "    ADDCOLUMNS (",
+              "        _pts,",
+              "        \"@x\", IF ( _n <= 1, 60, 7 + ( RANKX ( _pts, dim_snapshot[snapshot_id], , ASC ) - 1 ) * 106 / ( _n - 1 ) ),",
+              "        \"@y\", IF ( _hi = _lo, 19, 7 + ( _hi - [@v] ) * 24 / ( _hi - _lo ) )",
+              "    )",
+              "VAR _line =",
+              "    CONCATENATEX ( _xy, FORMAT ( [@x], \"0.0\" ) & \",\" & FORMAT ( [@y], \"0.0\" ), \" \", dim_snapshot[snapshot_id], ASC )",
+              "VAR _end = TOPN ( 1, _xy, dim_snapshot[snapshot_id], DESC )",
+              "VAR _x1 = FORMAT ( MINX ( _xy, [@x] ), \"0.0\" )",
+              "VAR _x2 = FORMAT ( MAXX ( _end, [@x] ), \"0.0\" )",
+              "VAR _y2 = FORMAT ( MAXX ( _end, [@y] ), \"0.0\" )",
+              "VAR _y0 = FORMAT ( 7 + _hi * 24 / ( _hi - _lo ), \"0.0\" )",
+              "VAR _zero =",
+              "    IF (",
+              "        _lo < 0 && _hi > 0,",
+              "        \"<line x1='0' x2='120' y1='\" & _y0 & \"' y2='\" & _y0",
+              "            & \"' stroke='%23C0392B' stroke-width='1.2' stroke-dasharray='3 2' vector-effect='non-scaling-stroke'/>\"",
+              "    )",
+              "RETURN",
+              "    IF (",
+              "        _n > 0,",
+              "        \"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='40' viewBox='0 0 120 40'>\" & _zero",
+              "            & \"<polygon points='\" & _x1 & \",38 \" & _line & \" \" & _x2",
+              "            & \",38' fill='%232B7A78' fill-opacity='0.14'/>\"",
+              "            & \"<polyline points='\" & _line",
+              "            & \"' fill='none' stroke='%232B7A78' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'\"",
+              "            & \" vector-effect='non-scaling-stroke'/>\"",
+              "            & \"<circle cx='\" & _x2 & \"' cy='\" & _y2 & \"' r='5.5' fill='%231F3A5F'/></svg>\"",
+              "    )"
+            ],
+            "displayFolder": "14 Trend lines for the KPI cards",
+            "description": "The KPI named in 'Trend KPI' by update up to the selected one: a teal line over a light fill, the last update marked",
+            "lineageTag": "d85703e8-aaa9-500b-b0c9-1b49b63aee4f"
+          },
+          {
+            "name": "Trend - Day 1 variance vs BL1",
+            "expression": "CALCULATE ( [Trend line], 'Trend KPI'[KPI] = \"Day 1 variance vs BL1\" )",
+            "displayFolder": "14 Trend lines for the KPI cards",
+            "description": "Card trend: calendar days of the Day 1 forecast against BL1, by update",
+            "dataCategory": "ImageUrl",
+            "lineageTag": "332b0349-2ecc-5330-97a5-40772890fd97"
+          },
+          {
+            "name": "Trend - Day 1 total float",
+            "expression": "CALCULATE ( [Trend line], 'Trend KPI'[KPI] = \"Day 1 total float\" )",
+            "displayFolder": "14 Trend lines for the KPI cards",
+            "description": "Card trend: working days of Day 1 total float, by update",
+            "dataCategory": "ImageUrl",
+            "lineageTag": "129df633-e901-509e-bf27-4cc531f88767"
+          },
+          {
+            "name": "Trend - Weighted % complete (actual)",
+            "expression": "CALCULATE ( [Trend line], 'Trend KPI'[KPI] = \"Weighted % complete (actual)\" )",
+            "displayFolder": "14 Trend lines for the KPI cards",
+            "description": "Card trend: duration-weighted % complete, by update",
+            "dataCategory": "ImageUrl",
+            "lineageTag": "a3e9c0b9-fae1-52cf-9781-cbd3d0f678fc"
+          },
+          {
+            "name": "Trend - DQ score",
+            "expression": "CALCULATE ( [Trend line], 'Trend KPI'[KPI] = \"DQ score\" )",
+            "displayFolder": "14 Trend lines for the KPI cards",
+            "description": "Card trend: DQ score out of 100, by update",
+            "dataCategory": "ImageUrl",
+            "lineageTag": "fb2dbb8c-35c8-52b5-8b03-047d49f5db7c"
+          },
+          {
+            "name": "Trend - Milestones later than baseline in force",
+            "expression": "CALCULATE ( [Trend line], 'Trend KPI'[KPI] = \"Milestones later than baseline in force\" )",
+            "displayFolder": "14 Trend lines for the KPI cards",
+            "description": "Card trend: milestones later than the baseline in force, by update",
+            "dataCategory": "ImageUrl",
+            "lineageTag": "e3ca6a87-207a-54a6-b31c-6a2c9bec6a39"
+          },
+          {
+            "name": "Trend - Milestones slipped vs previous period",
+            "expression": "CALCULATE ( [Trend line], 'Trend KPI'[KPI] = \"Milestones slipped vs previous period\" )",
+            "displayFolder": "14 Trend lines for the KPI cards",
+            "description": "Card trend: milestones that slipped against the previous update, by update",
+            "dataCategory": "ImageUrl",
+            "lineageTag": "c66645fc-cd7f-5129-a2df-446aece12cc1"
+          },
+          {
+            "name": "Trend - Day 1 movement vs previous period",
+            "expression": "CALCULATE ( [Trend line], 'Trend KPI'[KPI] = \"Day 1 movement vs previous period\" )",
+            "displayFolder": "14 Trend lines for the KPI cards",
+            "description": "Card trend: calendar days the Day 1 forecast moved, by update",
+            "dataCategory": "ImageUrl",
+            "lineageTag": "94d6d851-c271-5e8a-b492-9a169618b044"
+          },
+          {
+            "name": "Trend - Critical count",
+            "expression": "CALCULATE ( [Trend line], 'Trend KPI'[KPI] = \"Critical count\" )",
+            "displayFolder": "14 Trend lines for the KPI cards",
+            "description": "Card trend: critical activities, by update",
+            "dataCategory": "ImageUrl",
+            "lineageTag": "569a326a-2f66-5cce-9390-134d83d459a6"
+          },
+          {
+            "name": "Trend - Near-critical count",
+            "expression": "CALCULATE ( [Trend line], 'Trend KPI'[KPI] = \"Near-critical count\" )",
+            "displayFolder": "14 Trend lines for the KPI cards",
+            "description": "Card trend: near-critical activities at the selected threshold, by update",
+            "dataCategory": "ImageUrl",
+            "lineageTag": "46d7f967-1b25-5659-9fb3-8160a7a2e06b"
+          },
+          {
+            "name": "Trend - Negative float count",
+            "expression": "CALCULATE ( [Trend line], 'Trend KPI'[KPI] = \"Negative float count\" )",
+            "displayFolder": "14 Trend lines for the KPI cards",
+            "description": "Card trend: activities with negative float, by update",
+            "dataCategory": "ImageUrl",
+            "lineageTag": "b4f38359-40d5-56a5-961e-f1e9f0acab20"
+          },
+          {
+            "name": "Trend - Total float (min)",
+            "expression": "CALCULATE ( [Trend line], 'Trend KPI'[KPI] = \"Total float (min)\" )",
+            "displayFolder": "14 Trend lines for the KPI cards",
+            "description": "Card trend: lowest total float in working days, by update",
+            "dataCategory": "ImageUrl",
+            "lineageTag": "1d0b62b0-2b74-5f4f-8ddb-867904d755db"
+          },
+          {
+            "name": "Trend - Look-ahead items",
+            "expression": "CALCULATE ( [Trend line], 'Trend KPI'[KPI] = \"Look-ahead items\" )",
+            "displayFolder": "14 Trend lines for the KPI cards",
+            "description": "Card trend: activities in the 14-day look-ahead, by update",
+            "dataCategory": "ImageUrl",
+            "lineageTag": "bddfe7b0-4617-5c5b-a2bd-df496bfbd09b"
+          },
+          {
+            "name": "Trend - Look-back hit rate",
+            "expression": "CALCULATE ( [Trend line], 'Trend KPI'[KPI] = \"Look-back hit rate\" )",
+            "displayFolder": "14 Trend lines for the KPI cards",
+            "description": "Card trend: share of look-back items achieved, by update",
+            "dataCategory": "ImageUrl",
+            "lineageTag": "af510225-6d84-522b-a78f-6ba014ede2ae"
+          },
+          {
+            "name": "Trend - DCMA pass count",
+            "expression": "CALCULATE ( [Trend line], 'Trend KPI'[KPI] = \"DCMA pass count\" )",
+            "displayFolder": "14 Trend lines for the KPI cards",
+            "description": "Card trend: DCMA checks passed, by update",
+            "dataCategory": "ImageUrl",
+            "lineageTag": "1f7a44fc-6cd0-55fe-9834-9cd912dbb929"
+          },
+          {
+            "name": "Trend - CPLI",
+            "expression": "CALCULATE ( [Trend line], 'Trend KPI'[KPI] = \"CPLI\" )",
+            "displayFolder": "14 Trend lines for the KPI cards",
+            "description": "Card trend: critical path length index, by update",
+            "dataCategory": "ImageUrl",
+            "lineageTag": "7a37f6cb-8a03-5790-a68c-4bb20cb3f17f"
+          },
+          {
+            "name": "Trend - BEI",
+            "expression": "CALCULATE ( [Trend line], 'Trend KPI'[KPI] = \"BEI\" )",
+            "displayFolder": "14 Trend lines for the KPI cards",
+            "description": "Card trend: baseline execution index, by update",
+            "dataCategory": "ImageUrl",
+            "lineageTag": "85333517-745f-5ee8-939a-e073dfb4775a"
+          },
+          {
+            "name": "Owner DQ by update",
+            "expression": [
+              "VAR _s = SELECTEDVALUE ( 'Update axis'[snapshot_id] )",
+              "RETURN",
+              "    IF (",
+              "        NOT ISBLANK ( _s ) && _s <= [Selected snapshot id] && NOT ISEMPTY ( fact_owner_scorecard ),",
+              "        CALCULATE ( [Owner DQ], REMOVEFILTERS ( dim_snapshot ), dim_snapshot[snapshot_id] = _s )",
+              "    )"
+            ],
+            "formatString": "0.0%",
+            "displayFolder": "15 Sparklines in the tables, and the float bridge",
+            "description": "Sparkline: the owner's DQ (share of activities not flagged), by update",
+            "lineageTag": "7a7ff172-79a7-55b5-8da4-356982e6929e"
+          },
+          {
+            "name": "Milestone variance vs BL1 by update",
+            "expression": [
+              "VAR _s = SELECTEDVALUE ( 'Update axis'[snapshot_id] )",
+              "RETURN",
+              "    IF (",
+              "        NOT ISBLANK ( _s ) && _s <= [Selected snapshot id] && NOT ISEMPTY ( fact_activity_snapshot ),",
+              "        CALCULATE ( [Milestone variance vs BL1], REMOVEFILTERS ( dim_snapshot ), dim_snapshot[snapshot_id] = _s )",
+              "    )"
+            ],
+            "formatString": "+0;-0;0",
+            "displayFolder": "15 Sparklines in the tables, and the float bridge",
+            "description": "Sparkline: the milestone's forecast finish against BL1, in calendar days, by update",
+            "lineageTag": "3fc0460c-88d1-5295-9c39-c3ee2df6d60c"
+          },
+          {
+            "name": "Risk score (max) by update",
+            "expression": [
+              "VAR _s = SELECTEDVALUE ( 'Update axis'[snapshot_id] )",
+              "RETURN",
+              "    IF (",
+              "        NOT ISBLANK ( _s ) && _s <= [Selected snapshot id] && NOT ISEMPTY ( fact_risk ),",
+              "        CALCULATE ( [Risk score (max)], REMOVEFILTERS ( dim_snapshot ), dim_snapshot[snapshot_id] = _s )",
+              "    )"
+            ],
+            "formatString": "0",
+            "displayFolder": "15 Sparklines in the tables, and the float bridge",
+            "description": "Sparkline: the risk's score, by update",
+            "lineageTag": "d4729ce7-5f1d-5f71-beaa-0283abaccb3a"
+          },
+          {
+            "name": "Float bridge by update",
+            "expression": [
+              "VAR _s = SELECTEDVALUE ( 'Update axis'[snapshot_id] )",
+              "RETURN",
+              "    IF (",
+              "        NOT ISBLANK ( _s ) && _s <= [Selected snapshot id] && NOT ISEMPTY ( fact_snapshot_summary ),",
+              "        CALCULATE ( [Float bridge], REMOVEFILTERS ( dim_snapshot ), dim_snapshot[snapshot_id] = _s )",
+              "    )"
+            ],
+            "formatString": "+0;-0;0",
+            "displayFolder": "15 Sparklines in the tables, and the float bridge",
+            "description": "Sparkline: the float bridge on page 3 (a waterfall over 'Update axis'[update]), by update",
+            "lineageTag": "a77f9694-2a9e-501a-9d82-2458e6998d5a"
           }
         ],
         "annotations": [

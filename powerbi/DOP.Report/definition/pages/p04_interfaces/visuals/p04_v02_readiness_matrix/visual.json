@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
   "name": "p04_v02_readiness_matrix",
   "position": {
-    "x": 16,
-    "y": 280,
-    "z": 5000,
-    "height": 204,
-    "width": 1248,
-    "tabOrder": 5000
+    "x": 216,
+    "y": 248,
+    "z": 11000,
+    "height": 232,
+    "width": 1040,
+    "tabOrder": 11000
   },
   "visual": {
     "visualType": "pivotTable",
@@ -234,6 +234,19 @@
             "metadata": "_Measures.Readiness gap"
           }
         }
+      ],
+      "subTotals": [
+        {
+          "properties": {
+            "columnSubtotals": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
       ]
     },
     "visualContainerObjects": {
@@ -250,7 +263,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Readiness chain by asset: forecast and gap to the date that protects Day 1 (calendar days; positive = late)'"
+                  "Value": "'Readiness chain by asset: forecast and gap to the date that protects Day 1'"
                 }
               }
             },
@@ -270,7 +283,45 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Readiness chain by asset: forecast and gap to the date that protects Day 1 (calendar days; positive = late)'"
+                  "Value": "'Readiness chain by asset: forecast and gap to the date that protects Day 1'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "subTitle": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Gap in calendar days: red when later than the protecting date, green when earlier'"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#4A5568'"
+                    }
+                  }
                 }
               }
             }

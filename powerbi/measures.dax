@@ -120,6 +120,11 @@ DEFINE
         RETURN
             IF ( ISBLANK ( _prev ), _first, _tf - _tfPrev )
 
+    // Float bridge (the waterfall on page 3): the first update's Day 1 total float, then the change at each
+    // later update, so the bars add up to the float of the last update shown
+    MEASURE '_Measures'[Float bridge] =
+        IF ( ISBLANK ( [Previous snapshot id] ), [Day 1 total float], [Float erosion] )
+
     // RAG colour for the Day 1 card (conditional formatting > Field value)
     MEASURE '_Measures'[Day 1 RAG colour] =
         VAR _tf = [Day 1 total float]
@@ -654,6 +659,28 @@ DEFINE
         RETURN
             CALCULATE ( MAX ( fact_risk[score] ), dim_snapshot[snapshot_id] = _sid )
 
+    // Risk map (page 5): the risks in the cell of the 'Risk grid' row at the selected update, in risk order.
+    // An empty cell returns an empty text, not blank, so the matrix keeps all 25 cells
+    MEASURE '_Measures'[Risks in cell] =
+        VAR _sid = [Selected snapshot id]
+        VAR _p = SELECTEDVALUE ( 'Risk grid'[probability] )
+        VAR _i = SELECTEDVALUE ( 'Risk grid'[impact] )
+        VAR _risks =
+            CALCULATETABLE (
+                VALUES ( fact_risk[risk_id] ),
+                dim_snapshot[snapshot_id] = _sid,
+                fact_risk[probability] = _p,
+                fact_risk[impact] = _i
+            )
+        RETURN
+            CONCATENATEX ( _risks, fact_risk[risk_id], ", ", fact_risk[risk_id], ASC ) & ""
+
+    // Risk map (page 5): the cell's band by probability x impact, as the risk rating: high from 15, medium from 8
+    MEASURE '_Measures'[Risk cell colour] =
+        VAR _score = SELECTEDVALUE ( 'Risk grid'[probability] ) * SELECTEDVALUE ( 'Risk grid'[impact] )
+        RETURN
+            SWITCH ( TRUE (), _score >= 15, "#F6D5D1", _score >= 8, "#FBE7C6", "#DDEFE3" )
+
     MEASURE '_Measures'[Open decisions] =
         CALCULATE ( COUNTROWS ( fact_decision ), fact_decision[status] = "Open" ) + 0
 
@@ -815,7 +842,7 @@ DEFINE
         VAR _late =
             CONCATENATEX (
                 _lateTbl,
-                fact_decision[decision_id] & " (" & fact_decision[owner] & ", needed by "
+                fact_decision[decision_id] & " (" & fact_decision[owner] & ", due "
                     & FORMAT ( fact_decision[needed_by], "dd-mmm-yyyy" ) & ")",
                 ", ",
                 fact_decision[needed_by], ASC
@@ -843,6 +870,197 @@ DEFINE
             FORMAT ( [Controls total] - [Controls passed], "0" ) & " of " & FORMAT ( [Controls total], "0" )
                 & " controls fail for " & FORMAT ( [Data date], "dd-mmm-yyyy" ) & ": do not publish this update."
         )
+
+    // -------------------------------------------------------------------------------------------------
+    // 14. Trend lines for the KPI cards: an SVG picture (data category Image URL). [Trend line] draws the
+    //     KPI named in 'Trend KPI'[KPI] at every update up to the selected one, and each Trend - measure
+    //     names its KPI. The data-date slicer is lifted only to read the history, so a card's value and
+    //     its line end at the same update. A dashed red line marks zero where the values cross it.
+    // -------------------------------------------------------------------------------------------------
+    // The KPI named in 'Trend KPI' by update up to the selected one: a teal line over a light fill, the last update marked
+    MEASURE '_Measures'[Trend line] =
+        VAR _k = SELECTEDVALUE ( 'Trend KPI'[KPI] )
+        VAR _sid = [Selected snapshot id]
+        VAR _pts =
+            FILTER (
+                ADDCOLUMNS (
+                    CALCULATETABLE (
+                        VALUES ( dim_snapshot[snapshot_id] ),
+                        REMOVEFILTERS ( dim_snapshot ),
+                        dim_snapshot[snapshot_id] <= _sid
+                    ),
+                    "@v",
+                        VAR _s = dim_snapshot[snapshot_id]
+                        RETURN
+                            CALCULATE (
+                                SWITCH (
+                                    _k,
+                                    "Day 1 variance vs BL1", [Day 1 variance vs BL1],
+                                    "Day 1 total float", [Day 1 total float],
+                                    "Weighted % complete (actual)", [Weighted % complete (actual)],
+                                    "DQ score", [DQ score],
+                                    "Milestones later than baseline in force", [Milestones later than baseline in force],
+                                    "Milestones slipped vs previous period", [Milestones slipped vs previous period],
+                                    "Day 1 movement vs previous period", [Day 1 movement vs previous period],
+                                    "Critical count", [Critical count],
+                                    "Near-critical count", [Near-critical count],
+                                    "Negative float count", [Negative float count],
+                                    "Total float (min)", [Total float (min)],
+                                    "Look-ahead items", [Look-ahead items],
+                                    "Look-back hit rate", [Look-back hit rate],
+                                    "DCMA pass count", [DCMA pass count],
+                                    "CPLI", [CPLI],
+                                    "BEI", [BEI]
+                                ),
+                                REMOVEFILTERS ( dim_snapshot ),
+                                dim_snapshot[snapshot_id] = _s
+                            )
+                ),
+                NOT ISBLANK ( [@v] )
+            )
+        VAR _n = COUNTROWS ( _pts )
+        VAR _lo = MINX ( _pts, [@v] )
+        VAR _hi = MAXX ( _pts, [@v] )
+        VAR _xy =
+            ADDCOLUMNS (
+                _pts,
+                "@x", IF ( _n <= 1, 60, 7 + ( RANKX ( _pts, dim_snapshot[snapshot_id], , ASC ) - 1 ) * 106 / ( _n - 1 ) ),
+                "@y", IF ( _hi = _lo, 19, 7 + ( _hi - [@v] ) * 24 / ( _hi - _lo ) )
+            )
+        VAR _line =
+            CONCATENATEX ( _xy, FORMAT ( [@x], "0.0" ) & "," & FORMAT ( [@y], "0.0" ), " ", dim_snapshot[snapshot_id], ASC )
+        VAR _end = TOPN ( 1, _xy, dim_snapshot[snapshot_id], DESC )
+        VAR _x1 = FORMAT ( MINX ( _xy, [@x] ), "0.0" )
+        VAR _x2 = FORMAT ( MAXX ( _end, [@x] ), "0.0" )
+        VAR _y2 = FORMAT ( MAXX ( _end, [@y] ), "0.0" )
+        VAR _y0 = FORMAT ( 7 + _hi * 24 / ( _hi - _lo ), "0.0" )
+        VAR _zero =
+            IF (
+                _lo < 0 && _hi > 0,
+                "<line x1='0' x2='120' y1='" & _y0 & "' y2='" & _y0
+                    & "' stroke='%23C0392B' stroke-width='1.2' stroke-dasharray='3 2' vector-effect='non-scaling-stroke'/>"
+            )
+        RETURN
+            IF (
+                _n > 0,
+                "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='40' viewBox='0 0 120 40'>" & _zero
+                    & "<polygon points='" & _x1 & ",38 " & _line & " " & _x2
+                    & ",38' fill='%232B7A78' fill-opacity='0.14'/>"
+                    & "<polyline points='" & _line
+                    & "' fill='none' stroke='%232B7A78' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'"
+                    & " vector-effect='non-scaling-stroke'/>"
+                    & "<circle cx='" & _x2 & "' cy='" & _y2 & "' r='5.5' fill='%231F3A5F'/></svg>"
+            )
+
+    // Card trend: calendar days of the Day 1 forecast against BL1, by update
+    MEASURE '_Measures'[Trend - Day 1 variance vs BL1] =
+        CALCULATE ( [Trend line], 'Trend KPI'[KPI] = "Day 1 variance vs BL1" )
+
+    // Card trend: working days of Day 1 total float, by update
+    MEASURE '_Measures'[Trend - Day 1 total float] =
+        CALCULATE ( [Trend line], 'Trend KPI'[KPI] = "Day 1 total float" )
+
+    // Card trend: duration-weighted % complete, by update
+    MEASURE '_Measures'[Trend - Weighted % complete (actual)] =
+        CALCULATE ( [Trend line], 'Trend KPI'[KPI] = "Weighted % complete (actual)" )
+
+    // Card trend: DQ score out of 100, by update
+    MEASURE '_Measures'[Trend - DQ score] =
+        CALCULATE ( [Trend line], 'Trend KPI'[KPI] = "DQ score" )
+
+    // Card trend: milestones later than the baseline in force, by update
+    MEASURE '_Measures'[Trend - Milestones later than baseline in force] =
+        CALCULATE ( [Trend line], 'Trend KPI'[KPI] = "Milestones later than baseline in force" )
+
+    // Card trend: milestones that slipped against the previous update, by update
+    MEASURE '_Measures'[Trend - Milestones slipped vs previous period] =
+        CALCULATE ( [Trend line], 'Trend KPI'[KPI] = "Milestones slipped vs previous period" )
+
+    // Card trend: calendar days the Day 1 forecast moved, by update
+    MEASURE '_Measures'[Trend - Day 1 movement vs previous period] =
+        CALCULATE ( [Trend line], 'Trend KPI'[KPI] = "Day 1 movement vs previous period" )
+
+    // Card trend: critical activities, by update
+    MEASURE '_Measures'[Trend - Critical count] =
+        CALCULATE ( [Trend line], 'Trend KPI'[KPI] = "Critical count" )
+
+    // Card trend: near-critical activities at the selected threshold, by update
+    MEASURE '_Measures'[Trend - Near-critical count] =
+        CALCULATE ( [Trend line], 'Trend KPI'[KPI] = "Near-critical count" )
+
+    // Card trend: activities with negative float, by update
+    MEASURE '_Measures'[Trend - Negative float count] =
+        CALCULATE ( [Trend line], 'Trend KPI'[KPI] = "Negative float count" )
+
+    // Card trend: lowest total float in working days, by update
+    MEASURE '_Measures'[Trend - Total float (min)] =
+        CALCULATE ( [Trend line], 'Trend KPI'[KPI] = "Total float (min)" )
+
+    // Card trend: activities in the 14-day look-ahead, by update
+    MEASURE '_Measures'[Trend - Look-ahead items] =
+        CALCULATE ( [Trend line], 'Trend KPI'[KPI] = "Look-ahead items" )
+
+    // Card trend: share of look-back items achieved, by update
+    MEASURE '_Measures'[Trend - Look-back hit rate] =
+        CALCULATE ( [Trend line], 'Trend KPI'[KPI] = "Look-back hit rate" )
+
+    // Card trend: DCMA checks passed, by update
+    MEASURE '_Measures'[Trend - DCMA pass count] =
+        CALCULATE ( [Trend line], 'Trend KPI'[KPI] = "DCMA pass count" )
+
+    // Card trend: critical path length index, by update
+    MEASURE '_Measures'[Trend - CPLI] =
+        CALCULATE ( [Trend line], 'Trend KPI'[KPI] = "CPLI" )
+
+    // Card trend: baseline execution index, by update
+    MEASURE '_Measures'[Trend - BEI] =
+        CALCULATE ( [Trend line], 'Trend KPI'[KPI] = "BEI" )
+
+    // -------------------------------------------------------------------------------------------------
+    // 15. Sparklines in the tables, and the float bridge: a measure at the update of the 'Update axis' row,
+    //     for each update up to the selected one. A table sparkline (Add a sparkline, X-axis
+    //     'Update axis'[data_date]) draws it per row; the bridge's waterfall has 'Update axis'[update] as its
+    //     category. 'Update axis' is not related to the model, so the data-date slicer leaves every update on
+    //     the axis; each measure lifts the slicer only to read its row's update. A table pairs the values of its
+    //     columns and keeps the pairs where a measure is not blank, so each measure is blank unless the
+    //     selected update has the row in the table's own fact table: otherwise a milestone would also be
+    //     listed beside the dates of another milestone.
+    // -------------------------------------------------------------------------------------------------
+    // Sparkline: the owner's DQ (share of activities not flagged), by update
+    MEASURE '_Measures'[Owner DQ by update] =
+        VAR _s = SELECTEDVALUE ( 'Update axis'[snapshot_id] )
+        RETURN
+            IF (
+                NOT ISBLANK ( _s ) && _s <= [Selected snapshot id] && NOT ISEMPTY ( fact_owner_scorecard ),
+                CALCULATE ( [Owner DQ], REMOVEFILTERS ( dim_snapshot ), dim_snapshot[snapshot_id] = _s )
+            )
+
+    // Sparkline: the milestone's forecast finish against BL1, in calendar days, by update
+    MEASURE '_Measures'[Milestone variance vs BL1 by update] =
+        VAR _s = SELECTEDVALUE ( 'Update axis'[snapshot_id] )
+        RETURN
+            IF (
+                NOT ISBLANK ( _s ) && _s <= [Selected snapshot id] && NOT ISEMPTY ( fact_activity_snapshot ),
+                CALCULATE ( [Milestone variance vs BL1], REMOVEFILTERS ( dim_snapshot ), dim_snapshot[snapshot_id] = _s )
+            )
+
+    // Sparkline: the risk's score, by update
+    MEASURE '_Measures'[Risk score (max) by update] =
+        VAR _s = SELECTEDVALUE ( 'Update axis'[snapshot_id] )
+        RETURN
+            IF (
+                NOT ISBLANK ( _s ) && _s <= [Selected snapshot id] && NOT ISEMPTY ( fact_risk ),
+                CALCULATE ( [Risk score (max)], REMOVEFILTERS ( dim_snapshot ), dim_snapshot[snapshot_id] = _s )
+            )
+
+    // Sparkline: the float bridge on page 3 (a waterfall over 'Update axis'[update]), by update
+    MEASURE '_Measures'[Float bridge by update] =
+        VAR _s = SELECTEDVALUE ( 'Update axis'[snapshot_id] )
+        RETURN
+            IF (
+                NOT ISBLANK ( _s ) && _s <= [Selected snapshot id] && NOT ISEMPTY ( fact_snapshot_summary ),
+                CALCULATE ( [Float bridge], REMOVEFILTERS ( dim_snapshot ), dim_snapshot[snapshot_id] = _s )
+            )
 
 // -----------------------------------------------------------------------------------------------------
 // Validation query: one row per data date. Compare with output/csv/fact_snapshot_summary.csv and the

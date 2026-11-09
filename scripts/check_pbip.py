@@ -4,7 +4,8 @@ Checks
   1. Every JSON file parses; every file is UTF-8 without a BOM (CR line endings, which Desktop writes on save,
      are reported as a warning).
   2. Every PBIP/PBIR file (.pbip, .platform, definition.pbir, definition.pbism, version.json, report.json,
-     pages.json, page.json, visual.json) validates against the JSON schema named in its "$schema". The schemas
+     pages.json, page.json, visual.json, mobile.json, bookmarks.json, *.bookmark.json) validates against the JSON
+     schema named in its "$schema". The schemas
      are vendored in scripts/pbir_schemas and resolved offline through a referencing.Registry keyed by each
      schema's $id (and its published path, which the embedded schemas are referenced by). Every $ref is
      resolved once at start-up; nothing is fetched over the network.
@@ -22,7 +23,11 @@ Checks
      themeCollection.customTheme); every page background image is a registered image resource.
   8. pages.json pageOrder matches the page folders; page and visual names follow the PBIR naming rules and
      match their folders; drill-through bindings and visual interactions point at existing objects.
-  9. Every visual sits inside its page, no two visuals overlap, and content visuals are at least 180 x 90 px.
+  9. Every visual sits inside its page, no two visuals overlap, and content visuals are at least 180 x 90 px. A
+     visual hidden until a bookmark shows it, and a toggle button drawn wholly inside the visual it switches, may
+     overlap. Every phone-layout box (mobile.json) fits the 324-unit phone canvas.
+ 10. Every bookmark file is listed once in bookmarks.json under its own name; its pages, visuals and target
+     visuals exist; every bookmark button applies an existing bookmark.
 
 Usage:  .venv\\Scripts\\python.exe scripts\\check_pbip.py [project folder]      (exit 0 = clean, 1 = problems)
 """
@@ -65,7 +70,12 @@ DOCUMENTED_SCHEMAS = [
     (re.compile(r"/pages/pages\.json$"), _FABRIC + "item/report/definition/pagesMetadata/1.1.0/schema.json"),
     (re.compile(r"/pages/[^/]+/page\.json$"), _FABRIC + "item/report/definition/page/2.1.0/schema.json"),
     (re.compile(r"/visuals/[^/]+/visual\.json$"), _FABRIC + "item/report/definition/visualContainer/2.12.0/schema.json"),
+    (re.compile(r"/visuals/[^/]+/mobile\.json$"),
+     _FABRIC + "item/report/definition/visualContainerMobileState/2.7.0/schema.json"),
+    (re.compile(r"/bookmarks/bookmarks\.json$"), _FABRIC + "item/report/definition/bookmarksMetadata/1.0.0/schema.json"),
+    (re.compile(r"/bookmarks/[^/]+\.bookmark\.json$"), _FABRIC + "item/report/definition/bookmark/2.1.0/schema.json"),
 ]
+MOBILE_W = 324                                  # Desktop's phone canvas width
 
 
 # ----------------------------------------------------------------------------------------------------------------
@@ -522,7 +532,9 @@ def run_checks(project: pathlib.Path = ROOT / "powerbi", root: pathlib.Path = RO
     if pages_meta.get("activePageName") not in order:
         problems.append("pages.json: activePageName is not in pageOrder")
     bindings: list[str] = []
-    n_visuals = n_refs = 0
+    n_visuals = n_refs = n_mobile = 0
+    page_visuals: dict[str, set] = {}
+    bookmark_refs: list[tuple[str, str]] = []
     for folder in folders:
         page_path = pages_dir / folder / "page.json"
         page = docs_json.get(page_path)
@@ -562,8 +574,20 @@ def run_checks(project: pathlib.Path = ROOT / "powerbi", root: pathlib.Path = RO
                 problems.append(f"{rel(vpath)}: box ({x}, {y}, {w}, {h}) is outside the {width} x {height} page")
             if not HEADER_VISUAL.search(name or "") and (w < MIN_W or h < MIN_H):
                 problems.append(f"{rel(vpath)}: {w} x {h} px is below the {MIN_W} x {MIN_H} px minimum")
-            boxes.append((name, x, y, w, h))
             body = visual.get("visual", {})
+            boxes.append((name, x, y, w, h, bool(visual.get("isHidden")), body.get("visualType")))
+            mobile = docs_json.get(vdir / "mobile.json")
+            if mobile is not None:
+                n_mobile += 1
+                mpos = mobile.get("position", {})
+                mx, mw = mpos.get("x", 0), mpos.get("width", 0)
+                if mx < 0 or mpos.get("y", 0) < 0 or mx + mw > MOBILE_W:
+                    problems.append(f"{rel(vdir / 'mobile.json')}: box x={mx}, width={mw} is outside the "
+                                    f"{MOBILE_W}-unit phone canvas")
+            link = body.get("visualContainerObjects", {}).get("visualLink", [{}])[0].get("properties", {})
+            if link.get("type", {}).get("expr", {}).get("Literal", {}).get("Value") == "'Bookmark'":
+                target = link.get("bookmark", {}).get("expr", {}).get("Literal", {}).get("Value", "")
+                bookmark_refs.append((rel(vpath), target.strip("'")))
             qrefs = []
             for role, state in body.get("query", {}).get("queryState", {}).items():
                 for proj in state.get("projections", []):
@@ -579,16 +603,30 @@ def run_checks(project: pathlib.Path = ROOT / "powerbi", root: pathlib.Path = RO
                     problems.append(f"{rel(vpath)}: formatting selector points at {meta!r}, not a field of the visual")
             vtype = body.get("visualType")
             if vtype not in ("textbox", "slicer"):
-                title = body.get("visualContainerObjects", {}).get("title", [{}])[0].get("properties", {})
+                vco_ = body.get("visualContainerObjects", {})
+                title = vco_.get("title", [{}])[0].get("properties", {})
                 shown = title.get("show", {}).get("expr", {}).get("Literal", {}).get("Value") == "true"
-                if not HEADER_VISUAL.search(name or "") and not (shown and title.get("text")):
+                # a KPI strip (new card) labels each tile itself; its title may be hidden if it keeps the text
+                # and alt text
+                kpi_strip = vtype == "cardVisual" and title.get("text") and vco_.get("general")
+                if not HEADER_VISUAL.search(name or "") and not (shown and title.get("text")) and not kpi_strip:
                     problems.append(f"{rel(vpath)}: content visual has no title")
+        page_visuals[folder] = visual_names
         for a in range(len(boxes)):
             for b in range(a + 1, len(boxes)):
-                na, xa, ya, wa, ha = boxes[a]
-                nb, xb, yb, wb, hb = boxes[b]
-                if xa < xb + wb and xb < xa + wa and ya < yb + hb and yb < ya + ha:
-                    problems.append(f"{folder}: visuals {na} and {nb} overlap")
+                na, xa, ya, wa, ha, hid_a, ta = boxes[a]
+                nb, xb, yb, wb, hb, hid_b, tb = boxes[b]
+                if not (xa < xb + wb and xb < xa + wa and ya < yb + hb and yb < ya + ha):
+                    continue
+                # allowed: a bookmark alternative (hidden until a bookmark shows it in place of the other), and a
+                # toggle button drawn wholly inside the visual it switches
+                if hid_a or hid_b:
+                    continue
+                if ta == "actionButton" and xb <= xa and ya >= yb and xa + wa <= xb + wb and ya + ha <= yb + hb:
+                    continue
+                if tb == "actionButton" and xa <= xb and yb >= ya and xb + wb <= xa + wa and yb + hb <= ya + ha:
+                    continue
+                problems.append(f"{folder}: visuals {na} and {nb} overlap")
         for inter in page.get("visualInteractions", []):
             for end in ("source", "target"):
                 if inter.get(end) not in visual_names:
@@ -608,9 +646,47 @@ def run_checks(project: pathlib.Path = ROOT / "powerbi", root: pathlib.Path = RO
     if len(set(bindings)) != len(bindings):
         problems.append("pageBinding names are not unique across the report")
 
+    # 10. bookmarks -------------------------------------------------------------------------------------------
+    bm_dir = report_dir / "definition" / "bookmarks"
+    bookmarks = {p.name[:-len(".bookmark.json")]: docs_json[p] for p in sorted(bm_dir.glob("*.bookmark.json"))} \
+        if bm_dir.is_dir() else {}
+    index = docs_json.get(bm_dir / "bookmarks.json")
+    if bookmarks and index is None:
+        problems.append("bookmarks: bookmark files exist but bookmarks/bookmarks.json does not")
+    listed = [child for item in (index or {}).get("items", [])
+              for child in (item.get("children") if "children" in item else [item.get("name")])]
+    for name in sorted(set(listed)):
+        if listed.count(name) > 1:
+            problems.append(f"bookmarks.json: bookmark {name!r} is listed more than once")
+        if name not in bookmarks:
+            problems.append(f"bookmarks.json: lists {name!r}, which has no .bookmark.json file")
+    for name, bm in bookmarks.items():
+        where = f"bookmarks/{name}.bookmark.json"
+        if name not in listed:
+            problems.append(f"{where}: not listed in bookmarks.json")
+        if bm.get("name") != name:
+            problems.append(f"{where}: name {bm.get('name')!r} differs from the file name")
+        state = bm.get("explorationState", {})
+        if state.get("activeSection") not in page_visuals:
+            problems.append(f"{where}: activeSection {state.get('activeSection')!r} is not a page")
+        for page, section in state.get("sections", {}).items():
+            if page not in page_visuals:
+                problems.append(f"{where}: section {page!r} is not a page")
+                continue
+            for v in section.get("visualContainers", {}):
+                if v not in page_visuals[page]:
+                    problems.append(f"{where}: visual {v!r} is not on page {page}")
+        for v in bm.get("options", {}).get("targetVisualNames", []):
+            if not any(v in names for names in page_visuals.values()):
+                problems.append(f"{where}: target visual {v!r} is not in the report")
+    for where, target in bookmark_refs:
+        if target not in bookmarks:
+            problems.append(f"{where}: button applies bookmark {target!r}, which does not exist")
+
     stats = {"files": len(docs_json), "validated": validated, "schemas": len({id(d) for d in schemas.values()}),
              "tables": len(tables), "csv_columns": typed_columns, "measures": len(measures),
-             "relationships": len(model_rels), "pages": len(folders), "visuals": n_visuals, "field_refs": n_refs}
+             "relationships": len(model_rels), "pages": len(folders), "visuals": n_visuals, "field_refs": n_refs,
+             "mobile": n_mobile, "bookmarks": len(bookmarks)}
     return problems, warnings, stats
 
 
@@ -626,7 +702,8 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     print(f"PBIP checks passed: {stats['validated']} files schema-valid against {stats['schemas']} vendored schemas; "
           f"{stats['tables']} tables, {stats['csv_columns']} typed CSV columns, {stats['measures']} measures, "
-          f"{stats['relationships']} relationships, {stats['pages']} pages, {stats['visuals']} visuals, "
+          f"{stats['relationships']} relationships, {stats['pages']} pages, {stats['visuals']} visuals "
+          f"({stats['mobile']} in the phone layout), {stats['bookmarks']} bookmarks, "
           f"{stats['field_refs']} field references resolved")
     return 0
 

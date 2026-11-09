@@ -4,11 +4,13 @@
     "p01_exec",
     "p02_milestones",
     "p03_critical",
+    "p09_gantt",
     "p04_interfaces",
     "p05_risks",
     "p06_quality",
     "p07_recon",
-    "p08_activity"
+    "p08_activity",
+    "p10_float_tip"
   ],
   "activePageName": "p01_exec"
 }

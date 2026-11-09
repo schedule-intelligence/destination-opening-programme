@@ -50,7 +50,7 @@
   "visualInteractions": [
     {
       "source": "p06_h4_dd_slicer",
-      "target": "p06_v06_dq_trend",
+      "target": "p06_v03_dq_trend",
       "type": "NoFilter"
     }
   ]

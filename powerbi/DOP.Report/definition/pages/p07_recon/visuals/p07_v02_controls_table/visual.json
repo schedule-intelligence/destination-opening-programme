@@ -1,0 +1,381 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
+  "name": "p07_v02_controls_table",
+  "position": {
+    "x": 216,
+    "y": 264,
+    "z": 11000,
+    "height": 248,
+    "width": 1040,
+    "tabOrder": 11000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_reconciliation"
+                    }
+                  },
+                  "Property": "control_id"
+                }
+              },
+              "queryRef": "fact_reconciliation.control_id",
+              "nativeQueryRef": "control_id",
+              "displayName": "Control"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_reconciliation"
+                    }
+                  },
+                  "Property": "control"
+                }
+              },
+              "queryRef": "fact_reconciliation.control",
+              "nativeQueryRef": "control",
+              "displayName": "Description"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_reconciliation"
+                    }
+                  },
+                  "Property": "source_value"
+                }
+              },
+              "queryRef": "fact_reconciliation.source_value",
+              "nativeQueryRef": "source_value",
+              "displayName": "Source (XER)"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_reconciliation"
+                    }
+                  },
+                  "Property": "model_value"
+                }
+              },
+              "queryRef": "fact_reconciliation.model_value",
+              "nativeQueryRef": "model_value",
+              "displayName": "Model (CSV)"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_reconciliation"
+                    }
+                  },
+                  "Property": "dashboard_value"
+                }
+              },
+              "queryRef": "fact_reconciliation.dashboard_value",
+              "nativeQueryRef": "dashboard_value",
+              "displayName": "Dashboard (JSON)"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_reconciliation"
+                    }
+                  },
+                  "Property": "delta"
+                }
+              },
+              "queryRef": "fact_reconciliation.delta",
+              "nativeQueryRef": "delta",
+              "displayName": "Delta"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_reconciliation"
+                    }
+                  },
+                  "Property": "passed_label"
+                }
+              },
+              "queryRef": "fact_reconciliation.passed_label",
+              "nativeQueryRef": "passed_label",
+              "displayName": "Pass"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "fact_reconciliation"
+                  }
+                },
+                "Property": "control_id"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ]
+      }
+    },
+    "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "columnAdjustment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'growToFit'"
+                }
+              }
+            },
+            "autoSizeColumnWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "values": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "columnWidth": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "128D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fact_reconciliation.control_id"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "291D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fact_reconciliation.control"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "158D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fact_reconciliation.source_value"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "158D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fact_reconciliation.model_value"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "158D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fact_reconciliation.dashboard_value"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "55D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fact_reconciliation.delta"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "55D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fact_reconciliation.passed_label"
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Reconciliation controls: source, model and dashboard values'"
+                }
+              }
+            },
+            "titleWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Reconciliation controls: source, model and dashboard values'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "subTitle": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Every control must agree across the three before the update is published'"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#4A5568'"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

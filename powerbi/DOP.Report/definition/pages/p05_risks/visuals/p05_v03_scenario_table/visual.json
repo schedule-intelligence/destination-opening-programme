@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
   "name": "p05_v03_scenario_table",
   "position": {
-    "x": 448,
-    "y": 280,
-    "z": 6000,
-    "height": 204,
-    "width": 816,
-    "tabOrder": 6000
+    "x": 568,
+    "y": 296,
+    "z": 12000,
+    "height": 208,
+    "width": 688,
+    "tabOrder": 12000
   },
   "visual": {
     "visualType": "tableEx",
@@ -73,7 +73,7 @@
               },
               "queryRef": "fact_scenario.day1_tf_d",
               "nativeQueryRef": "day1_tf_d",
-              "displayName": "Day 1 TF (d)"
+              "displayName": "Day 1 TF (wd)"
             },
             {
               "field": {
@@ -88,37 +88,7 @@
               },
               "queryRef": "fact_scenario.float_gain_d",
               "nativeQueryRef": "float_gain_d",
-              "displayName": "Float gain (d)"
-            },
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "fact_scenario"
-                    }
-                  },
-                  "Property": "neg_float_count"
-                }
-              },
-              "queryRef": "fact_scenario.neg_float_count",
-              "nativeQueryRef": "neg_float_count",
-              "displayName": "Negative float"
-            },
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "fact_scenario"
-                    }
-                  },
-                  "Property": "near_critical_count"
-                }
-              },
-              "queryRef": "fact_scenario.near_critical_count",
-              "nativeQueryRef": "near_critical_count",
-              "displayName": "Near-critical"
+              "displayName": "Float gain (wd)"
             },
             {
               "field": {
@@ -158,11 +128,11 @@
                       "Entity": "fact_scenario"
                     }
                   },
-                  "Property": "recommended"
+                  "Property": "recommended_label"
                 }
               },
-              "queryRef": "fact_scenario.recommended",
-              "nativeQueryRef": "recommended",
+              "queryRef": "fact_scenario.recommended_label",
+              "nativeQueryRef": "recommended_label",
               "displayName": "Recommended"
             }
           ]
@@ -247,7 +217,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "60D"
+                  "Value": "72D"
                 }
               }
             }
@@ -261,7 +231,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "160D"
+                  "Value": "146D"
                 }
               }
             }
@@ -275,7 +245,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "85D"
+                  "Value": "82D"
                 }
               }
             }
@@ -289,7 +259,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "55D"
+                  "Value": "54D"
                 }
               }
             }
@@ -303,7 +273,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "60D"
+                  "Value": "54D"
                 }
               }
             }
@@ -317,35 +287,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "65D"
-                }
-              }
-            }
-          },
-          "selector": {
-            "metadata": "fact_scenario.neg_float_count"
-          }
-        },
-        {
-          "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "70D"
-                }
-              }
-            }
-          },
-          "selector": {
-            "metadata": "fact_scenario.near_critical_count"
-          }
-        },
-        {
-          "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "75D"
+                  "Value": "72D"
                 }
               }
             }
@@ -359,7 +301,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "70D"
+                  "Value": "79D"
                 }
               }
             }
@@ -373,13 +315,13 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "85D"
+                  "Value": "93D"
                 }
               }
             }
           },
           "selector": {
-            "metadata": "fact_scenario.recommended"
+            "metadata": "fact_scenario.recommended_label"
           }
         }
       ]
@@ -419,6 +361,44 @@
               "expr": {
                 "Literal": {
                   "Value": "'Recovery scenarios: outcome, decisions needed and residual risk'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "subTitle": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Day 1 forecast and total float if the scenario''s decisions are approved'"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#4A5568'"
+                    }
+                  }
                 }
               }
             }

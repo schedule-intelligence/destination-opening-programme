@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
   "name": "p08_v05_drivers",
   "position": {
-    "x": 648,
-    "y": 506,
-    "z": 8000,
-    "height": 198,
-    "width": 616,
-    "tabOrder": 8000
+    "x": 744,
+    "y": 520,
+    "z": 14000,
+    "height": 176,
+    "width": 512,
+    "tabOrder": 14000
   },
   "visual": {
     "visualType": "tableEx",
@@ -58,7 +58,7 @@
               },
               "queryRef": "fact_relationship.lag_d",
               "nativeQueryRef": "lag_d",
-              "displayName": "Lag (d)"
+              "displayName": "Lag (wd)"
             },
             {
               "field": {
@@ -68,11 +68,11 @@
                       "Entity": "fact_relationship"
                     }
                   },
-                  "Property": "is_driving"
+                  "Property": "is_driving_label"
                 }
               },
-              "queryRef": "fact_relationship.is_driving",
-              "nativeQueryRef": "is_driving",
+              "queryRef": "fact_relationship.is_driving_label",
+              "nativeQueryRef": "is_driving_label",
               "displayName": "Driving"
             },
             {
@@ -88,7 +88,7 @@
               },
               "queryRef": "fact_relationship.slack_d",
               "nativeQueryRef": "slack_d",
-              "displayName": "Slack (d)"
+              "displayName": "Slack (wd)"
             }
           ]
         }
@@ -103,7 +103,7 @@
                     "Entity": "fact_relationship"
                   }
                 },
-                "Property": "is_driving"
+                "Property": "is_driving_label"
               }
             },
             "direction": "Descending"
@@ -125,7 +125,7 @@
             "autoSizeColumnWidth": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
                 }
               }
             },
@@ -165,6 +165,78 @@
             }
           }
         }
+      ],
+      "columnWidth": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "170D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fact_relationship.pred_id"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "68D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fact_relationship.rel_type"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "79D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fact_relationship.lag_d"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "79D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fact_relationship.is_driving_label"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "79D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fact_relationship.slack_d"
+          }
+        }
       ]
     },
     "visualContainerObjects": {
@@ -181,7 +253,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Predecessors in the latest update (driving first)'"
+                  "Value": "'Predecessors in the latest update, driving first'"
                 }
               }
             },
@@ -201,7 +273,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Predecessors in the latest update (driving first)'"
+                  "Value": "'Predecessors in the latest update, driving first'"
                 }
               }
             }

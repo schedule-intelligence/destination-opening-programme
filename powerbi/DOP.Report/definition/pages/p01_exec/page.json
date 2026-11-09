@@ -46,5 +46,12 @@
         }
       }
     ]
-  }
+  },
+  "visualInteractions": [
+    {
+      "source": "p01_h4_dd_slicer",
+      "target": "p01_v02_day1_float_trend",
+      "type": "NoFilter"
+    }
+  ]
 }

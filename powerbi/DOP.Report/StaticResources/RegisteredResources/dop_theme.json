@@ -240,6 +240,46 @@
         ]
       }
     },
+    "columnChart": {
+      "*": {
+        "valueAxis": [
+          {
+            "gridlineShow": true,
+            "gridlineColor": {
+              "solid": {
+                "color": "#E2E8F0"
+              }
+            },
+            "gridlineStyle": "dotted",
+            "gridlineThickness": 1,
+            "labelColor": {
+              "solid": {
+                "color": "#4A5568"
+              }
+            },
+            "titleColor": {
+              "solid": {
+                "color": "#4A5568"
+              }
+            }
+          }
+        ],
+        "categoryAxis": [
+          {
+            "labelColor": {
+              "solid": {
+                "color": "#4A5568"
+              }
+            },
+            "titleColor": {
+              "solid": {
+                "color": "#4A5568"
+              }
+            }
+          }
+        ]
+      }
+    },
     "tableEx": {
       "*": {
         "columnHeaders": [

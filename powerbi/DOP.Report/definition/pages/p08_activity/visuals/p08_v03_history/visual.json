@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
   "name": "p08_v03_history",
   "position": {
-    "x": 16,
-    "y": 286,
-    "z": 6000,
-    "height": 204,
-    "width": 1248,
-    "tabOrder": 6000
+    "x": 216,
+    "y": 296,
+    "z": 12000,
+    "height": 208,
+    "width": 1040,
+    "tabOrder": 12000
   },
   "visual": {
     "visualType": "tableEx",
@@ -103,7 +103,7 @@
               },
               "queryRef": "fact_activity_snapshot.total_float_d",
               "nativeQueryRef": "total_float_d",
-              "displayName": "TF (d)"
+              "displayName": "TF (wd)"
             },
             {
               "field": {
@@ -118,7 +118,7 @@
               },
               "queryRef": "fact_activity_snapshot.var_finish_bl0_d",
               "nativeQueryRef": "var_finish_bl0_d",
-              "displayName": "vs BL0 (d)"
+              "displayName": "vs BL0 (cd)"
             },
             {
               "field": {
@@ -133,7 +133,7 @@
               },
               "queryRef": "fact_activity_snapshot.var_finish_bl1_d",
               "nativeQueryRef": "var_finish_bl1_d",
-              "displayName": "vs BL1 (d)"
+              "displayName": "vs BL1 (cd)"
             },
             {
               "field": {
@@ -148,7 +148,7 @@
               },
               "queryRef": "fact_activity_snapshot.slip_vs_prev_d",
               "nativeQueryRef": "slip_vs_prev_d",
-              "displayName": "Movement (d)"
+              "displayName": "Movement (cd)"
             },
             {
               "field": {
@@ -215,7 +215,7 @@
             "autoSizeColumnWidth": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
                 }
               }
             },
@@ -253,6 +253,162 @@
                 }
               }
             }
+          }
+        }
+      ],
+      "columnWidth": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "59D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_snapshot.label"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "93D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_snapshot.data_date"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "95D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fact_activity_snapshot.status"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "93D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fact_activity_snapshot.start"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "93D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fact_activity_snapshot.finish"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "63D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fact_activity_snapshot.total_float_d"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "74D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fact_activity_snapshot.var_finish_bl0_d"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "74D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fact_activity_snapshot.var_finish_bl1_d"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "84D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fact_activity_snapshot.slip_vs_prev_d"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "116D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fact_activity_snapshot.constraint_type"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "158D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fact_activity_snapshot.dq_flags"
           }
         }
       ]

@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
   "name": "p04_v01_interface_kpis",
   "position": {
-    "x": 16,
-    "y": 144,
-    "z": 4000,
-    "height": 120,
-    "width": 1248,
-    "tabOrder": 4000
+    "x": 216,
+    "y": 96,
+    "z": 10000,
+    "height": 136,
+    "width": 1040,
+    "tabOrder": 10000
   },
   "visual": {
     "visualType": "cardVisual",
@@ -43,7 +43,7 @@
               },
               "queryRef": "_Measures.Interfaces at risk",
               "nativeQueryRef": "Interfaces at risk",
-              "displayName": "At risk"
+              "displayName": "Interfaces at risk"
             },
             {
               "field": {
@@ -58,7 +58,7 @@
               },
               "queryRef": "_Measures.Interface gap (max)",
               "nativeQueryRef": "Interface gap (max)",
-              "displayName": "Worst interface gap (days)"
+              "displayName": "Worst interface gap (cd)"
             },
             {
               "field": {
@@ -73,7 +73,7 @@
               },
               "queryRef": "_Measures.Readiness gap",
               "nativeQueryRef": "Readiness gap",
-              "displayName": "Worst readiness gap (days)"
+              "displayName": "Worst readiness gap (cd)"
             },
             {
               "field": {
@@ -95,36 +95,38 @@
       }
     },
     "objects": {
-      "outline": [
-        {
-          "properties": {
-            "show": {
-              "expr": {
-                "Literal": {
-                  "Value": "false"
-                }
-              }
-            }
-          },
-          "selector": {
-            "id": "default"
-          }
-        }
-      ],
       "value": [
         {
           "properties": {
-            "textWrap": {
-              "expr": {
-                "Literal": {
-                  "Value": "true"
-                }
-              }
-            },
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "18D"
+                  "Value": "20D"
+                }
+              }
+            },
+            "fontFamily": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Segoe UI Semibold'"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#1F3A5F'"
+                    }
+                  }
+                }
+              }
+            },
+            "horizontalAlignment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'left'"
                 }
               }
             }
@@ -144,17 +146,51 @@
                 }
               }
             },
-            "textWrap": {
-              "expr": {
-                "Literal": {
-                  "Value": "true"
-                }
-              }
-            },
             "fontSize": {
               "expr": {
                 "Literal": {
                   "Value": "10D"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#4A5568'"
+                    }
+                  }
+                }
+              }
+            },
+            "position": {
+              "expr": {
+                "Literal": {
+                  "Value": "'aboveValue'"
+                }
+              }
+            },
+            "horizontalAlignment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'left'"
+                }
+              }
+            }
+          },
+          "selector": {
+            "id": "default"
+          }
+        }
+      ],
+      "outline": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
                 }
               }
             }
@@ -179,7 +215,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#1F3A5F'"
+                      "Value": "'#2B7A78'"
                     }
                   }
                 }
@@ -206,21 +242,14 @@
             "show": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
                 }
               }
             },
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Interfaces and readiness for the selected update'"
-                }
-              }
-            },
-            "titleWrap": {
-              "expr": {
-                "Literal": {
-                  "Value": "true"
+                  "Value": "'Interfaces and readiness at the selected update'"
                 }
               }
             }
@@ -233,7 +262,20 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Interfaces and readiness for the selected update'"
+                  "Value": "'KPI strip: Interfaces and readiness at the selected update'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "visualHeader": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
                 }
               }
             }

@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
   "name": "p03_h2_threshold",
   "position": {
-    "x": 848,
-    "y": 8,
-    "z": 2000,
-    "height": 56,
-    "width": 200,
-    "tabOrder": 2000
+    "x": 904,
+    "y": 20,
+    "z": 9000,
+    "height": 60,
+    "width": 168,
+    "tabOrder": 9000
   },
   "visual": {
     "visualType": "slicer",
@@ -48,7 +48,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Near-critical threshold (d)'"
+                  "Value": "'Near-critical (wd)'"
                 }
               }
             }
@@ -76,6 +76,47 @@
                 "Literal": {
                   "Value": "true"
                 }
+              }
+            },
+            "filter": {
+              "filter": {
+                "Version": 2,
+                "From": [
+                  {
+                    "Name": "n",
+                    "Entity": "Near-critical threshold",
+                    "Type": 0
+                  }
+                ],
+                "Where": [
+                  {
+                    "Condition": {
+                      "In": {
+                        "Expressions": [
+                          {
+                            "Column": {
+                              "Expression": {
+                                "SourceRef": {
+                                  "Source": "n"
+                                }
+                              },
+                              "Property": "Near-critical threshold"
+                            }
+                          }
+                        ],
+                        "Values": [
+                          [
+                            {
+                              "Literal": {
+                                "Value": "10L"
+                              }
+                            }
+                          ]
+                        ]
+                      }
+                    }
+                  }
+                ]
               }
             }
           }
@@ -136,7 +177,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Slicer: Near-critical threshold (d)'"
+                  "Value": "'Slicer: Near-critical (wd)'"
                 }
               }
             }

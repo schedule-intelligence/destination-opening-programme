@@ -1,0 +1,59 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/bookmark/2.1.0/schema.json",
+  "displayName": "Float - trend",
+  "name": "bm_float_trend",
+  "options": {
+    "targetVisualNames": [
+      "p03_v03_float_erosion",
+      "p03_h12_trend_on",
+      "p03_h13_trend_off",
+      "p03_v05_float_bridge",
+      "p03_h14_bridge_on",
+      "p03_h15_bridge_off"
+    ],
+    "suppressData": true,
+    "suppressDisplay": false,
+    "suppressActiveSection": false,
+    "applyOnlyToTargetVisuals": true
+  },
+  "explorationState": {
+    "version": "1.3",
+    "activeSection": "p03_critical",
+    "sections": {
+      "p03_critical": {
+        "visualContainers": {
+          "p03_v03_float_erosion": {
+            "singleVisual": {}
+          },
+          "p03_h12_trend_on": {
+            "singleVisual": {}
+          },
+          "p03_h13_trend_off": {
+            "singleVisual": {
+              "display": {
+                "mode": "hidden"
+              }
+            }
+          },
+          "p03_v05_float_bridge": {
+            "singleVisual": {
+              "display": {
+                "mode": "hidden"
+              }
+            }
+          },
+          "p03_h14_bridge_on": {
+            "singleVisual": {
+              "display": {
+                "mode": "hidden"
+              }
+            }
+          },
+          "p03_h15_bridge_off": {
+            "singleVisual": {}
+          }
+        }
+      }
+    }
+  }
+}

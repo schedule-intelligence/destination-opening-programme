@@ -33,6 +33,9 @@ MODEL_TABLES = {
     "Near-critical threshold": {"Near-critical threshold"},
     "Hierarchy level": {"Hierarchy level", "Hierarchy level Fields", "Hierarchy level Order"},
     "Compare against": {"Compare against", "Compare against Fields", "Compare against Order"},
+    "Trend KPI": {"KPI"},                    # the KPI each Trend - measure asks [Trend line] to draw
+    "Update axis": {"snapshot_id", "data_date", "update"},   # sparkline and float-bridge axis (not related)
+    "Risk grid": {"probability", "impact"},        # the 25 cells of the risk map (page 5)
     "security_owner_map": {"user_upn", "owner_code"},
     "definitions": {"measure", "definition", "formula", "source_fields", "grain", "owner", "unit"},
 }
@@ -138,7 +141,8 @@ def check_refs(label: str, code: str, tables: dict[str, set[str]], measures: set
             errors.append(f"{label}: column {table}[{col}] not found")
     rest = QUAL.sub(" ", clean)
     for m in BARE.finditer(rest):
-        if m.group(1) not in measures and m.group(1) not in BARE_OK:
+        # [@name] is a column added to a table variable (ADDCOLUMNS), not a measure
+        if m.group(1) not in measures and m.group(1) not in BARE_OK and not m.group(1).startswith("@"):
             errors.append(f"{label}: bare reference [{m.group(1)}] is not a defined measure")
 
 

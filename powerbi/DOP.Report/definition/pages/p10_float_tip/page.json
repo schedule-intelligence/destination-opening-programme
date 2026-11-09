@@ -1,0 +1,41 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json",
+  "name": "p10_float_tip",
+  "displayName": "Float tooltip",
+  "displayOption": "FitToPage",
+  "height": 240,
+  "width": 320,
+  "type": "Tooltip",
+  "visibility": "HiddenInViewMode",
+  "pageBinding": {
+    "name": "Podp10_float_tip",
+    "type": "Tooltip",
+    "parameters": []
+  },
+  "objects": {
+    "background": [
+      {
+        "properties": {
+          "color": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'#FFFFFF'"
+                  }
+                }
+              }
+            }
+          },
+          "transparency": {
+            "expr": {
+              "Literal": {
+                "Value": "0D"
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}

@@ -50,7 +50,7 @@
   "visualInteractions": [
     {
       "source": "p07_h4_dd_slicer",
-      "target": "p07_v07_source_files",
+      "target": "p07_v04_source_files",
       "type": "NoFilter"
     }
   ]

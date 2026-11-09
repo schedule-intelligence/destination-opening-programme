@@ -1,0 +1,44 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/bookmarksMetadata/1.0.0/schema.json",
+  "items": [
+    {
+      "name": "bmg_compare",
+      "displayName": "Compare",
+      "children": [
+        "bm_compare_bl1",
+        "bm_compare_bl0"
+      ]
+    },
+    {
+      "name": "bmg_look",
+      "displayName": "Look window",
+      "children": [
+        "bm_look_ahead",
+        "bm_look_back"
+      ]
+    },
+    {
+      "name": "bmg_float",
+      "displayName": "Float view",
+      "children": [
+        "bm_float_trend",
+        "bm_float_bridge"
+      ]
+    },
+    {
+      "name": "bmg_register",
+      "displayName": "Register",
+      "children": [
+        "bm_register_decisions",
+        "bm_register_risks",
+        "bm_register_map"
+      ]
+    },
+    {
+      "name": "bm_decisions_spotlight"
+    },
+    {
+      "name": "bm_reset"
+    }
+  ]
+}
