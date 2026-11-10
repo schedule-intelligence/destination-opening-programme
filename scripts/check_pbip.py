@@ -48,6 +48,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 from dop import tmdl  # noqa: E402  (the TMDL reader, shared with the generator)
+from dop.pbip import expand_functions, parse_functions, parse_measures  # noqa: E402  (the function expansion)
 
 SCHEMA_DIR = pathlib.Path(__file__).resolve().parent / "pbir_schemas"
 THEME_SCHEMA_DIR = pathlib.Path(__file__).resolve().parent / "theme_schema"
@@ -418,8 +419,10 @@ def run_checks(project: pathlib.Path = ROOT / "powerbi", root: pathlib.Path = RO
         partition = tables[table].get("partitions", [{}])[0].get("source", {})
         m_code = partition.get("expression", "")
         m_code = "\n".join(m_code) if isinstance(m_code, list) else m_code
-        if f'File.Contents(CsvFolder & "\\{table}.csv")' not in m_code:
-            problems.append(f"{table}: partition does not read CsvFolder & \"\\{table}.csv\"")
+        # a URL (Web.Contents with a RelativePath: refreshable in the service) or a local folder (File.Contents)
+        if (f'Web.Contents(CsvFolder, [RelativePath = "{table}.csv"])' not in m_code
+                and f'File.Contents(CsvFolder & "\\{table}.csv")' not in m_code):
+            problems.append(f"{table}: partition does not read {table}.csv from CsvFolder")
         if '[Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]' not in m_code or \
                 "Table.PromoteHeaders(" not in m_code or "[PromoteAllScalars=true]" not in m_code:
             problems.append(f"{table}: partition must use Csv.Document (comma, UTF-8, QuoteStyle.Csv) and "
@@ -477,7 +480,13 @@ def run_checks(project: pathlib.Path = ROOT / "powerbi", root: pathlib.Path = RO
         problems.append(f"relationship in the model not in POWERBI.md section 3: {extra}")
 
     # 6. measures ---------------------------------------------------------------------------------------------
-    source = dax_measures((root / "powerbi" / "measures.dax").read_text(encoding="utf-8"))
+    dax_text = (root / "powerbi" / "measures.dax").read_text(encoding="utf-8")
+    source = dax_measures(dax_text)
+    # a measure that calls a FUNCTION of measures.dax carries the function written out in full (the model holds no
+    # functions: the service could not resolve them); compare with that expansion
+    dax_funcs = parse_functions(dax_text)
+    expanded = {m["name"]: " ".join("\n".join(expand_functions(m["expression"], dax_funcs)).split())
+                for m in parse_measures(dax_text)}
     for name, expression in source.items():
         if name.endswith(" (duplicate)"):
             problems.append(f"measures.dax: [{name[:-12]}] is defined twice")
@@ -488,23 +497,15 @@ def run_checks(project: pathlib.Path = ROOT / "powerbi", root: pathlib.Path = RO
             body = m["expression"] if isinstance(m["expression"], str) else "\n".join(m["expression"])
             if table != MEASURE_TABLE:
                 problems.append(f"measure [{name}] is on table {table}, not {MEASURE_TABLE}")
-            if " ".join(body.split()) != expression:
+            if " ".join(body.split()) != expanded.get(name, expression):
                 problems.append(f"measure [{name}]: expression differs from measures.dax")
+            if any(f"{f} (" in body or f"{f}(" in body for f in dax_functions(dax_text)):
+                problems.append(f"measure [{name}] still calls a function of measures.dax")
     for name in measures:
         if name not in source:
             problems.append(f"measure [{name}] in the model is not in measures.dax")
-    functions = {f["name"]: f for f in model.get("functions", [])}
-    for name, expression in dax_functions((root / "powerbi" / "measures.dax").read_text(encoding="utf-8")).items():
-        if name not in functions:
-            problems.append(f"function {name} from measures.dax is not in the model (functions.tmdl)")
-        else:
-            body = functions[name]["expression"]
-            body = body if isinstance(body, str) else "\n".join(body)
-            if " ".join(body.split()) != expression:
-                problems.append(f"function {name}: expression differs from measures.dax")
-    for name in functions:
-        if name not in dax_functions((root / "powerbi" / "measures.dax").read_text(encoding="utf-8")):
-            problems.append(f"function {name} in the model is not in measures.dax")
+    if model.get("functions"):
+        problems.append("the model holds DAX functions: the generator writes them out in the measures instead")
     for fmt, names in doc_formats(doc_text).items():
         for name in names:
             if name in measures and measures[name][1].get("formatString") != fmt:
@@ -660,9 +661,11 @@ def run_checks(project: pathlib.Path = ROOT / "powerbi", root: pathlib.Path = RO
                 # toggle button drawn wholly inside the visual it switches
                 if hid_a or hid_b:
                     continue
-                if ta == "actionButton" and xb <= xa and ya >= yb and xa + wa <= xb + wb and ya + ha <= yb + hb:
+                # (a bookmark button, or the button slicer that picks a matrix's rows)
+                inside = ("actionButton", "advancedSlicerVisual")
+                if ta in inside and xb <= xa and ya >= yb and xa + wa <= xb + wb and ya + ha <= yb + hb:
                     continue
-                if tb == "actionButton" and xa <= xb and yb >= ya and xb + wb <= xa + wa and yb + hb <= ya + ha:
+                if tb in inside and xa <= xb and yb >= ya and xb + wb <= xa + wa and yb + hb <= ya + ha:
                     continue
                 problems.append(f"{folder}: visuals {na} and {nb} overlap")
         for inter in page.get("visualInteractions", []):

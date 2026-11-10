@@ -43,6 +43,14 @@ def cmd_pbip(args):
     return 0
 
 
+def cmd_rdl(args):
+    from .rdl import RDL_NAME, build_rdl
+    out = ROOT / "powerbi" / RDL_NAME
+    out.write_text(build_rdl(), encoding="utf-8", newline="\n")
+    print(f"[rdl] {out.relative_to(ROOT)}")
+    return 0
+
+
 def cmd_run(args):
     t0 = time.perf_counter()
     rc = cmd_generate(args)
@@ -78,13 +86,15 @@ def main(argv=None) -> int:
     p = sub.add_parser("pbip", help="generate the Power BI project (PBIP) from the CSV star schema, DAX measures and theme")
     p.add_argument("--out", type=pathlib.Path, default=None, help="output folder (default: powerbi)")
     p.add_argument("--csv-folder", default=None,
-                   help=r"default value of the CsvFolder parameter (default: V:\schedule-intelligence\output\csv)")
+                   help="default value of the CsvFolder parameter: a URL (read with Web.Contents) or a local folder "
+                        "(read with File.Contents). Default: the repository's output/csv on GitHub")
+    sub.add_parser("rdl", help="generate the paginated report (RDL): the reconciliation certificate")
     p = sub.add_parser("run", help="run everything")
     p.add_argument("--all", action="store_true", required=True)
     p.add_argument("--near-critical", type=int, default=10)
     args = ap.parse_args(argv)
     return {"generate": cmd_generate, "pipeline": cmd_pipeline, "pptx": cmd_pptx, "pbip": cmd_pbip,
-            "run": cmd_run}[args.cmd](args)
+            "rdl": cmd_rdl, "run": cmd_run}[args.cmd](args)
 
 
 if __name__ == "__main__":

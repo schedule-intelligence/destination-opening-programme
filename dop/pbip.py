@@ -32,7 +32,13 @@ from dop import tmdl
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 PROJECT = "DOP"
-DEFAULT_CSV_FOLDER = r"V:\schedule-intelligence\output\csv"
+# The CSVs the project reads: the repository's output/csv on GitHub (main holds only data that passed the
+# reconciliation gate), so Desktop and the Power BI service refresh from the same files with no gateway and no
+# local path. `python -m dop pbip --csv-folder <local output\csv>` generates a variant that reads a local folder
+# instead, for CSVs not pushed yet.
+DEFAULT_CSV_FOLDER = ("https://raw.githubusercontent.com/schedule-intelligence/destination-opening-programme/"
+                      "main/output/csv/")
+LOCAL_CSV_FOLDER = r"V:\schedule-intelligence\output\csv"
 PROGRAMME = "Destination Opening Programme"
 THEME_FILE = "dop_theme.json"
 BASE_THEME = "CY26SU10"                       # classic base theme shipped with the October 2026 Desktop
@@ -51,6 +57,23 @@ COMPARE_DEFAULT = "Finish variance vs BL1"    # the measure it shows when the pa
 # its options in slicer order (the first is selected when the page opens): label -> measure
 COMPARE_OPTIONS = {"vs BL1": COMPARE_DEFAULT, "vs BL0": "Finish variance vs BL0",
                    "vs previous": "Slip vs previous period"}
+
+
+# POWERBI.md section 4, item 3: the "Hierarchy level" field parameter. A button slicer on page 1 picks the rows of
+# the float matrix; the first option is the one the page opens on. label -> (table, column)
+LEVEL_TABLE = "Hierarchy level"
+LEVEL_OPTIONS = {"Asset": ("dim_activity", "asset_name"), "Owner": ("dim_owner", "owner_name"),
+                 "Package": ("dim_activity", "package_name")}
+LEVEL_DEFAULT = "Asset"
+# About & method page: the measure definitions of dashboard.json (the records of DATA_DICTIONARY.md) as a table
+DEFINITIONS_TABLE = "Definitions"
+DEFINITION_COLUMNS = ("measure", "definition", "formula", "unit", "owner")
+
+
+def level_key(label: str) -> str:
+    """The value a selection of the Hierarchy level slicer filters on: NAMEOF of the option's column."""
+    table, column = LEVEL_OPTIONS[label]
+    return f"'{table}'[{column}]"
 
 
 def compare_key(label: str) -> str:
@@ -102,7 +125,7 @@ BRAND_Y, BRAND_H = 16, 64
 NAV_Y, NAV_ROW_H = 96, 40
 FOOTER_Y, FOOTER_H = 584, 112
 # "Views" block between the page list and the source line: a label and two bookmark buttons
-VIEWS_Y, VIEW_BTN_H = 436, 32
+VIEWS_Y, VIEW_BTN_H = 476, 32                 # under nine navigator rows (96 + 9 x 40 = 456)
 # Content column: page name (kicker), the headline sentence and the slicers on one row, then the content grid
 CONTENT_X = RAIL_W + MARGIN                   # 216
 CONTENT_W = PAGE_W - CONTENT_X - MARGIN       # 1040
@@ -124,7 +147,8 @@ TOGGLE_BL1, TOGGLE_BL0 = (96, 8, 42, 22), (50, 8, 42, 22)
 TOGGLE_AHEAD, TOGGLE_BACK = (184, 8, 84, 22), (96, 8, 84, 22)
 TOGGLE_FIRST_OF_3 = (272, 8, 84, 22)     # Decisions | Risks | Risk map (page 5): the first of three pills
 TOGGLE_TREND, TOGGLE_BRIDGE = (136, 8, 62, 22), (70, 8, 62, 22)     # Trend | Bridge over the float chart (page 3)
-PILL_BAND = 30                # on the phone, the band above a toggled visual that holds its buttons
+TOGGLE_LEVEL = (212, 4, 204, 30)         # Asset | Owner | Package button slicer in the float matrix's title row
+PILL_BAND = 30               # on the phone, the band above a toggled visual that holds its buttons
 CANVAS, BAND_SUBTEXT = "#F7F8FA", "#C9D4E3"
 BACKGROUND_FILE = "dop_background.svg"
 
@@ -475,15 +499,105 @@ def _parse_define(dax: str) -> tuple[list[dict], list[dict]]:
 # Semantic model (built as a dictionary in TOM's shape, written as TMDL by dop.tmdl)
 # ----------------------------------------------------------------------------------------------------------------
 
-def _partition_m(table: CsvTable) -> list[str]:
+_SIGNATURE = re.compile(r"^\(\s*(?P<params>.*?)\s*\)\s*=>\s*(?P<rest>.*)$")
+_PARAM = re.compile(r"(?P<name>\w+)\s*:\s*\w+\s+(?P<mode>EXPR|VAL)", re.I)
+
+
+def _function_parts(f: dict) -> tuple[list[tuple[str, str]], list[str]]:
+    """((name, EXPR|VAL) per parameter, body lines) of a measures.dax FUNCTION."""
+    lines = list(f["expression"])
+    match = _SIGNATURE.match(lines[0].strip())
+    if not match:
+        raise ValueError(f"measures.dax: cannot read the signature of {f['name']}: {lines[0]!r}")
+    params = [(p.group("name"), p.group("mode").upper()) for p in _PARAM.finditer(match.group("params"))]
+    body = ([match.group("rest")] if match.group("rest") else []) + lines[1:]
+    return params, body
+
+
+def _call_args(text: str, start: int) -> tuple[list[str], int]:
+    """The comma-separated arguments of the call whose "(" is at text[start], and the index after its ")"."""
+    depth, args, current, i, quote = 0, [], [], start, False
+    while i < len(text):
+        ch = text[i]
+        if ch == '"':
+            quote = not quote
+        if not quote:
+            if ch in "([{":
+                depth += 1
+                if depth == 1:
+                    i += 1
+                    continue
+            elif ch in ")]}":
+                depth -= 1
+                if depth == 0:
+                    args.append("".join(current).strip())
+                    return [a for a in args if a], i + 1
+            elif ch == "," and depth == 1:
+                args.append("".join(current).strip())
+                current = []
+                i += 1
+                continue
+        current.append(ch)
+        i += 1
+    raise ValueError(f"unbalanced call in {text!r}")
+
+
+def expand_functions(expression: list[str], functions: list[dict] | None) -> list[str]:
+    """The measure's DAX with every call to a measures.dax FUNCTION written out in full. An EXPR parameter is
+    substituted as written (it is evaluated where the function uses it, as in DAX); a VAL parameter is evaluated
+    once, into a variable, before the body runs. A measure that is a single call becomes the function's body."""
+    defs = {f["name"]: _function_parts(f) for f in functions or []}
+    if not defs:
+        return expression
+    call = re.compile(r"(?<![\w.])(" + "|".join(re.escape(n) for n in defs) + r")\s*\(")
+
+    def substitute(body: list[str], params, args) -> list[str]:
+        if len(args) != len(params):
+            raise ValueError(f"measures.dax: {len(args)} arguments for {len(params)} parameters")
+        prefix = []
+        for (name, mode), arg in zip(params, args):
+            if mode == "VAL":
+                prefix.append(f"VAR __{name} = {arg}")
+                arg = f"__{name}"
+            body = [re.sub(rf"(?<![\w\[.@']){name}(?![\w\]])", lambda _: arg, line) for line in body]
+        return prefix + (["RETURN"] if prefix else []) + body
+
+    def expand_text(text: str) -> str:
+        while (match := call.search(text)):
+            params, body = defs[match.group(1)]
+            args, end = _call_args(text, match.end() - 1)
+            args = [expand_text(a) for a in args]
+            inline = " ".join(line.strip() for line in substitute(body, params, args))
+            text = text[:match.start()] + "( " + inline + " )" + text[end:]
+        return text
+
+    whole = "\n".join(expression).strip()
+    match = call.match(whole)
+    if match:
+        args, end = _call_args(whole, match.end() - 1)
+        if end == len(whole):                 # the measure is one call: the body, line by line
+            params, body = defs[match.group(1)]
+            return [expand_text(line) for line in substitute(body, params, [expand_text(a) for a in args])]
+    return expand_text(whole).split("\n")
+
+
+def is_web_source(csv_folder: str) -> bool:
+    return csv_folder.startswith(("https://", "http://"))
+
+
+def _partition_m(table: CsvTable, web: bool = True) -> list[str]:
     """Power Query for one CSV: read, promote headers, empty field -> null, then explicit types (en-GB).
-    Date columns whose values carry a time of day are read as datetime and then reduced to date."""
+    Date columns whose values carry a time of day are read as datetime and then reduced to date.
+    web: CsvFolder is a URL (the repository's output/csv on GitHub) read with Web.Contents and a RelativePath, the
+    form the Power BI service can refresh without a gateway; otherwise a local folder read with File.Contents."""
     timed = [c.name for c in table.columns if c.has_time]
     derived = table.name in DERIVED_COLUMNS
     labels = sorted((column, words) for (t, column), words in LABEL_COLUMNS.items() if t == table.name)
+    read = (f'Web.Contents(CsvFolder, [RelativePath = "{table.name}.csv"])' if web
+            else f'File.Contents(CsvFolder & "\\{table.name}.csv")')
     lines = [
         "let",
-        f'    Source = Csv.Document(File.Contents(CsvFolder & "\\{table.name}.csv"), '
+        f'    Source = Csv.Document({read}, '
         '[Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),',
         "    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),",
         '    Nulls = Table.ReplaceValue(Promoted, "", null, Replacer.ReplaceValue, Table.ColumnNames(Promoted)),',
@@ -545,7 +659,7 @@ def _column(table: str, c: CsvColumn, key_columns: set[tuple[str, str]]) -> dict
 
 
 def build_model(tables: list[CsvTable], measures: list[dict], csv_folder: str,
-                functions: list[dict] | None = None) -> dict:
+                functions: list[dict] | None = None, definitions: list[dict] | None = None) -> dict:
     by_name = {t.name: t for t in tables}
     key_columns = {(r[0], r[1]) for r in RELATIONSHIPS} | {(r[2], r[3]) for r in RELATIONSHIPS}
     for many, mcol, one, ocol, _ in RELATIONSHIPS:
@@ -583,7 +697,7 @@ def build_model(tables: list[CsvTable], measures: list[dict], csv_folder: str,
         table["lineageTag"] = guid("table", t.name)
         table["columns"] = columns
         table["partitions"] = [{"name": f"{t.name}-{guid('partition', t.name)}", "mode": "import",
-                                "source": {"type": "m", "expression": _partition_m(t)}}]
+                                "source": {"type": "m", "expression": _partition_m(t, is_web_source(csv_folder))}}]
         if t.name in HIERARCHIES:
             table["hierarchies"] = [
                 {"name": h, "lineageTag": guid("hierarchy", t.name, h),
@@ -632,6 +746,52 @@ def build_model(tables: list[CsvTable], measures: list[dict], csv_folder: str,
             ["{"] + [f"    ( \"{label}\", NAMEOF ( '{MEASURE_TABLE}'[{m}] ), {k} )" + ("," if k < len(params) - 1 else "")
                      for k, (label, m) in enumerate(params)] + ["}"])}}],
     })
+
+    # POWERBI.md section 4, item 3: the "Hierarchy level" field parameter (columns, not measures): the rows of the
+    # float matrix on page 1 follow the button its slicer has pressed
+    levels = list(LEVEL_OPTIONS.items())
+    for _, (lt, lc) in levels:
+        if lt not in by_name or lc not in {x.name for x in by_name[lt].columns}:
+            raise ValueError(f"Hierarchy level: {lt}[{lc}] is not in output/csv")
+    c, fields, order = LEVEL_TABLE, f"{LEVEL_TABLE} Fields", f"{LEVEL_TABLE} Order"
+    model_tables.append({
+        "name": c,
+        "lineageTag": guid("table", c),
+        "columns": [
+            {"type": "calculatedTableColumn", "name": c, "dataType": "string", "isNameInferred": False,
+             "isDataTypeInferred": True, "sourceColumn": "[Value1]", "sortByColumn": order,
+             "relatedColumnDetails": {"groupByColumns": [{"groupingColumn": fields}]},
+             "lineageTag": guid("column", c, c), "summarizeBy": "none"},
+            {"type": "calculatedTableColumn", "name": fields, "dataType": "string", "isHidden": True,
+             "isNameInferred": False, "isDataTypeInferred": True, "sourceColumn": "[Value2]",
+             "lineageTag": guid("column", c, fields), "summarizeBy": "none",
+             "extendedProperties": [{"type": "json", "name": "ParameterMetadata", "value": {"version": 3, "kind": 2}}]},
+            {"type": "calculatedTableColumn", "name": order, "dataType": "int64", "isHidden": True,
+             "isNameInferred": False, "isDataTypeInferred": True, "sourceColumn": "[Value3]", "formatString": "0",
+             "lineageTag": guid("column", c, order), "summarizeBy": "none"},
+        ],
+        "partitions": [{"name": c, "mode": "import", "source": {"type": "calculated", "expression": (
+            ["{"] + [f"    ( \"{label}\", NAMEOF ( '{lt}'[{lc}] ), {k} )" + ("," if k < len(levels) - 1 else "")
+                     for k, (label, (lt, lc)) in enumerate(levels)] + ["}"])}}],
+    })
+
+    # About & method page: the definitions of dashboard.json as a small table (measure, definition, formula, unit,
+    # owner), so the page lists them from the model like any other data
+    if definitions:
+        def cell(value) -> str:
+            return '"' + str(value or "").replace('"', '""') + '"'
+        rows = ["    { " + ", ".join(cell(d.get(k)) for k in DEFINITION_COLUMNS) + " }" for d in definitions]
+        model_tables.append({
+            "name": DEFINITIONS_TABLE,
+            "lineageTag": guid("table", DEFINITIONS_TABLE),
+            "columns": [{"type": "calculatedTableColumn", "name": k, "dataType": "string", "isNameInferred": False,
+                         "isDataTypeInferred": True, "sourceColumn": f"[{k}]",
+                         "lineageTag": guid("column", DEFINITIONS_TABLE, k), "summarizeBy": "none"}
+                        for k in DEFINITION_COLUMNS],
+            "partitions": [{"name": DEFINITIONS_TABLE, "mode": "import", "source": {"type": "calculated", "expression": (
+                ["DATATABLE ("] + [f'    "{k}", STRING,' for k in DEFINITION_COLUMNS] + ["    {"]
+                + [r + ("," if i < len(rows) - 1 else "") for i, r in enumerate(rows)] + ["    }", ")"])}}],
+        })
 
     # measures.dax section 14: every Trend - measure is the KPI drawn by the DOP.TrendSvg function (section 0)
     functions = list(functions or [])
@@ -686,8 +846,8 @@ def build_model(tables: list[CsvTable], measures: list[dict], csv_folder: str,
 
     model_measures = []
     for m in measures:
-        entry = {"name": m["name"],
-                 "expression": m["expression"][0] if len(m["expression"]) == 1 else m["expression"]}
+        expression = expand_functions(m["expression"], functions)
+        entry = {"name": m["name"], "expression": expression[0] if len(expression) == 1 else expression}
         fmt = measure_format(m["name"])
         if fmt:
             entry["formatString"] = fmt
@@ -742,11 +902,9 @@ def build_model(tables: list[CsvTable], measures: list[dict], csv_folder: str,
             {"name": "PBI_QueryOrder", "value": json.dumps(query_order, separators=(",", ":"))},
         ],
     }
-    if functions:                 # DAX user-defined functions (measures.dax section 0), expressions verbatim
-        model["functions"] = [{"name": f["name"],
-                               "expression": f["expression"][0] if len(f["expression"]) == 1 else f["expression"],
-                               **({"description": f["description"]} if f["description"] else {})}
-                              for f in functions]
+    # The functions of measures.dax section 0 are not model objects: the generator writes each call out in full
+    # (expand_functions). With them as DAX user-defined functions in the model, the Power BI service could not
+    # resolve DOP.TrendSvg on refresh ("Failed to resolve name") and the trend images stayed empty in Desktop too.
     return {"compatibilityLevel": COMPATIBILITY_LEVEL, "model": model}
 
 
@@ -894,7 +1052,8 @@ class ReportBuilder:
         self.gate_ids = gate_ids
         self.files: dict[str, bytes] = {}
         self.pages: list[str] = []
-        self.nav_pages = 8                # rows in the rail's page navigator: the visible pages
+        self.nav_pages = 9                # rows in the rail's page navigator: the visible pages
+        self.model_tables: set[str] = set()      # names of the model's tables (a page may depend on one)
         # per report page, for the bookmarks: visual names in z order, slicer -> its default filter, the
         # visuals hidden until a bookmark shows them
         self.page_state: dict[str, dict] = {}
@@ -1182,7 +1341,7 @@ class ReportBuilder:
         return {"visualType": "cardVisual", "query": {"queryState": {"Data": self.role([field])}},
                 "objects": objects, "visualContainerObjects": container}
 
-    def headline(self, f: Field, alt: str) -> dict:
+    def headline(self, f: Field | str, alt: str) -> dict:
         """The page's thesis sentence: the title of an empty shape, bound to the title measure and word-wrapped,
         left-aligned. A visual title wraps onto a second line; the new card's value cut the sentence off with
         "..." in Desktop. Its colour is the theme's shape title (navy); a theme colour in a title went white."""
@@ -1191,7 +1350,9 @@ class ReportBuilder:
             "visualType": "shape",
             "objects": shape_invisible(),
             "visualContainerObjects": vco(
-                title={"show": flag(True), "text": {"expr": field_expr(f)}, "titleWrap": flag(True),
+                # a page without a title measure (About & method) passes its sentence as text
+                title={"show": flag(True), "text": lit(text(f)) if isinstance(f, str) else {"expr": field_expr(f)},
+                       "titleWrap": flag(True),
                        "fontSize": num(13), "fontFamily": lit(text("Segoe UI Semibold")), "bold": flag(True),
                        "alignment": lit(text("left")), "heading": lit(text("Heading2"))},
                 background={"show": flag(False)}, border={"show": flag(False)}, dropShadow={"show": flag(False)},
@@ -1358,23 +1519,33 @@ class ReportBuilder:
                                             "Property": filter_column or f.name}}],
                 "Values": [[{"Literal": {"Value": selected}}]]}}}]}}
 
-    def button_slicer(self, f: Field, title: str, selected: str, filter_column: str, buttons: int) -> dict:
+    def button_slicer(self, f: Field, title: str, selected: str, filter_column: str, buttons: int,
+                      compact: bool = False) -> dict:
         """A row of buttons (the button slicer), one per value of f and one pressed at a time; `selected` is the
         button pressed when the page opens. A button at rest is the theme's default (white, grey outline, navy
         text); the pressed one is a navy pill with white text. Objects and state selectors as Desktop writes them:
         the button's text is `value` (the field's member; `label` is the optional highlight measure), its fill
         `fillCustom`, and the pressed state's selector id is "selection:selected"."""
         sel, pressed = {"id": "default"}, {"id": "selection:selected"}
+        # compact: a row of small pills inside another visual's title row (no outer padding, 8 pt)
+        pad = 0 if compact else 2
+        layout = {"columnCount": lit(f"{buttons}L"), "rowCount": lit("1L")}
+        tight = {}
+        if compact:                       # narrow button padding and no outer margins, so 8 pt text fits 30 px
+            layout.update({"customizePadding": flag(True), "cellPadding": lit("4L"),
+                           **{f"{side}OuterMargin": lit("0L") for side in ("left", "right", "top", "bottom")}})
+            tight = {"padding": [{"properties": {"paddingSelection": lit(text("Narrow"))}, "selector": sel}]}
         return {
             "visualType": "advancedSlicerVisual",
             "query": {"queryState": {"Values": self.role([f], active=True)}},
             "objects": {
                 "general": [{"properties": {"filter": self.selection_filter(f, selected, filter_column)}}],
                 "selection": [{"properties": {"singleSelect": flag(True), "strictSingleSelect": flag(True)}}],
-                "layout": [{"properties": {"columnCount": lit(f"{buttons}L"), "rowCount": lit("1L")}}],
+                "layout": [{"properties": layout}],
+                **tight,
                 "shapeCustomRectangle": [{"properties": {"tileShape": lit(text("rectangleRoundedByPixel")),
                                                          "rectangleRoundedCurve": lit("10L")}, "selector": sel}],
-                "value": [{"properties": {"fontSize": num(9)}, "selector": sel},
+                "value": [{"properties": {"fontSize": num(8 if compact else 9)}, "selector": sel},
                           {"properties": {"fontColor": colour(WHITE), "bold": flag(True)}, "selector": pressed}],
                 "label": [{"properties": {"show": flag(False)}, "selector": sel}],
                 "fillCustom": [{"properties": {"show": flag(True)}},
@@ -1387,8 +1558,13 @@ class ReportBuilder:
             # no title: a button row needs about 56 px of height for its text, which is the whole title-row slot
             "visualContainerObjects": {
                 "title": [{"properties": {"show": flag(False), "text": lit(text(title))}}],
-                "padding": [{"properties": {"top": num(2), "bottom": num(2), "left": num(8), "right": num(8)}}],
+                "padding": [{"properties": {"top": num(pad), "bottom": num(pad), "left": num(pad * 4),
+                                            "right": num(pad * 4)}}],
                 "general": [{"properties": {"altText": lit(text(f"Slicer: {title}"))}}],
+                **({"background": [{"properties": {"show": flag(False)}}],
+                    "border": [{"properties": {"show": flag(False)}}],
+                    "dropShadow": [{"properties": {"show": flag(False)}}],
+                    "visualHeader": [{"properties": {"show": flag(False)}}]} if compact else {}),
             },
         }
 
@@ -1484,7 +1660,14 @@ class ReportBuilder:
                value_objects: list[dict] | None = None, subtitle: str | None = None,
                tooltip_page: str | None = None, column_totals: bool = True, row_totals: bool = True,
                sort: tuple[Field, str] | None = None, extra_objects: dict[str, list] | None = None) -> dict:
+        # a Hierarchy level row becomes the column it shows by default plus a fieldParameters entry, so the rows
+        # follow the parameter's slicer
+        params = [{"parameterExpr": field_expr(f), "index": k, "length": 1}
+                  for k, f in enumerate(rows) if f.table == LEVEL_TABLE]
+        rows = [col(*LEVEL_OPTIONS[LEVEL_DEFAULT], f.label) if f.table == LEVEL_TABLE else f for f in rows]
         state = {"Rows": self.role(rows, active=True)}
+        if params:
+            state["Rows"]["fieldParameters"] = params
         if columns:
             state["Columns"] = self.role(columns, active=True)
         state["Values"] = self.role(values)
@@ -1651,7 +1834,7 @@ class ReportBuilder:
     # -- pages ------------------------------------------------------------------------------------------------
     def add_page(self, number: int, key: str, display: str, title_measure: str | None, rows: list,
                  slicers: tuple[str, ...] = ("data_date",), no_filter_from_date: tuple[str, ...] = (),
-                 drillthrough: Field | None = None, headline: Field | None = None, legacy: bool = True,
+                 drillthrough: Field | None = None, headline: Field | str | None = None, legacy: bool = True,
                  overlays: dict[str, list[tuple]] | None = None,
                  extra_slicer: tuple[str, dict] | None = None) -> None:
         """overlays: {content key: [(key, visual, box, hidden, filters)]} drawn over that content visual, for a
@@ -1948,7 +2131,14 @@ class ReportBuilder:
                                     for e in visual["objects"]["columnWidth"]],
                     "values": [{"properties": {"wordWrap": flag(True), "fontSize": num(8)}}]}
             # a toggle button sits in the band above its visual, at its desktop distance from the right edge
-            put(n, (mx, my, mw, mh) if same_box else (mx + mw - (hx + hw - x), my - PILL_BAND + 4, w, h), extra)
+            # (a button slicer is as tall as the band, so it starts at the band's top)
+            if same_box:
+                box = (mx, my, mw, mh)
+            elif visual["visualType"] == "advancedSlicerVisual":
+                box = (mx + mw - (hx + hw - x), my - PILL_BAND, w, PILL_BAND - 2)
+            else:
+                box = (mx + mw - (hx + hw - x), my - PILL_BAND + 4, w, h)
+            put(n, box, extra)
         put(f"{prefix}_h7_provenance", (0, y, W, 104), {"visualContainerObjects": vco(**navy_box)})
 
         z_of = {n: (k + 1) * 1000 for k, n in enumerate(by_name)}
@@ -2014,10 +2204,11 @@ def build_pages(rb: ReportBuilder) -> None:
         (176, [
             # the matrix needs about 450 px (asset names and seven narrow columns); the rest goes to the asks
             (528, ("float_matrix", rb.matrix(
-                [col(act, "asset_name", "Asset")], [col(act, "workstream_code", "Workstream")], [tf_min],
-                "Minimum total float by asset and workstream (working days)", value_objects=float_rules(tf_min),
-                subtitle="Red below 0, amber 0 to 10, green above 10 working days; hover a cell for its "
-                         "activities", tooltip_page="p10_float_tip"), None)),
+                # the rows follow the Hierarchy level buttons in the title row: asset, owner or package
+                [col(LEVEL_TABLE, LEVEL_TABLE, "Asset")], [col(act, "workstream_code", "Workstream")], [tf_min],
+                "Minimum total float by workstream (wd)", value_objects=float_rules(tf_min),
+                # short: the level buttons take the right end of the title row
+                subtitle="Red below 0, amber 0 to 10; hover a cell", tooltip_page="p10_float_tip"), None)),
             # the ask second and wrapped, so a reader sees what is being decided without scrolling
             (496, ("open_decisions", rb.table(
                 [col("fact_decision", "decision_id", "ID"), col("fact_decision", "ask", "Ask"),
@@ -2027,7 +2218,12 @@ def build_pages(rb: ReportBuilder) -> None:
                 widths=[42, 210, 100, 82, 60], subtitle="Open decisions, earliest first"),
                 [(col("fact_decision", "status"), [text("Open")])])),
         ]),
-    ], no_filter_from_date=("day1_float_trend",), legacy=False)
+    ], no_filter_from_date=("day1_float_trend",), legacy=False, overlays={
+        # the Hierarchy level buttons in the matrix's title row: one pressed at a time, opening on Asset
+        "float_matrix": [("level", rb.button_slicer(
+            col(LEVEL_TABLE, LEVEL_TABLE), "Matrix rows", selected=text(level_key(LEVEL_DEFAULT)),
+            filter_column=f"{LEVEL_TABLE} Fields", buttons=len(LEVEL_OPTIONS), compact=True),
+            TOGGLE_LEVEL, False, None)]})
 
     # 2 Milestones & slippage ----------------------------------------------------------------------------------
     # KPI strip, then the gate trend beside slippage by owner, then the milestone register beside the finish profile
@@ -2425,7 +2621,8 @@ def build_pages(rb: ReportBuilder) -> None:
         [("3. Star schema: output/csv (22 tables) and the dashboard JSON", lineage_style)],
         [("4. Reconciliation gate: source XER = model = dashboard for every control; CSVs are published only "
           "when all pass", lineage_style)],
-        [("5. This report: the CSV star schema, loaded through the CsvFolder parameter", lineage_style)],
+        [("5. This report: the published CSVs on GitHub (CsvFolder parameter), refreshed by the Power BI service on "
+          "a schedule", lineage_style)],
     ])
     lineage["visualContainerObjects"] = vco(background={"show": flag(True), "color": colour(WHITE)},
                                             border={"show": flag(True), "color": colour("#E2E8F0"),
@@ -2455,6 +2652,51 @@ def build_pages(rb: ReportBuilder) -> None:
                 widths=[50, 82, 160, 150, 60]), None)),
         ]),
     ], no_filter_from_date=("source_files",), legacy=False)
+
+    # 11 About & method (after page 7 in the navigator) ---------------------------------------------------------
+    # three notes on what the report is, how its dates are produced and how to read its numbers, then the measure
+    # definitions of the data dictionary as a table (the Definitions table of the model)
+    def note(title: str, lines: list[str]) -> dict:
+        box = rb.textbox([[(title, {"fontFamily": "Segoe UI Semibold", "fontSize": "13px", "color": NAVY,
+                                    "fontWeight": "bold"})]] + [[(line, lineage_style)] for line in lines])
+        box["visualContainerObjects"] = vco(background={"show": flag(True), "color": colour(WHITE)},
+                                            border={"show": flag(True), "color": colour("#E2E8F0"), "radius": num(8)})
+        return box
+
+    if DEFINITIONS_TABLE in rb.model_tables:
+        d = DEFINITIONS_TABLE
+        rb.add_page(11, "about", "About & method", None, [
+            (216, [
+                (336, ("about_what", note("What this report is", [
+                    "One reconciled view of a fictional destination opening programme: 291 activities from "
+                    "construction to Day 1, in two baselines (BL0, BL1) and six monthly updates.",
+                    "Every page reads the same star schema as the web dashboard and the executive packs, so the "
+                    "three always show the same numbers.",
+                    "All data are synthetic. Nothing comes from a real project."]), None)),
+                (336, ("about_method", note("How the dates are produced", [
+                    "Schedules are exported in Primavera P6 XER format and re-scheduled by a CPM engine that follows "
+                    "P6 conventions: working-time calendars, FS/SS/FF/SF links with lags, constraints, retained "
+                    "logic at the data date.",
+                    "Total float = late finish - early finish. The longest path is traced through driving "
+                    "relationships and kept separate from float <= 0.",
+                    "The engine reproduces the exported dates and floats exactly (control R16)."]), None)),
+                (336, ("about_read", note("How to read the numbers", [
+                    "Float and durations are in working days; variances, slips and gaps are in calendar days, and a "
+                    "positive variance is later.",
+                    "Variance is measured against the baseline in force (BL1 from 30-Jul-2026) unless a page says "
+                    "otherwise. Near-critical means float at or below the threshold (10 working days by default).",
+                    "An update is published only when all reconciliation controls agree between the source XER, the "
+                    "model and the dashboard."]), None)),
+            ]),
+            (368, [(1040, ("definitions", rb.table(
+                [col(d, "measure", "Measure"), col(d, "definition", "Definition"), col(d, "formula", "Formula"),
+                 col(d, "unit", "Unit"), col(d, "owner", "Owner")],
+                "Measure definitions", sort=(col(d, "measure"), "Ascending"), widths=[170, 420, 240, 60, 150],
+                wrap=True, totals=False,
+                subtitle="The data dictionary: what each headline measure means, how it is derived from the P6 "
+                         "fields and who owns it"), None))]),
+        ], slicers=(), headline="How the numbers on these pages are produced, what they mean and who owns them",
+            legacy=False)
 
     # 8 Activity details (drill-through, hidden) ---------------------------------------------------------------
     # dim_activity columns only in the attribute strip: the drill-through filter on dim_activity does not reach
@@ -2626,7 +2868,14 @@ def build_bookmarks(rb: ReportBuilder) -> dict[str, bytes]:
                      if n not in state[exec_page]["hidden"]}})
     reset: dict[str, dict] = {}
     for page, st in state.items():
-        visuals = {n: compare_state("vs BL1") if n == compare else slicer(f) for n, f in st["slicers"].items()}
+        visuals = {}
+        for n, f in st["slicers"].items():
+            if n == compare:
+                visuals[n] = compare_state("vs BL1")
+            elif n.endswith("_level"):             # the Hierarchy level buttons: back on the first level
+                visuals[n] = slicer(f, LEVEL_DEFAULT, st["slicer_types"][n])
+            else:
+                visuals[n] = slicer(f)
         for n in st["cleared"]:               # a slicer that opens with nothing selected: its selection removed
             visuals[n] = {"singleVisual": {"visualType": "slicer", "objects": {
                 "remove": [{"object": "general", "property": "filter"}]}}}
@@ -2682,7 +2931,11 @@ def build_files(root: pathlib.Path = ROOT, csv_folder: str = DEFAULT_CSV_FOLDER)
     theme = (root / "powerbi" / "dop_theme.json").read_bytes()
     json.loads(theme)                                            # must parse
 
-    model = build_model(tables, measures, csv_folder, functions)
+    # the measure definitions for the About & method page come from the dashboard's JSON (the data dictionary)
+    dashboard_json = root / "docs" / "data" / "dashboard.json"
+    definitions = (json.loads(dashboard_json.read_text(encoding="utf-8")).get("definitions", [])
+                   if dashboard_json.exists() else [])
+    model = build_model(tables, measures, csv_folder, functions, definitions)
     by_name = {t.name: t for t in tables}
     kinds = {(t.name, c.name): c.kind for t in tables for c in t.columns}
     snapshots = by_name["dim_snapshot"].rows
@@ -2694,6 +2947,7 @@ def build_files(root: pathlib.Path = ROOT, csv_folder: str = DEFAULT_CSV_FOLDER)
 
     rb = ReportBuilder(kinds, latest, gate_ids)
     rb.activity_types = sorted({r["activity_type"] for r in by_name["dim_activity"].rows})
+    rb.model_tables = {t["name"] for t in model["model"]["tables"]}
     DATE_FIELDS.clear()
     DATE_FIELDS.update(f"{t}.{c}" for (t, c), kind in kinds.items() if kind == "date")
     CODE_CHARS.clear()

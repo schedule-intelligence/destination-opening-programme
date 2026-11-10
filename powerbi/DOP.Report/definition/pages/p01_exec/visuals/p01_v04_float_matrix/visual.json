@@ -31,6 +31,22 @@
               "active": true,
               "displayName": "Asset"
             }
+          ],
+          "fieldParameters": [
+            {
+              "parameterExpr": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Hierarchy level"
+                    }
+                  },
+                  "Property": "Hierarchy level"
+                }
+              },
+              "index": 0,
+              "length": 1
+            }
           ]
         },
         "Columns": {
@@ -398,7 +414,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Minimum total float by asset and workstream (working days)'"
+                  "Value": "'Minimum total float by workstream (wd)'"
                 }
               }
             },
@@ -418,7 +434,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Minimum total float by asset and workstream (working days)'"
+                  "Value": "'Minimum total float by workstream (wd)'"
                 }
               }
             }
@@ -438,7 +454,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Red below 0, amber 0 to 10, green above 10 working days; hover a cell for its activities'"
+                  "Value": "'Red below 0, amber 0 to 10; hover a cell'"
                 }
               }
             }

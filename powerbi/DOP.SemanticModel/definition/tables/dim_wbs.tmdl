@@ -107,7 +107,7 @@ table dim_wbs
 		mode: import
 		source = ```
 				let
-				    Source = Csv.Document(File.Contents(CsvFolder & "\dim_wbs.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Source = Csv.Document(Web.Contents(CsvFolder, [RelativePath = "dim_wbs.csv"]), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
 				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
 				    Nulls = Table.ReplaceValue(Promoted, "", null, Replacer.ReplaceValue, Table.ColumnNames(Promoted)),
 				    Typed = Table.TransformColumnTypes(Nulls, {

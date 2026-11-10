@@ -85,7 +85,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "5. This report: the CSV star schema, loaded through the CsvFolder parameter",
+                    "value": "5. This report: the published CSVs on GitHub (CsvFolder parameter), refreshed by the Power BI service on a schedule",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "11px",

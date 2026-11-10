@@ -8,7 +8,9 @@ import shutil
 import pytest
 
 from dop import tmdl
-from dop.pbip import PROJECT, build_files, build_model, parse_functions, parse_measures, read_tables, write_project
+from dop.pbip import (DEFAULT_CSV_FOLDER, LOCAL_CSV_FOLDER, PROJECT, build_files, build_model, expand_functions,
+                      parse_functions,
+                      parse_measures, read_tables, write_project)
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 _spec = importlib.util.spec_from_file_location("check_pbip", ROOT / "scripts" / "check_pbip.py")
@@ -43,8 +45,9 @@ def _dax(obj: dict) -> str:
 def test_committed_project_passes_all_checks():
     problems, _, stats = check_pbip.run_checks(ROOT / "powerbi", ROOT)
     assert not problems, "\n".join(problems[:25])
-    assert stats["measures"] == 119 and stats["functions"] == 2 and stats["relationships"] == 26
-    assert stats["pages"] == 10
+    # the two DAX functions in measures.dax are expanded into the measures: the model itself has none
+    assert stats["measures"] == 119 and stats["functions"] == 0 and stats["relationships"] == 26
+    assert stats["pages"] == 11
 
 
 def test_generated_project_passes_all_checks_without_warnings(generated):
@@ -54,8 +57,8 @@ def test_generated_project_passes_all_checks_without_warnings(generated):
     assert not warnings, "\n".join(warnings[:25])
     # every JSON file is schema-checked: all but the TMDL model files, the theme copy and the background
     assert stats["validated"] == summary["files"] - stats["tmdl_files"] - 2
-    # + threshold, measures, Compare against, Update axis, Risk grid
-    assert summary["csv_tables"] == 22 and summary["tables"] == 27 and summary["functions"] == 2
+    # + threshold, measures, Compare against, Hierarchy level, Definitions, Update axis, Risk grid
+    assert summary["csv_tables"] == 22 and summary["tables"] == 29 and summary["functions"] == 2
 
 
 def test_semantic_model_is_tmdl_at_compatibility_1702(generated):
@@ -66,13 +69,14 @@ def test_semantic_model_is_tmdl_at_compatibility_1702(generated):
     assert database.startswith("database DOP\n\tcompatibilityLevel: 1702\n")
     model_file = (model_dir / "definition" / "model.tmdl").read_text(encoding="utf-8")
     assert model_file.startswith("model Model\n\tculture: en-US\n")
-    assert model_file.count("\nref table ") == 27
+    assert model_file.count("\nref table ") == 29
     tables = {p.stem for p in (model_dir / "definition" / "tables").glob("*.tmdl")}
     assert {"_Measures", "dim_activity", "Compare against", "Update axis", "Risk grid", "Near-critical threshold"} <= tables
     # the definition reads back exactly as the generator built it
     dax = (ROOT / "powerbi" / "measures.dax").read_text(encoding="utf-8")
-    built = build_model(read_tables(ROOT / "output" / "csv"), parse_measures(dax), r"V:\schedule-intelligence\output\csv",
-                        parse_functions(dax))
+    built = build_model(read_tables(ROOT / "output" / "csv"), parse_measures(dax), DEFAULT_CSV_FOLDER,
+                        parse_functions(dax),
+                        json.loads((ROOT / "docs" / "data" / "dashboard.json").read_text(encoding="utf-8"))["definitions"])
     assert tmdl.read_model(model_dir / "definition") == built
     # properties come before nested objects, or Desktop reports an indentation error (seen in Desktop)
     assert model_file.index("\tsourceQueryCulture:") < model_file.index("\tdataAccessOptions")
@@ -150,7 +154,13 @@ def test_semantic_model_contents(generated):
     assert measures["BEI"]["formatString"] == "0.000" and measures["Owner DQ"]["formatString"] == "0.0%"
     assert {r["fromColumn"] for r in model["relationships"] if r.get("isActive") is False} == {"bl0_finish", "bl1_finish"}
     assert tables["dim_date"]["dataCategory"] == "Time"
-    assert '"V:\\schedule-intelligence\\output\\csv" meta [IsParameterQuery=true' in model["expressions"][0]["expression"]
+    # the CSVs are read from the repository on GitHub: Web.Contents with a RelativePath, which the Power BI
+    # service can refresh on a schedule without a gateway
+    assert model["expressions"][0]["expression"].startswith(
+        '"https://raw.githubusercontent.com/schedule-intelligence/destination-opening-programme/main/output/csv/" meta '
+        '[IsParameterQuery=true')
+    source = tables["dim_activity"]["partitions"][0]["source"]["expression"][1]
+    assert 'Csv.Document(Web.Contents(CsvFolder, [RelativePath = "dim_activity.csv"]), ' in source
     lookback = next(c for c in tables["fact_activity_snapshot"]["columns"] if c["name"] == "lookback_event")
     assert lookback["dataType"] == "string"
     partition = "\n".join(tables["fact_activity_snapshot"]["partitions"][0]["source"]["expression"])
@@ -158,12 +168,25 @@ def test_semantic_model_contents(generated):
     assert '{"finish", type datetime}' in partition and '{"finish", type date}' in partition
 
 
+def test_expand_functions_writes_calls_out_in_full():
+    functions = [{"name": "F.Scale", "expression": ["( x : SCALAR EXPR, n : INT64 VAL ) =>", "[x] + x * n + n"]},
+                 {"name": "G.Next", "expression": ["( a : SCALAR EXPR ) => a + 1"]}]
+    # a measure that is one call becomes the body; a VAL argument is evaluated once, an EXPR one in place
+    assert expand_functions(["F.Scale ( [A], 2 )"], functions) == ["VAR __n = 2", "RETURN", "[x] + [A] * __n + __n"]
+    # a call inside a larger expression is inlined in brackets, the calls in its arguments first
+    assert expand_functions(["1 + F.Scale ( G.Next ( [A] ), [B] + 1 )"], functions) == [
+        "1 + ( VAR __n = [B] + 1 RETURN [x] + ( [A] + 1 ) * __n + __n )"]
+    assert expand_functions(["[A] + 1"], functions) == ["[A] + 1"] and expand_functions(["[A]"], None) == ["[A]"]
+
+
 def test_dax_functions_draw_the_trend_lines(generated):
     out = generated[0]
     model = _model(out)
     tables = {t["name"]: t for t in model["tables"]}
     measures = {m["name"]: m for m in tables["_Measures"]["measures"]}
-    functions = {f["name"]: f for f in model["functions"]}
+    # the trend pattern is written once in measures.dax as two DAX functions ...
+    dax = (ROOT / "powerbi" / "measures.dax").read_text(encoding="utf-8")
+    functions = {f["name"]: f for f in parse_functions(dax)}
     assert set(functions) == {"DOP.AtUpdate", "DOP.TrendSvg"} and "Trend KPI" not in tables
     at_update, trend_svg = _dax(functions["DOP.AtUpdate"]), _dax(functions["DOP.TrendSvg"])
     assert at_update.startswith("( value : SCALAR EXPR, snapshotId : INT64 VAL ) =>")
@@ -171,15 +194,19 @@ def test_dax_functions_draw_the_trend_lines(generated):
     assert trend_svg.startswith("( value : SCALAR EXPR ) =>")
     assert "DOP.AtUpdate ( value, dim_snapshot[snapshot_id] )" in trend_svg
     assert "data:image/svg+xml;utf8," in trend_svg and "SWITCH" not in trend_svg
-    assert functions["DOP.TrendSvg"]["description"].startswith("The KPI at every update")
-    functions_file = (out / "DOP.SemanticModel" / "definition" / "functions.tmdl").read_text(encoding="utf-8")
-    assert "function 'DOP.TrendSvg' = ```" in functions_file and "function 'DOP.AtUpdate' = ```" in functions_file
+    # ... and expanded into each measure: the service failed to resolve 'DOP.TrendSvg' on refresh and Desktop
+    # drew blank images, so the model ships without functions
+    assert not model.get("functions")
+    assert not (out / "DOP.SemanticModel" / "definition" / "functions.tmdl").exists()
     trends = {name: m for name, m in measures.items() if name.startswith("Trend - ")}
     assert len(trends) == 16
     for name, m in trends.items():
         kpi = name[len("Trend - "):]
+        body = _dax(m)
         assert m["dataCategory"] == "ImageUrl" and "formatString" not in m, name
-        assert _dax(m) == f"DOP.TrendSvg ( [{kpi}] )", name
+        assert "DOP." not in body and "data:image/svg+xml;utf8," in body, name
+        assert f"CALCULATE ( [{kpi}], REMOVEFILTERS ( dim_snapshot ), " \
+               "dim_snapshot[snapshot_id] = __snapshotId )" in body, name
     # the sparkline measures carry their pattern inline: a table sparkline cannot follow a measure into a
     # function (Missing_References in Desktop 2.159)
     for name in ("Owner DQ by update", "Milestone variance vs BL1 by update", "Risk score (max) by update",
@@ -234,7 +261,7 @@ def test_table_sparklines_read_every_update(generated):
 def test_report_pages_and_header_strip(generated):
     out = generated[0]
     order = _json(out / PAGES / "pages.json")["pageOrder"]
-    assert len(order) == 10
+    assert len(order) == 11 and order[order.index("p07_recon") + 1] == "p11_about"
     assert order.index("p09_gantt") == order.index("p03_critical") + 1     # the Gantt follows the critical path
     for page in order:
         meta = _json(out / PAGES / page / "page.json")
@@ -255,6 +282,9 @@ def test_report_pages_and_header_strip(generated):
         assert image["url"]["expr"]["ResourcePackageItem"]["ItemName"] == "dop_background.svg"
         if meta.get("type") == "Drillthrough":
             assert meta["pageBinding"]["acceptsFilterContext"] == "None"
+            continue
+        if page == "p11_about":                # definitions do not depend on the update: no data-date slicer
+            assert f"{prefix}_h4_dd_slicer" not in names and f"{prefix}_v04_definitions" in names
             continue
         slicer = _json(out / PAGES / page / "visuals" / f"{prefix}_h4_dd_slicer" / "visual.json")["visual"]
         assert slicer["syncGroup"]["groupName"] == "DataDate"
@@ -296,8 +326,8 @@ ALLOWED_FIXED_COLOURS = [                    # (visual name, property path with 
     (r".*", r"FillRule\.linearGradient2\.(min|max)\.color"),
     (r".*", r"dataPoint\.properties\.fill\."),
     (r".*_h\d+_(navigator|spotlight|reset|provenance|\w+_on)$", r".*"),
-    (r".*_h3_compare$", r"objects\.(value|fillCustom|outline)\."),
-    (r".*_v\d+_lineage_text$", r"visualContainerObjects\.(background|border)\."),
+    (r".*_h\d+_(compare|level)$", r"objects\.(value|fillCustom|outline)\."),
+    (r".*_v\d+_(lineage_text|about_\w+)$", r"visualContainerObjects\.(background|border)\."),
     (r".*_v\d+_risk_map$", r"objects\.grid\."),
 ]
 
@@ -465,3 +495,53 @@ def test_tooltip_page_is_wired_to_the_float_matrix(generated):
     assert tip["type"]["expr"]["Literal"]["Value"] == "'Canvas'"
     assert tip["section"]["expr"]["Literal"]["Value"] == "'p10_float_tip'"
     assert (out / PAGES / "p10_float_tip" / "page.json").exists()
+
+
+def test_hierarchy_level_field_parameter_drives_the_float_matrix(generated):
+    out = generated[0]
+    table = (out / "DOP.SemanticModel" / "definition" / "tables" / "Hierarchy level.tmdl").read_text(encoding="utf-8")
+    for label, column in (("Asset", "'dim_activity'[asset_name]"), ("Owner", "'dim_owner'[owner_name]"),
+                          ("Package", "'dim_activity'[package_name]")):
+        assert f'( "{label}", NAMEOF ( {column} ),' in table
+    assert '"kind": 2' in table                                  # ParameterMetadata: a field parameter
+    matrix = _json(out / PAGES / "p01_exec" / "visuals" / "p01_v04_float_matrix" / "visual.json")["visual"]
+    rows = matrix["query"]["queryState"]["Rows"]
+    assert rows["projections"][0]["queryRef"] == "dim_activity.asset_name"       # the level it opens on
+    param = rows["fieldParameters"][0]
+    assert (param["index"], param["length"]) == (0, 1)
+    assert param["parameterExpr"]["Column"]["Property"] == "Hierarchy level"
+    # three buttons in the matrix's title row, Asset pressed; Reset puts the buttons back on Asset
+    slicer = _json(out / PAGES / "p01_exec" / "visuals" / "p01_h12_level" / "visual.json")
+    assert slicer["visual"]["visualType"] == "advancedSlicerVisual"
+    where = slicer["visual"]["objects"]["general"][0]["properties"]["filter"]["filter"]["Where"][0]["Condition"]["In"]
+    assert where["Expressions"][0]["Column"]["Property"] == "Hierarchy level Fields"
+    assert "dim_activity" in where["Values"][0][0]["Literal"]["Value"] and "[asset_name]" in where["Values"][0][0]["Literal"]["Value"]
+    host = _json(out / PAGES / "p01_exec" / "visuals" / "p01_v04_float_matrix" / "visual.json")["position"]
+    box = slicer["position"]
+    assert host["x"] <= box["x"] and box["x"] + box["width"] <= host["x"] + host["width"]
+    assert host["y"] <= box["y"] and box["y"] + box["height"] <= host["y"] + host["height"]
+    reset = _json(out / "DOP.Report" / "definition" / "bookmarks" / "bm_reset.bookmark.json")
+    assert "p01_h12_level" in reset["options"]["targetVisualNames"]
+
+
+def test_about_page_lists_the_data_dictionary(generated):
+    out = generated[0]
+    definitions = json.loads((ROOT / "docs" / "data" / "dashboard.json").read_text(encoding="utf-8"))["definitions"]
+    table = (out / "DOP.SemanticModel" / "definition" / "tables" / "Definitions.tmdl").read_text(encoding="utf-8")
+    assert table.count("\n\t\t\t\t    { ") == len(definitions) == 30
+    for d in definitions:
+        assert '"' + d["measure"].replace('"', '""') + '"' in table
+    visual = _json(out / PAGES / "p11_about" / "visuals" / "p11_v04_definitions" / "visual.json")["visual"]
+    refs = [p["queryRef"] for p in visual["query"]["queryState"]["Values"]["projections"]]
+    assert refs == [f"Definitions.{c}" for c in ("measure", "definition", "formula", "unit", "owner")]
+    meta = _json(out / PAGES / "p11_about" / "page.json")
+    assert meta["displayName"] == "About & method" and "visibility" not in meta
+
+def test_a_local_csv_folder_is_read_with_file_contents():
+    """`python -m dop pbip --csv-folder <local folder>`: the variant for CSVs not pushed to GitHub yet."""
+    dax = (ROOT / "powerbi" / "measures.dax").read_text(encoding="utf-8")
+    model = build_model(read_tables(ROOT / "output" / "csv"), parse_measures(dax), LOCAL_CSV_FOLDER,
+                        parse_functions(dax))["model"]
+    assert model["expressions"][0]["expression"].startswith('"V:\\schedule-intelligence\\output\\csv" meta ')
+    activity = next(t for t in model["tables"] if t["name"] == "dim_activity")
+    assert 'File.Contents(CsvFolder & "\\dim_activity.csv")' in activity["partitions"][0]["source"]["expression"][1]

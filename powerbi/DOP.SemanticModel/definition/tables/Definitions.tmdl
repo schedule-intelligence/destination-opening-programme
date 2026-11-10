@@ -1,0 +1,86 @@
+table Definitions
+	lineageTag: 76d9078d-2fdb-56e1-a5b3-39a213f4fbc6
+
+	column measure
+		dataType: string
+		isNameInferred: false
+		isDataTypeInferred
+		lineageTag: f90ec14d-e83a-5995-b2cd-67f58d8d1574
+		sourceColumn: [measure]
+		summarizeBy: none
+
+	column definition
+		dataType: string
+		isNameInferred: false
+		isDataTypeInferred
+		lineageTag: 2a110b0e-b5bb-52a1-9389-07b4477d2d1b
+		sourceColumn: [definition]
+		summarizeBy: none
+
+	column formula
+		dataType: string
+		isNameInferred: false
+		isDataTypeInferred
+		lineageTag: f82673ef-4f10-54fd-a485-524367a5a681
+		sourceColumn: [formula]
+		summarizeBy: none
+
+	column unit
+		dataType: string
+		isNameInferred: false
+		isDataTypeInferred
+		lineageTag: a5d04e5f-e53d-5cec-a039-8d2ec4745dcf
+		sourceColumn: [unit]
+		summarizeBy: none
+
+	column owner
+		dataType: string
+		isNameInferred: false
+		isDataTypeInferred
+		lineageTag: 78597ba8-ed23-55fb-9dc5-c7bda5cff807
+		sourceColumn: [owner]
+		summarizeBy: none
+
+	partition Definitions = calculated
+		mode: import
+		source = ```
+				DATATABLE (
+				    "measure", STRING,
+				    "definition", STRING,
+				    "formula", STRING,
+				    "unit", STRING,
+				    "owner", STRING,
+				    {
+				    { "Data date", "Status date of the schedule update; no remaining work is scheduled before it.", "PROJECT.last_recalc_date", "date", "Programme Controls Manager" },
+				    { "Baseline in force", "Approved baseline used for variance in this update (BL0 until 30-Jul-2026, then BL1).", "PROJECT.sum_base_proj_id -> baseline XER", "text", "Programme Controls Manager" },
+				    { "Day 1 forecast", "Early finish of the Day 1 Opening milestone (PRG-D1R-M999).", "TASK.early_end_date (Day 1)", "date", "Programme Director" },
+				    { "Day 1 total float", "Working days between the Day 1 forecast and the 14-Oct-2027 Finish-On-or-Before target; negative = late.", "total_float_hr_cnt / day_hr_cnt (Day 1)", "working days", "Programme Director" },
+				    { "Total float", "Late finish minus early finish in the activity calendar (P6 TF = LF - EF).", "total_float_hr_cnt / day_hr_cnt", "working days", "Schedule owner" },
+				    { "Free float", "Delay an activity can absorb without delaying any successor's early dates.", "free_float_hr_cnt / day_hr_cnt", "working days", "Schedule owner" },
+				    { "Critical", "Incomplete activity with total float <= 0.", "total_float_d <= 0", "flag", "Planner" },
+				    { "Near-critical", "Incomplete activity with 0 < total float <= threshold (default 10 working days, a parameter).", "0 < total_float_d <= NearCriticalDays", "flag", "Planner" },
+				    { "Longest path", "Activity on the driving-relationship chain into Day 1 (P6 longest path); distinct from Critical.", "driving_path_flag = 'Y'", "flag", "Planner" },
+				    { "Finish variance vs BL0", "Forecast/actual finish minus BL0 finish; positive = later than baseline.", "finish - bl0_finish", "calendar days", "Schedule owner" },
+				    { "Finish variance vs BL1", "Forecast/actual finish minus BL1 finish (BL1 approved 23-Jul-2026, CR-003).", "finish - bl1_finish", "calendar days", "Schedule owner" },
+				    { "Slip vs previous period", "Change in forecast finish since the previous data date; positive = slipped.", "finish - prev_finish", "calendar days", "Schedule owner" },
+				    { "Float erosion", "Change in Day 1 total float since the previous period; negative = float lost.", "day1_tf_d - previous day1_tf_d", "working days", "Programme Controls Manager" },
+				    { "Duration % complete", "Share of original duration consumed.", "(target_drtn - remain_drtn) / target_drtn", "%", "Schedule owner" },
+				    { "Physical % complete", "Owner-reported physical progress.", "phys_complete_pct", "%", "Schedule owner" },
+				    { "Weighted % complete (actual)", "Duration-weighted % complete of normal tasks (LOE and milestones excluded).", "sum(dur × pct) / sum(dur)", "%", "Programme Controls Manager" },
+				    { "Planned % complete", "Baseline-weighted share of duration that should be complete at the data date (linear in working time).", "sum(dur × elapsed_share_bl) / sum(dur)", "%", "Programme Controls Manager" },
+				    { "Look-back item", "Activity the previous update forecast to start or finish in the 14 days before the data date.", "prev forecast in [DD-14, DD)", "flag", "Schedule owner" },
+				    { "Look-ahead item", "Activity forecast to start or finish in the 14 days from the data date.", "forecast in [DD, DD+14)", "flag", "Schedule owner" },
+				    { "Interface gap", "Giver forecast finish minus receiver need-by date (receiver's baseline start); positive = late.", "giver_forecast - need_by", "calendar days", "Giver owner" },
+				    { "Readiness gap", "Forecast minus latest date that still protects Day 1 (late finish), per readiness stage.", "forecast - late_finish", "calendar days", "Asset lead" },
+				    { "DQ score", "Weighted schedule-quality score 0-100 over DCMA and update-discipline checks; Good >= 85, Fair 70 to < 85, Poor < 70.", "100 × sum(check score) / sum(weights)", "points", "Programme Controls Manager" },
+				    { "DCMA pass count", "Number of applicable DCMA checks passing their threshold.", "count(passed) over D01-D14", "count", "Programme Controls Manager" },
+				    { "CPLI", "Critical Path Length Index: (critical path length + Day 1 TF) / critical path length; target >= 0.95.", "(CPL + TF) / CPL", "ratio", "Programme Controls Manager" },
+				    { "BEI", "Baseline Execution Index: tasks completed / tasks due by the data date in the baseline in force; target >= 0.95.", "completed / due", "ratio", "Programme Controls Manager" },
+				    { "Owner DQ", "Share of an owner's activities with no activity-level quality flag.", "1 - flagged / activities", "%", "Owner" },
+				    { "Reconciliation status", "All controls (source XER = model = dashboard) pass for the data date.", "all(pass)", "flag", "Programme Controls Manager" },
+				    { "Risk score", "Probability (1-5) x impact (1-5); High >= 15, Medium 8-14, Low < 8.", "probability x impact", "points", "Risk owner" },
+				    { "Scenario Day 1 impact", "Working days Day 1 moves earlier under a recovery scenario rescheduled by the CPM engine.", "pos(base EF) - pos(scenario EF)", "working days", "Programme Controls Manager" },
+				    { "Float gain", "Change in Day 1 total float under a scenario.", "scenario TF - base TF", "working days", "Programme Controls Manager" }
+				    }
+				)
+				```

@@ -1,0 +1,49 @@
+table 'Hierarchy level'
+	lineageTag: 2eea7ba2-eeab-5159-8174-45eed0fb9894
+
+	column 'Hierarchy level'
+		dataType: string
+		isNameInferred: false
+		isDataTypeInferred
+		lineageTag: a33b6542-0968-5d2a-afc4-2e188196aeeb
+		sourceColumn: [Value1]
+		sortByColumn: 'Hierarchy level Order'
+		summarizeBy: none
+
+		relatedColumnDetails
+			groupByColumn: 'Hierarchy level Fields'
+
+	column 'Hierarchy level Fields'
+		dataType: string
+		isHidden
+		isNameInferred: false
+		isDataTypeInferred
+		lineageTag: 45decc20-5430-5dfc-9502-5a02799b9cee
+		sourceColumn: [Value2]
+		summarizeBy: none
+
+		extendedProperty ParameterMetadata =
+				{
+				  "version": 3,
+				  "kind": 2
+				}
+
+	column 'Hierarchy level Order'
+		dataType: int64
+		isHidden
+		isNameInferred: false
+		isDataTypeInferred
+		formatString: 0
+		lineageTag: cdb258f3-8630-53d8-96fd-36943add13be
+		sourceColumn: [Value3]
+		summarizeBy: none
+
+	partition 'Hierarchy level' = calculated
+		mode: import
+		source = ```
+				{
+				    ( "Asset", NAMEOF ( 'dim_activity'[asset_name] ), 0 ),
+				    ( "Owner", NAMEOF ( 'dim_owner'[owner_name] ), 1 ),
+				    ( "Package", NAMEOF ( 'dim_activity'[package_name] ), 2 )
+				}
+				```

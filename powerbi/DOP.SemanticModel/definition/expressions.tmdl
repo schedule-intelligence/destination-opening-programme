@@ -1,4 +1,4 @@
-expression CsvFolder = "V:\schedule-intelligence\output\csv" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+expression CsvFolder = "https://raw.githubusercontent.com/schedule-intelligence/destination-opening-programme/main/output/csv/" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
 	lineageTag: dc2ae739-6e86-516c-abba-2e44ede52dfa
 
 	annotation PBI_ResultType = Text

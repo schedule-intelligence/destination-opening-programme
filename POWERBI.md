@@ -33,9 +33,9 @@ drill-through page, a float tooltip page and the theme.
 Open it in Power BI Desktop, set the `CsvFolder` parameter if the repository is not at `V:\schedule-intelligence`,
 and select Refresh.
 [`powerbi/README_PBIP.md`](https://github.com/schedule-intelligence/destination-opening-programme/blob/main/powerbi/README_PBIP.md)
-lists the steps, the contents and the parts still built by hand: the *Hierarchy level* field parameter, the
-About & method page and row-level security. The *Compare against* field parameter, the bookmarks of section 7
-and a phone layout are generated. The sections below remain the reference for every object in it.
+lists the steps, the contents and the part still built by hand: row-level security. The *Hierarchy level* and
+*Compare against* field parameters, the About & method page, the bookmarks of section 7 and a phone layout are
+generated. The sections below remain the reference for every object in it.
 
 Contents: [1 Data flow](#1-data-flow) · [2 Power Query](#2-get-the-data-and-shape-it-in-power-query) ·
 [3 Relationships](#3-relationships) · [4 Helper tables and parameters](#4-helper-tables-and-parameters) ·
@@ -312,6 +312,11 @@ Compare against = {
    model since June 2026; Model view shows them under *Functions*. `DOP.AtUpdate` evaluates a value at one
    update with the data-date slicer lifted; `DOP.TrendSvg` draws the KPI it is given at every update up to the
    selected one as an SVG picture, so every `[Trend - ...]` measure of section 5, group 14 is one call.
+   The generated project (`python -m dop pbip`) does not ship the functions: it writes each call out in full
+   inside the measure, because the Power BI service could not resolve `DOP.TrendSvg` on refresh ("Failed to
+   resolve name", 10-Nov-2026) and Desktop drew the trend images blank. Built by hand in Desktop, the functions
+   work as above; if a published model shows the same refresh warning, paste the function body into the
+   measures the same way.
 
 <!-- DAX-GROUP:FUNCTIONS -->
 

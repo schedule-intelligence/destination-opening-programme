@@ -1147,97 +1147,849 @@ table _Measures
 		lineageTag: 5c3e64b5-ddbb-5561-af13-3a1cfd26eb97
 
 	/// Card trend: calendar days of the Day 1 forecast against BL1, by update
-	measure 'Trend - Day 1 variance vs BL1' = DOP.TrendSvg ( [Day 1 variance vs BL1] )
+	measure 'Trend - Day 1 variance vs BL1' = ```
+			VAR _sid = [Selected snapshot id]
+			VAR _pts =
+			    FILTER (
+			        ADDCOLUMNS (
+			            CALCULATETABLE (
+			                VALUES ( dim_snapshot[snapshot_id] ),
+			                REMOVEFILTERS ( dim_snapshot ),
+			                dim_snapshot[snapshot_id] <= _sid
+			            ),
+			            "@v", ( VAR __snapshotId = dim_snapshot[snapshot_id] RETURN CALCULATE ( [Day 1 variance vs BL1], REMOVEFILTERS ( dim_snapshot ), dim_snapshot[snapshot_id] = __snapshotId ) )
+			        ),
+			        NOT ISBLANK ( [@v] )
+			    )
+			VAR _n = COUNTROWS ( _pts )
+			VAR _lo = MINX ( _pts, [@v] )
+			VAR _hi = MAXX ( _pts, [@v] )
+			VAR _xy =
+			    ADDCOLUMNS (
+			        _pts,
+			        "@x", IF ( _n <= 1, 60, 7 + ( RANKX ( _pts, dim_snapshot[snapshot_id], , ASC ) - 1 ) * 106 / ( _n - 1 ) ),
+			        "@y", IF ( _hi = _lo, 19, 7 + ( _hi - [@v] ) * 24 / ( _hi - _lo ) )
+			    )
+			VAR _line =
+			    CONCATENATEX ( _xy, FORMAT ( [@x], "0.0" ) & "," & FORMAT ( [@y], "0.0" ), " ", dim_snapshot[snapshot_id], ASC )
+			VAR _end = TOPN ( 1, _xy, dim_snapshot[snapshot_id], DESC )
+			VAR _x1 = FORMAT ( MINX ( _xy, [@x] ), "0.0" )
+			VAR _x2 = FORMAT ( MAXX ( _end, [@x] ), "0.0" )
+			VAR _y2 = FORMAT ( MAXX ( _end, [@y] ), "0.0" )
+			VAR _y0 = FORMAT ( 7 + _hi * 24 / ( _hi - _lo ), "0.0" )
+			VAR _zero =
+			    IF (
+			        _lo < 0 && _hi > 0,
+			        "<line x1='0' x2='120' y1='" & _y0 & "' y2='" & _y0
+			            & "' stroke='%23C0392B' stroke-width='1.2' stroke-dasharray='3 2' vector-effect='non-scaling-stroke'/>"
+			    )
+			RETURN
+			    IF (
+			        _n > 0,
+			        "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='40' viewBox='0 0 120 40'>" & _zero
+			            & "<polygon points='" & _x1 & ",38 " & _line & " " & _x2
+			            & ",38' fill='%232B7A78' fill-opacity='0.14'/>"
+			            & "<polyline points='" & _line
+			            & "' fill='none' stroke='%232B7A78' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'"
+			            & " vector-effect='non-scaling-stroke'/>"
+			            & "<circle cx='" & _x2 & "' cy='" & _y2 & "' r='5.5' fill='%231F3A5F'/></svg>"
+			    )
+			```
 		displayFolder: 14 Trend lines for the KPI cards
 		lineageTag: 332b0349-2ecc-5330-97a5-40772890fd97
 		dataCategory: ImageUrl
 
 	/// Card trend: working days of Day 1 total float, by update
-	measure 'Trend - Day 1 total float' = DOP.TrendSvg ( [Day 1 total float] )
+	measure 'Trend - Day 1 total float' = ```
+			VAR _sid = [Selected snapshot id]
+			VAR _pts =
+			    FILTER (
+			        ADDCOLUMNS (
+			            CALCULATETABLE (
+			                VALUES ( dim_snapshot[snapshot_id] ),
+			                REMOVEFILTERS ( dim_snapshot ),
+			                dim_snapshot[snapshot_id] <= _sid
+			            ),
+			            "@v", ( VAR __snapshotId = dim_snapshot[snapshot_id] RETURN CALCULATE ( [Day 1 total float], REMOVEFILTERS ( dim_snapshot ), dim_snapshot[snapshot_id] = __snapshotId ) )
+			        ),
+			        NOT ISBLANK ( [@v] )
+			    )
+			VAR _n = COUNTROWS ( _pts )
+			VAR _lo = MINX ( _pts, [@v] )
+			VAR _hi = MAXX ( _pts, [@v] )
+			VAR _xy =
+			    ADDCOLUMNS (
+			        _pts,
+			        "@x", IF ( _n <= 1, 60, 7 + ( RANKX ( _pts, dim_snapshot[snapshot_id], , ASC ) - 1 ) * 106 / ( _n - 1 ) ),
+			        "@y", IF ( _hi = _lo, 19, 7 + ( _hi - [@v] ) * 24 / ( _hi - _lo ) )
+			    )
+			VAR _line =
+			    CONCATENATEX ( _xy, FORMAT ( [@x], "0.0" ) & "," & FORMAT ( [@y], "0.0" ), " ", dim_snapshot[snapshot_id], ASC )
+			VAR _end = TOPN ( 1, _xy, dim_snapshot[snapshot_id], DESC )
+			VAR _x1 = FORMAT ( MINX ( _xy, [@x] ), "0.0" )
+			VAR _x2 = FORMAT ( MAXX ( _end, [@x] ), "0.0" )
+			VAR _y2 = FORMAT ( MAXX ( _end, [@y] ), "0.0" )
+			VAR _y0 = FORMAT ( 7 + _hi * 24 / ( _hi - _lo ), "0.0" )
+			VAR _zero =
+			    IF (
+			        _lo < 0 && _hi > 0,
+			        "<line x1='0' x2='120' y1='" & _y0 & "' y2='" & _y0
+			            & "' stroke='%23C0392B' stroke-width='1.2' stroke-dasharray='3 2' vector-effect='non-scaling-stroke'/>"
+			    )
+			RETURN
+			    IF (
+			        _n > 0,
+			        "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='40' viewBox='0 0 120 40'>" & _zero
+			            & "<polygon points='" & _x1 & ",38 " & _line & " " & _x2
+			            & ",38' fill='%232B7A78' fill-opacity='0.14'/>"
+			            & "<polyline points='" & _line
+			            & "' fill='none' stroke='%232B7A78' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'"
+			            & " vector-effect='non-scaling-stroke'/>"
+			            & "<circle cx='" & _x2 & "' cy='" & _y2 & "' r='5.5' fill='%231F3A5F'/></svg>"
+			    )
+			```
 		displayFolder: 14 Trend lines for the KPI cards
 		lineageTag: 129df633-e901-509e-bf27-4cc531f88767
 		dataCategory: ImageUrl
 
 	/// Card trend: duration-weighted % complete, by update
-	measure 'Trend - Weighted % complete (actual)' = DOP.TrendSvg ( [Weighted % complete (actual)] )
+	measure 'Trend - Weighted % complete (actual)' = ```
+			VAR _sid = [Selected snapshot id]
+			VAR _pts =
+			    FILTER (
+			        ADDCOLUMNS (
+			            CALCULATETABLE (
+			                VALUES ( dim_snapshot[snapshot_id] ),
+			                REMOVEFILTERS ( dim_snapshot ),
+			                dim_snapshot[snapshot_id] <= _sid
+			            ),
+			            "@v", ( VAR __snapshotId = dim_snapshot[snapshot_id] RETURN CALCULATE ( [Weighted % complete (actual)], REMOVEFILTERS ( dim_snapshot ), dim_snapshot[snapshot_id] = __snapshotId ) )
+			        ),
+			        NOT ISBLANK ( [@v] )
+			    )
+			VAR _n = COUNTROWS ( _pts )
+			VAR _lo = MINX ( _pts, [@v] )
+			VAR _hi = MAXX ( _pts, [@v] )
+			VAR _xy =
+			    ADDCOLUMNS (
+			        _pts,
+			        "@x", IF ( _n <= 1, 60, 7 + ( RANKX ( _pts, dim_snapshot[snapshot_id], , ASC ) - 1 ) * 106 / ( _n - 1 ) ),
+			        "@y", IF ( _hi = _lo, 19, 7 + ( _hi - [@v] ) * 24 / ( _hi - _lo ) )
+			    )
+			VAR _line =
+			    CONCATENATEX ( _xy, FORMAT ( [@x], "0.0" ) & "," & FORMAT ( [@y], "0.0" ), " ", dim_snapshot[snapshot_id], ASC )
+			VAR _end = TOPN ( 1, _xy, dim_snapshot[snapshot_id], DESC )
+			VAR _x1 = FORMAT ( MINX ( _xy, [@x] ), "0.0" )
+			VAR _x2 = FORMAT ( MAXX ( _end, [@x] ), "0.0" )
+			VAR _y2 = FORMAT ( MAXX ( _end, [@y] ), "0.0" )
+			VAR _y0 = FORMAT ( 7 + _hi * 24 / ( _hi - _lo ), "0.0" )
+			VAR _zero =
+			    IF (
+			        _lo < 0 && _hi > 0,
+			        "<line x1='0' x2='120' y1='" & _y0 & "' y2='" & _y0
+			            & "' stroke='%23C0392B' stroke-width='1.2' stroke-dasharray='3 2' vector-effect='non-scaling-stroke'/>"
+			    )
+			RETURN
+			    IF (
+			        _n > 0,
+			        "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='40' viewBox='0 0 120 40'>" & _zero
+			            & "<polygon points='" & _x1 & ",38 " & _line & " " & _x2
+			            & ",38' fill='%232B7A78' fill-opacity='0.14'/>"
+			            & "<polyline points='" & _line
+			            & "' fill='none' stroke='%232B7A78' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'"
+			            & " vector-effect='non-scaling-stroke'/>"
+			            & "<circle cx='" & _x2 & "' cy='" & _y2 & "' r='5.5' fill='%231F3A5F'/></svg>"
+			    )
+			```
 		displayFolder: 14 Trend lines for the KPI cards
 		lineageTag: a3e9c0b9-fae1-52cf-9781-cbd3d0f678fc
 		dataCategory: ImageUrl
 
 	/// Card trend: DQ score out of 100, by update
-	measure 'Trend - DQ score' = DOP.TrendSvg ( [DQ score] )
+	measure 'Trend - DQ score' = ```
+			VAR _sid = [Selected snapshot id]
+			VAR _pts =
+			    FILTER (
+			        ADDCOLUMNS (
+			            CALCULATETABLE (
+			                VALUES ( dim_snapshot[snapshot_id] ),
+			                REMOVEFILTERS ( dim_snapshot ),
+			                dim_snapshot[snapshot_id] <= _sid
+			            ),
+			            "@v", ( VAR __snapshotId = dim_snapshot[snapshot_id] RETURN CALCULATE ( [DQ score], REMOVEFILTERS ( dim_snapshot ), dim_snapshot[snapshot_id] = __snapshotId ) )
+			        ),
+			        NOT ISBLANK ( [@v] )
+			    )
+			VAR _n = COUNTROWS ( _pts )
+			VAR _lo = MINX ( _pts, [@v] )
+			VAR _hi = MAXX ( _pts, [@v] )
+			VAR _xy =
+			    ADDCOLUMNS (
+			        _pts,
+			        "@x", IF ( _n <= 1, 60, 7 + ( RANKX ( _pts, dim_snapshot[snapshot_id], , ASC ) - 1 ) * 106 / ( _n - 1 ) ),
+			        "@y", IF ( _hi = _lo, 19, 7 + ( _hi - [@v] ) * 24 / ( _hi - _lo ) )
+			    )
+			VAR _line =
+			    CONCATENATEX ( _xy, FORMAT ( [@x], "0.0" ) & "," & FORMAT ( [@y], "0.0" ), " ", dim_snapshot[snapshot_id], ASC )
+			VAR _end = TOPN ( 1, _xy, dim_snapshot[snapshot_id], DESC )
+			VAR _x1 = FORMAT ( MINX ( _xy, [@x] ), "0.0" )
+			VAR _x2 = FORMAT ( MAXX ( _end, [@x] ), "0.0" )
+			VAR _y2 = FORMAT ( MAXX ( _end, [@y] ), "0.0" )
+			VAR _y0 = FORMAT ( 7 + _hi * 24 / ( _hi - _lo ), "0.0" )
+			VAR _zero =
+			    IF (
+			        _lo < 0 && _hi > 0,
+			        "<line x1='0' x2='120' y1='" & _y0 & "' y2='" & _y0
+			            & "' stroke='%23C0392B' stroke-width='1.2' stroke-dasharray='3 2' vector-effect='non-scaling-stroke'/>"
+			    )
+			RETURN
+			    IF (
+			        _n > 0,
+			        "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='40' viewBox='0 0 120 40'>" & _zero
+			            & "<polygon points='" & _x1 & ",38 " & _line & " " & _x2
+			            & ",38' fill='%232B7A78' fill-opacity='0.14'/>"
+			            & "<polyline points='" & _line
+			            & "' fill='none' stroke='%232B7A78' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'"
+			            & " vector-effect='non-scaling-stroke'/>"
+			            & "<circle cx='" & _x2 & "' cy='" & _y2 & "' r='5.5' fill='%231F3A5F'/></svg>"
+			    )
+			```
 		displayFolder: 14 Trend lines for the KPI cards
 		lineageTag: fb2dbb8c-35c8-52b5-8b03-047d49f5db7c
 		dataCategory: ImageUrl
 
 	/// Card trend: milestones later than the baseline in force, by update
-	measure 'Trend - Milestones later than baseline in force' = DOP.TrendSvg ( [Milestones later than baseline in force] )
+	measure 'Trend - Milestones later than baseline in force' = ```
+			VAR _sid = [Selected snapshot id]
+			VAR _pts =
+			    FILTER (
+			        ADDCOLUMNS (
+			            CALCULATETABLE (
+			                VALUES ( dim_snapshot[snapshot_id] ),
+			                REMOVEFILTERS ( dim_snapshot ),
+			                dim_snapshot[snapshot_id] <= _sid
+			            ),
+			            "@v", ( VAR __snapshotId = dim_snapshot[snapshot_id] RETURN CALCULATE ( [Milestones later than baseline in force], REMOVEFILTERS ( dim_snapshot ), dim_snapshot[snapshot_id] = __snapshotId ) )
+			        ),
+			        NOT ISBLANK ( [@v] )
+			    )
+			VAR _n = COUNTROWS ( _pts )
+			VAR _lo = MINX ( _pts, [@v] )
+			VAR _hi = MAXX ( _pts, [@v] )
+			VAR _xy =
+			    ADDCOLUMNS (
+			        _pts,
+			        "@x", IF ( _n <= 1, 60, 7 + ( RANKX ( _pts, dim_snapshot[snapshot_id], , ASC ) - 1 ) * 106 / ( _n - 1 ) ),
+			        "@y", IF ( _hi = _lo, 19, 7 + ( _hi - [@v] ) * 24 / ( _hi - _lo ) )
+			    )
+			VAR _line =
+			    CONCATENATEX ( _xy, FORMAT ( [@x], "0.0" ) & "," & FORMAT ( [@y], "0.0" ), " ", dim_snapshot[snapshot_id], ASC )
+			VAR _end = TOPN ( 1, _xy, dim_snapshot[snapshot_id], DESC )
+			VAR _x1 = FORMAT ( MINX ( _xy, [@x] ), "0.0" )
+			VAR _x2 = FORMAT ( MAXX ( _end, [@x] ), "0.0" )
+			VAR _y2 = FORMAT ( MAXX ( _end, [@y] ), "0.0" )
+			VAR _y0 = FORMAT ( 7 + _hi * 24 / ( _hi - _lo ), "0.0" )
+			VAR _zero =
+			    IF (
+			        _lo < 0 && _hi > 0,
+			        "<line x1='0' x2='120' y1='" & _y0 & "' y2='" & _y0
+			            & "' stroke='%23C0392B' stroke-width='1.2' stroke-dasharray='3 2' vector-effect='non-scaling-stroke'/>"
+			    )
+			RETURN
+			    IF (
+			        _n > 0,
+			        "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='40' viewBox='0 0 120 40'>" & _zero
+			            & "<polygon points='" & _x1 & ",38 " & _line & " " & _x2
+			            & ",38' fill='%232B7A78' fill-opacity='0.14'/>"
+			            & "<polyline points='" & _line
+			            & "' fill='none' stroke='%232B7A78' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'"
+			            & " vector-effect='non-scaling-stroke'/>"
+			            & "<circle cx='" & _x2 & "' cy='" & _y2 & "' r='5.5' fill='%231F3A5F'/></svg>"
+			    )
+			```
 		displayFolder: 14 Trend lines for the KPI cards
 		lineageTag: e3ca6a87-207a-54a6-b31c-6a2c9bec6a39
 		dataCategory: ImageUrl
 
 	/// Card trend: milestones that slipped against the previous update, by update
-	measure 'Trend - Milestones slipped vs previous period' = DOP.TrendSvg ( [Milestones slipped vs previous period] )
+	measure 'Trend - Milestones slipped vs previous period' = ```
+			VAR _sid = [Selected snapshot id]
+			VAR _pts =
+			    FILTER (
+			        ADDCOLUMNS (
+			            CALCULATETABLE (
+			                VALUES ( dim_snapshot[snapshot_id] ),
+			                REMOVEFILTERS ( dim_snapshot ),
+			                dim_snapshot[snapshot_id] <= _sid
+			            ),
+			            "@v", ( VAR __snapshotId = dim_snapshot[snapshot_id] RETURN CALCULATE ( [Milestones slipped vs previous period], REMOVEFILTERS ( dim_snapshot ), dim_snapshot[snapshot_id] = __snapshotId ) )
+			        ),
+			        NOT ISBLANK ( [@v] )
+			    )
+			VAR _n = COUNTROWS ( _pts )
+			VAR _lo = MINX ( _pts, [@v] )
+			VAR _hi = MAXX ( _pts, [@v] )
+			VAR _xy =
+			    ADDCOLUMNS (
+			        _pts,
+			        "@x", IF ( _n <= 1, 60, 7 + ( RANKX ( _pts, dim_snapshot[snapshot_id], , ASC ) - 1 ) * 106 / ( _n - 1 ) ),
+			        "@y", IF ( _hi = _lo, 19, 7 + ( _hi - [@v] ) * 24 / ( _hi - _lo ) )
+			    )
+			VAR _line =
+			    CONCATENATEX ( _xy, FORMAT ( [@x], "0.0" ) & "," & FORMAT ( [@y], "0.0" ), " ", dim_snapshot[snapshot_id], ASC )
+			VAR _end = TOPN ( 1, _xy, dim_snapshot[snapshot_id], DESC )
+			VAR _x1 = FORMAT ( MINX ( _xy, [@x] ), "0.0" )
+			VAR _x2 = FORMAT ( MAXX ( _end, [@x] ), "0.0" )
+			VAR _y2 = FORMAT ( MAXX ( _end, [@y] ), "0.0" )
+			VAR _y0 = FORMAT ( 7 + _hi * 24 / ( _hi - _lo ), "0.0" )
+			VAR _zero =
+			    IF (
+			        _lo < 0 && _hi > 0,
+			        "<line x1='0' x2='120' y1='" & _y0 & "' y2='" & _y0
+			            & "' stroke='%23C0392B' stroke-width='1.2' stroke-dasharray='3 2' vector-effect='non-scaling-stroke'/>"
+			    )
+			RETURN
+			    IF (
+			        _n > 0,
+			        "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='40' viewBox='0 0 120 40'>" & _zero
+			            & "<polygon points='" & _x1 & ",38 " & _line & " " & _x2
+			            & ",38' fill='%232B7A78' fill-opacity='0.14'/>"
+			            & "<polyline points='" & _line
+			            & "' fill='none' stroke='%232B7A78' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'"
+			            & " vector-effect='non-scaling-stroke'/>"
+			            & "<circle cx='" & _x2 & "' cy='" & _y2 & "' r='5.5' fill='%231F3A5F'/></svg>"
+			    )
+			```
 		displayFolder: 14 Trend lines for the KPI cards
 		lineageTag: c66645fc-cd7f-5129-a2df-446aece12cc1
 		dataCategory: ImageUrl
 
 	/// Card trend: calendar days the Day 1 forecast moved, by update
-	measure 'Trend - Day 1 movement vs previous period' = DOP.TrendSvg ( [Day 1 movement vs previous period] )
+	measure 'Trend - Day 1 movement vs previous period' = ```
+			VAR _sid = [Selected snapshot id]
+			VAR _pts =
+			    FILTER (
+			        ADDCOLUMNS (
+			            CALCULATETABLE (
+			                VALUES ( dim_snapshot[snapshot_id] ),
+			                REMOVEFILTERS ( dim_snapshot ),
+			                dim_snapshot[snapshot_id] <= _sid
+			            ),
+			            "@v", ( VAR __snapshotId = dim_snapshot[snapshot_id] RETURN CALCULATE ( [Day 1 movement vs previous period], REMOVEFILTERS ( dim_snapshot ), dim_snapshot[snapshot_id] = __snapshotId ) )
+			        ),
+			        NOT ISBLANK ( [@v] )
+			    )
+			VAR _n = COUNTROWS ( _pts )
+			VAR _lo = MINX ( _pts, [@v] )
+			VAR _hi = MAXX ( _pts, [@v] )
+			VAR _xy =
+			    ADDCOLUMNS (
+			        _pts,
+			        "@x", IF ( _n <= 1, 60, 7 + ( RANKX ( _pts, dim_snapshot[snapshot_id], , ASC ) - 1 ) * 106 / ( _n - 1 ) ),
+			        "@y", IF ( _hi = _lo, 19, 7 + ( _hi - [@v] ) * 24 / ( _hi - _lo ) )
+			    )
+			VAR _line =
+			    CONCATENATEX ( _xy, FORMAT ( [@x], "0.0" ) & "," & FORMAT ( [@y], "0.0" ), " ", dim_snapshot[snapshot_id], ASC )
+			VAR _end = TOPN ( 1, _xy, dim_snapshot[snapshot_id], DESC )
+			VAR _x1 = FORMAT ( MINX ( _xy, [@x] ), "0.0" )
+			VAR _x2 = FORMAT ( MAXX ( _end, [@x] ), "0.0" )
+			VAR _y2 = FORMAT ( MAXX ( _end, [@y] ), "0.0" )
+			VAR _y0 = FORMAT ( 7 + _hi * 24 / ( _hi - _lo ), "0.0" )
+			VAR _zero =
+			    IF (
+			        _lo < 0 && _hi > 0,
+			        "<line x1='0' x2='120' y1='" & _y0 & "' y2='" & _y0
+			            & "' stroke='%23C0392B' stroke-width='1.2' stroke-dasharray='3 2' vector-effect='non-scaling-stroke'/>"
+			    )
+			RETURN
+			    IF (
+			        _n > 0,
+			        "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='40' viewBox='0 0 120 40'>" & _zero
+			            & "<polygon points='" & _x1 & ",38 " & _line & " " & _x2
+			            & ",38' fill='%232B7A78' fill-opacity='0.14'/>"
+			            & "<polyline points='" & _line
+			            & "' fill='none' stroke='%232B7A78' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'"
+			            & " vector-effect='non-scaling-stroke'/>"
+			            & "<circle cx='" & _x2 & "' cy='" & _y2 & "' r='5.5' fill='%231F3A5F'/></svg>"
+			    )
+			```
 		displayFolder: 14 Trend lines for the KPI cards
 		lineageTag: 94d6d851-c271-5e8a-b492-9a169618b044
 		dataCategory: ImageUrl
 
 	/// Card trend: critical activities, by update
-	measure 'Trend - Critical count' = DOP.TrendSvg ( [Critical count] )
+	measure 'Trend - Critical count' = ```
+			VAR _sid = [Selected snapshot id]
+			VAR _pts =
+			    FILTER (
+			        ADDCOLUMNS (
+			            CALCULATETABLE (
+			                VALUES ( dim_snapshot[snapshot_id] ),
+			                REMOVEFILTERS ( dim_snapshot ),
+			                dim_snapshot[snapshot_id] <= _sid
+			            ),
+			            "@v", ( VAR __snapshotId = dim_snapshot[snapshot_id] RETURN CALCULATE ( [Critical count], REMOVEFILTERS ( dim_snapshot ), dim_snapshot[snapshot_id] = __snapshotId ) )
+			        ),
+			        NOT ISBLANK ( [@v] )
+			    )
+			VAR _n = COUNTROWS ( _pts )
+			VAR _lo = MINX ( _pts, [@v] )
+			VAR _hi = MAXX ( _pts, [@v] )
+			VAR _xy =
+			    ADDCOLUMNS (
+			        _pts,
+			        "@x", IF ( _n <= 1, 60, 7 + ( RANKX ( _pts, dim_snapshot[snapshot_id], , ASC ) - 1 ) * 106 / ( _n - 1 ) ),
+			        "@y", IF ( _hi = _lo, 19, 7 + ( _hi - [@v] ) * 24 / ( _hi - _lo ) )
+			    )
+			VAR _line =
+			    CONCATENATEX ( _xy, FORMAT ( [@x], "0.0" ) & "," & FORMAT ( [@y], "0.0" ), " ", dim_snapshot[snapshot_id], ASC )
+			VAR _end = TOPN ( 1, _xy, dim_snapshot[snapshot_id], DESC )
+			VAR _x1 = FORMAT ( MINX ( _xy, [@x] ), "0.0" )
+			VAR _x2 = FORMAT ( MAXX ( _end, [@x] ), "0.0" )
+			VAR _y2 = FORMAT ( MAXX ( _end, [@y] ), "0.0" )
+			VAR _y0 = FORMAT ( 7 + _hi * 24 / ( _hi - _lo ), "0.0" )
+			VAR _zero =
+			    IF (
+			        _lo < 0 && _hi > 0,
+			        "<line x1='0' x2='120' y1='" & _y0 & "' y2='" & _y0
+			            & "' stroke='%23C0392B' stroke-width='1.2' stroke-dasharray='3 2' vector-effect='non-scaling-stroke'/>"
+			    )
+			RETURN
+			    IF (
+			        _n > 0,
+			        "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='40' viewBox='0 0 120 40'>" & _zero
+			            & "<polygon points='" & _x1 & ",38 " & _line & " " & _x2
+			            & ",38' fill='%232B7A78' fill-opacity='0.14'/>"
+			            & "<polyline points='" & _line
+			            & "' fill='none' stroke='%232B7A78' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'"
+			            & " vector-effect='non-scaling-stroke'/>"
+			            & "<circle cx='" & _x2 & "' cy='" & _y2 & "' r='5.5' fill='%231F3A5F'/></svg>"
+			    )
+			```
 		displayFolder: 14 Trend lines for the KPI cards
 		lineageTag: 569a326a-2f66-5cce-9390-134d83d459a6
 		dataCategory: ImageUrl
 
 	/// Card trend: near-critical activities at the selected threshold, by update
-	measure 'Trend - Near-critical count' = DOP.TrendSvg ( [Near-critical count] )
+	measure 'Trend - Near-critical count' = ```
+			VAR _sid = [Selected snapshot id]
+			VAR _pts =
+			    FILTER (
+			        ADDCOLUMNS (
+			            CALCULATETABLE (
+			                VALUES ( dim_snapshot[snapshot_id] ),
+			                REMOVEFILTERS ( dim_snapshot ),
+			                dim_snapshot[snapshot_id] <= _sid
+			            ),
+			            "@v", ( VAR __snapshotId = dim_snapshot[snapshot_id] RETURN CALCULATE ( [Near-critical count], REMOVEFILTERS ( dim_snapshot ), dim_snapshot[snapshot_id] = __snapshotId ) )
+			        ),
+			        NOT ISBLANK ( [@v] )
+			    )
+			VAR _n = COUNTROWS ( _pts )
+			VAR _lo = MINX ( _pts, [@v] )
+			VAR _hi = MAXX ( _pts, [@v] )
+			VAR _xy =
+			    ADDCOLUMNS (
+			        _pts,
+			        "@x", IF ( _n <= 1, 60, 7 + ( RANKX ( _pts, dim_snapshot[snapshot_id], , ASC ) - 1 ) * 106 / ( _n - 1 ) ),
+			        "@y", IF ( _hi = _lo, 19, 7 + ( _hi - [@v] ) * 24 / ( _hi - _lo ) )
+			    )
+			VAR _line =
+			    CONCATENATEX ( _xy, FORMAT ( [@x], "0.0" ) & "," & FORMAT ( [@y], "0.0" ), " ", dim_snapshot[snapshot_id], ASC )
+			VAR _end = TOPN ( 1, _xy, dim_snapshot[snapshot_id], DESC )
+			VAR _x1 = FORMAT ( MINX ( _xy, [@x] ), "0.0" )
+			VAR _x2 = FORMAT ( MAXX ( _end, [@x] ), "0.0" )
+			VAR _y2 = FORMAT ( MAXX ( _end, [@y] ), "0.0" )
+			VAR _y0 = FORMAT ( 7 + _hi * 24 / ( _hi - _lo ), "0.0" )
+			VAR _zero =
+			    IF (
+			        _lo < 0 && _hi > 0,
+			        "<line x1='0' x2='120' y1='" & _y0 & "' y2='" & _y0
+			            & "' stroke='%23C0392B' stroke-width='1.2' stroke-dasharray='3 2' vector-effect='non-scaling-stroke'/>"
+			    )
+			RETURN
+			    IF (
+			        _n > 0,
+			        "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='40' viewBox='0 0 120 40'>" & _zero
+			            & "<polygon points='" & _x1 & ",38 " & _line & " " & _x2
+			            & ",38' fill='%232B7A78' fill-opacity='0.14'/>"
+			            & "<polyline points='" & _line
+			            & "' fill='none' stroke='%232B7A78' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'"
+			            & " vector-effect='non-scaling-stroke'/>"
+			            & "<circle cx='" & _x2 & "' cy='" & _y2 & "' r='5.5' fill='%231F3A5F'/></svg>"
+			    )
+			```
 		displayFolder: 14 Trend lines for the KPI cards
 		lineageTag: 46d7f967-1b25-5659-9fb3-8160a7a2e06b
 		dataCategory: ImageUrl
 
 	/// Card trend: activities with negative float, by update
-	measure 'Trend - Negative float count' = DOP.TrendSvg ( [Negative float count] )
+	measure 'Trend - Negative float count' = ```
+			VAR _sid = [Selected snapshot id]
+			VAR _pts =
+			    FILTER (
+			        ADDCOLUMNS (
+			            CALCULATETABLE (
+			                VALUES ( dim_snapshot[snapshot_id] ),
+			                REMOVEFILTERS ( dim_snapshot ),
+			                dim_snapshot[snapshot_id] <= _sid
+			            ),
+			            "@v", ( VAR __snapshotId = dim_snapshot[snapshot_id] RETURN CALCULATE ( [Negative float count], REMOVEFILTERS ( dim_snapshot ), dim_snapshot[snapshot_id] = __snapshotId ) )
+			        ),
+			        NOT ISBLANK ( [@v] )
+			    )
+			VAR _n = COUNTROWS ( _pts )
+			VAR _lo = MINX ( _pts, [@v] )
+			VAR _hi = MAXX ( _pts, [@v] )
+			VAR _xy =
+			    ADDCOLUMNS (
+			        _pts,
+			        "@x", IF ( _n <= 1, 60, 7 + ( RANKX ( _pts, dim_snapshot[snapshot_id], , ASC ) - 1 ) * 106 / ( _n - 1 ) ),
+			        "@y", IF ( _hi = _lo, 19, 7 + ( _hi - [@v] ) * 24 / ( _hi - _lo ) )
+			    )
+			VAR _line =
+			    CONCATENATEX ( _xy, FORMAT ( [@x], "0.0" ) & "," & FORMAT ( [@y], "0.0" ), " ", dim_snapshot[snapshot_id], ASC )
+			VAR _end = TOPN ( 1, _xy, dim_snapshot[snapshot_id], DESC )
+			VAR _x1 = FORMAT ( MINX ( _xy, [@x] ), "0.0" )
+			VAR _x2 = FORMAT ( MAXX ( _end, [@x] ), "0.0" )
+			VAR _y2 = FORMAT ( MAXX ( _end, [@y] ), "0.0" )
+			VAR _y0 = FORMAT ( 7 + _hi * 24 / ( _hi - _lo ), "0.0" )
+			VAR _zero =
+			    IF (
+			        _lo < 0 && _hi > 0,
+			        "<line x1='0' x2='120' y1='" & _y0 & "' y2='" & _y0
+			            & "' stroke='%23C0392B' stroke-width='1.2' stroke-dasharray='3 2' vector-effect='non-scaling-stroke'/>"
+			    )
+			RETURN
+			    IF (
+			        _n > 0,
+			        "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='40' viewBox='0 0 120 40'>" & _zero
+			            & "<polygon points='" & _x1 & ",38 " & _line & " " & _x2
+			            & ",38' fill='%232B7A78' fill-opacity='0.14'/>"
+			            & "<polyline points='" & _line
+			            & "' fill='none' stroke='%232B7A78' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'"
+			            & " vector-effect='non-scaling-stroke'/>"
+			            & "<circle cx='" & _x2 & "' cy='" & _y2 & "' r='5.5' fill='%231F3A5F'/></svg>"
+			    )
+			```
 		displayFolder: 14 Trend lines for the KPI cards
 		lineageTag: b4f38359-40d5-56a5-961e-f1e9f0acab20
 		dataCategory: ImageUrl
 
 	/// Card trend: lowest total float in working days, by update
-	measure 'Trend - Total float (min)' = DOP.TrendSvg ( [Total float (min)] )
+	measure 'Trend - Total float (min)' = ```
+			VAR _sid = [Selected snapshot id]
+			VAR _pts =
+			    FILTER (
+			        ADDCOLUMNS (
+			            CALCULATETABLE (
+			                VALUES ( dim_snapshot[snapshot_id] ),
+			                REMOVEFILTERS ( dim_snapshot ),
+			                dim_snapshot[snapshot_id] <= _sid
+			            ),
+			            "@v", ( VAR __snapshotId = dim_snapshot[snapshot_id] RETURN CALCULATE ( [Total float (min)], REMOVEFILTERS ( dim_snapshot ), dim_snapshot[snapshot_id] = __snapshotId ) )
+			        ),
+			        NOT ISBLANK ( [@v] )
+			    )
+			VAR _n = COUNTROWS ( _pts )
+			VAR _lo = MINX ( _pts, [@v] )
+			VAR _hi = MAXX ( _pts, [@v] )
+			VAR _xy =
+			    ADDCOLUMNS (
+			        _pts,
+			        "@x", IF ( _n <= 1, 60, 7 + ( RANKX ( _pts, dim_snapshot[snapshot_id], , ASC ) - 1 ) * 106 / ( _n - 1 ) ),
+			        "@y", IF ( _hi = _lo, 19, 7 + ( _hi - [@v] ) * 24 / ( _hi - _lo ) )
+			    )
+			VAR _line =
+			    CONCATENATEX ( _xy, FORMAT ( [@x], "0.0" ) & "," & FORMAT ( [@y], "0.0" ), " ", dim_snapshot[snapshot_id], ASC )
+			VAR _end = TOPN ( 1, _xy, dim_snapshot[snapshot_id], DESC )
+			VAR _x1 = FORMAT ( MINX ( _xy, [@x] ), "0.0" )
+			VAR _x2 = FORMAT ( MAXX ( _end, [@x] ), "0.0" )
+			VAR _y2 = FORMAT ( MAXX ( _end, [@y] ), "0.0" )
+			VAR _y0 = FORMAT ( 7 + _hi * 24 / ( _hi - _lo ), "0.0" )
+			VAR _zero =
+			    IF (
+			        _lo < 0 && _hi > 0,
+			        "<line x1='0' x2='120' y1='" & _y0 & "' y2='" & _y0
+			            & "' stroke='%23C0392B' stroke-width='1.2' stroke-dasharray='3 2' vector-effect='non-scaling-stroke'/>"
+			    )
+			RETURN
+			    IF (
+			        _n > 0,
+			        "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='40' viewBox='0 0 120 40'>" & _zero
+			            & "<polygon points='" & _x1 & ",38 " & _line & " " & _x2
+			            & ",38' fill='%232B7A78' fill-opacity='0.14'/>"
+			            & "<polyline points='" & _line
+			            & "' fill='none' stroke='%232B7A78' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'"
+			            & " vector-effect='non-scaling-stroke'/>"
+			            & "<circle cx='" & _x2 & "' cy='" & _y2 & "' r='5.5' fill='%231F3A5F'/></svg>"
+			    )
+			```
 		displayFolder: 14 Trend lines for the KPI cards
 		lineageTag: 1d0b62b0-2b74-5f4f-8ddb-867904d755db
 		dataCategory: ImageUrl
 
 	/// Card trend: activities in the 14-day look-ahead, by update
-	measure 'Trend - Look-ahead items' = DOP.TrendSvg ( [Look-ahead items] )
+	measure 'Trend - Look-ahead items' = ```
+			VAR _sid = [Selected snapshot id]
+			VAR _pts =
+			    FILTER (
+			        ADDCOLUMNS (
+			            CALCULATETABLE (
+			                VALUES ( dim_snapshot[snapshot_id] ),
+			                REMOVEFILTERS ( dim_snapshot ),
+			                dim_snapshot[snapshot_id] <= _sid
+			            ),
+			            "@v", ( VAR __snapshotId = dim_snapshot[snapshot_id] RETURN CALCULATE ( [Look-ahead items], REMOVEFILTERS ( dim_snapshot ), dim_snapshot[snapshot_id] = __snapshotId ) )
+			        ),
+			        NOT ISBLANK ( [@v] )
+			    )
+			VAR _n = COUNTROWS ( _pts )
+			VAR _lo = MINX ( _pts, [@v] )
+			VAR _hi = MAXX ( _pts, [@v] )
+			VAR _xy =
+			    ADDCOLUMNS (
+			        _pts,
+			        "@x", IF ( _n <= 1, 60, 7 + ( RANKX ( _pts, dim_snapshot[snapshot_id], , ASC ) - 1 ) * 106 / ( _n - 1 ) ),
+			        "@y", IF ( _hi = _lo, 19, 7 + ( _hi - [@v] ) * 24 / ( _hi - _lo ) )
+			    )
+			VAR _line =
+			    CONCATENATEX ( _xy, FORMAT ( [@x], "0.0" ) & "," & FORMAT ( [@y], "0.0" ), " ", dim_snapshot[snapshot_id], ASC )
+			VAR _end = TOPN ( 1, _xy, dim_snapshot[snapshot_id], DESC )
+			VAR _x1 = FORMAT ( MINX ( _xy, [@x] ), "0.0" )
+			VAR _x2 = FORMAT ( MAXX ( _end, [@x] ), "0.0" )
+			VAR _y2 = FORMAT ( MAXX ( _end, [@y] ), "0.0" )
+			VAR _y0 = FORMAT ( 7 + _hi * 24 / ( _hi - _lo ), "0.0" )
+			VAR _zero =
+			    IF (
+			        _lo < 0 && _hi > 0,
+			        "<line x1='0' x2='120' y1='" & _y0 & "' y2='" & _y0
+			            & "' stroke='%23C0392B' stroke-width='1.2' stroke-dasharray='3 2' vector-effect='non-scaling-stroke'/>"
+			    )
+			RETURN
+			    IF (
+			        _n > 0,
+			        "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='40' viewBox='0 0 120 40'>" & _zero
+			            & "<polygon points='" & _x1 & ",38 " & _line & " " & _x2
+			            & ",38' fill='%232B7A78' fill-opacity='0.14'/>"
+			            & "<polyline points='" & _line
+			            & "' fill='none' stroke='%232B7A78' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'"
+			            & " vector-effect='non-scaling-stroke'/>"
+			            & "<circle cx='" & _x2 & "' cy='" & _y2 & "' r='5.5' fill='%231F3A5F'/></svg>"
+			    )
+			```
 		displayFolder: 14 Trend lines for the KPI cards
 		lineageTag: bddfe7b0-4617-5c5b-a2bd-df496bfbd09b
 		dataCategory: ImageUrl
 
 	/// Card trend: share of look-back items achieved, by update
-	measure 'Trend - Look-back hit rate' = DOP.TrendSvg ( [Look-back hit rate] )
+	measure 'Trend - Look-back hit rate' = ```
+			VAR _sid = [Selected snapshot id]
+			VAR _pts =
+			    FILTER (
+			        ADDCOLUMNS (
+			            CALCULATETABLE (
+			                VALUES ( dim_snapshot[snapshot_id] ),
+			                REMOVEFILTERS ( dim_snapshot ),
+			                dim_snapshot[snapshot_id] <= _sid
+			            ),
+			            "@v", ( VAR __snapshotId = dim_snapshot[snapshot_id] RETURN CALCULATE ( [Look-back hit rate], REMOVEFILTERS ( dim_snapshot ), dim_snapshot[snapshot_id] = __snapshotId ) )
+			        ),
+			        NOT ISBLANK ( [@v] )
+			    )
+			VAR _n = COUNTROWS ( _pts )
+			VAR _lo = MINX ( _pts, [@v] )
+			VAR _hi = MAXX ( _pts, [@v] )
+			VAR _xy =
+			    ADDCOLUMNS (
+			        _pts,
+			        "@x", IF ( _n <= 1, 60, 7 + ( RANKX ( _pts, dim_snapshot[snapshot_id], , ASC ) - 1 ) * 106 / ( _n - 1 ) ),
+			        "@y", IF ( _hi = _lo, 19, 7 + ( _hi - [@v] ) * 24 / ( _hi - _lo ) )
+			    )
+			VAR _line =
+			    CONCATENATEX ( _xy, FORMAT ( [@x], "0.0" ) & "," & FORMAT ( [@y], "0.0" ), " ", dim_snapshot[snapshot_id], ASC )
+			VAR _end = TOPN ( 1, _xy, dim_snapshot[snapshot_id], DESC )
+			VAR _x1 = FORMAT ( MINX ( _xy, [@x] ), "0.0" )
+			VAR _x2 = FORMAT ( MAXX ( _end, [@x] ), "0.0" )
+			VAR _y2 = FORMAT ( MAXX ( _end, [@y] ), "0.0" )
+			VAR _y0 = FORMAT ( 7 + _hi * 24 / ( _hi - _lo ), "0.0" )
+			VAR _zero =
+			    IF (
+			        _lo < 0 && _hi > 0,
+			        "<line x1='0' x2='120' y1='" & _y0 & "' y2='" & _y0
+			            & "' stroke='%23C0392B' stroke-width='1.2' stroke-dasharray='3 2' vector-effect='non-scaling-stroke'/>"
+			    )
+			RETURN
+			    IF (
+			        _n > 0,
+			        "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='40' viewBox='0 0 120 40'>" & _zero
+			            & "<polygon points='" & _x1 & ",38 " & _line & " " & _x2
+			            & ",38' fill='%232B7A78' fill-opacity='0.14'/>"
+			            & "<polyline points='" & _line
+			            & "' fill='none' stroke='%232B7A78' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'"
+			            & " vector-effect='non-scaling-stroke'/>"
+			            & "<circle cx='" & _x2 & "' cy='" & _y2 & "' r='5.5' fill='%231F3A5F'/></svg>"
+			    )
+			```
 		displayFolder: 14 Trend lines for the KPI cards
 		lineageTag: af510225-6d84-522b-a78f-6ba014ede2ae
 		dataCategory: ImageUrl
 
 	/// Card trend: DCMA checks passed, by update
-	measure 'Trend - DCMA pass count' = DOP.TrendSvg ( [DCMA pass count] )
+	measure 'Trend - DCMA pass count' = ```
+			VAR _sid = [Selected snapshot id]
+			VAR _pts =
+			    FILTER (
+			        ADDCOLUMNS (
+			            CALCULATETABLE (
+			                VALUES ( dim_snapshot[snapshot_id] ),
+			                REMOVEFILTERS ( dim_snapshot ),
+			                dim_snapshot[snapshot_id] <= _sid
+			            ),
+			            "@v", ( VAR __snapshotId = dim_snapshot[snapshot_id] RETURN CALCULATE ( [DCMA pass count], REMOVEFILTERS ( dim_snapshot ), dim_snapshot[snapshot_id] = __snapshotId ) )
+			        ),
+			        NOT ISBLANK ( [@v] )
+			    )
+			VAR _n = COUNTROWS ( _pts )
+			VAR _lo = MINX ( _pts, [@v] )
+			VAR _hi = MAXX ( _pts, [@v] )
+			VAR _xy =
+			    ADDCOLUMNS (
+			        _pts,
+			        "@x", IF ( _n <= 1, 60, 7 + ( RANKX ( _pts, dim_snapshot[snapshot_id], , ASC ) - 1 ) * 106 / ( _n - 1 ) ),
+			        "@y", IF ( _hi = _lo, 19, 7 + ( _hi - [@v] ) * 24 / ( _hi - _lo ) )
+			    )
+			VAR _line =
+			    CONCATENATEX ( _xy, FORMAT ( [@x], "0.0" ) & "," & FORMAT ( [@y], "0.0" ), " ", dim_snapshot[snapshot_id], ASC )
+			VAR _end = TOPN ( 1, _xy, dim_snapshot[snapshot_id], DESC )
+			VAR _x1 = FORMAT ( MINX ( _xy, [@x] ), "0.0" )
+			VAR _x2 = FORMAT ( MAXX ( _end, [@x] ), "0.0" )
+			VAR _y2 = FORMAT ( MAXX ( _end, [@y] ), "0.0" )
+			VAR _y0 = FORMAT ( 7 + _hi * 24 / ( _hi - _lo ), "0.0" )
+			VAR _zero =
+			    IF (
+			        _lo < 0 && _hi > 0,
+			        "<line x1='0' x2='120' y1='" & _y0 & "' y2='" & _y0
+			            & "' stroke='%23C0392B' stroke-width='1.2' stroke-dasharray='3 2' vector-effect='non-scaling-stroke'/>"
+			    )
+			RETURN
+			    IF (
+			        _n > 0,
+			        "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='40' viewBox='0 0 120 40'>" & _zero
+			            & "<polygon points='" & _x1 & ",38 " & _line & " " & _x2
+			            & ",38' fill='%232B7A78' fill-opacity='0.14'/>"
+			            & "<polyline points='" & _line
+			            & "' fill='none' stroke='%232B7A78' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'"
+			            & " vector-effect='non-scaling-stroke'/>"
+			            & "<circle cx='" & _x2 & "' cy='" & _y2 & "' r='5.5' fill='%231F3A5F'/></svg>"
+			    )
+			```
 		displayFolder: 14 Trend lines for the KPI cards
 		lineageTag: 1f7a44fc-6cd0-55fe-9834-9cd912dbb929
 		dataCategory: ImageUrl
 
 	/// Card trend: critical path length index, by update
-	measure 'Trend - CPLI' = DOP.TrendSvg ( [CPLI] )
+	measure 'Trend - CPLI' = ```
+			VAR _sid = [Selected snapshot id]
+			VAR _pts =
+			    FILTER (
+			        ADDCOLUMNS (
+			            CALCULATETABLE (
+			                VALUES ( dim_snapshot[snapshot_id] ),
+			                REMOVEFILTERS ( dim_snapshot ),
+			                dim_snapshot[snapshot_id] <= _sid
+			            ),
+			            "@v", ( VAR __snapshotId = dim_snapshot[snapshot_id] RETURN CALCULATE ( [CPLI], REMOVEFILTERS ( dim_snapshot ), dim_snapshot[snapshot_id] = __snapshotId ) )
+			        ),
+			        NOT ISBLANK ( [@v] )
+			    )
+			VAR _n = COUNTROWS ( _pts )
+			VAR _lo = MINX ( _pts, [@v] )
+			VAR _hi = MAXX ( _pts, [@v] )
+			VAR _xy =
+			    ADDCOLUMNS (
+			        _pts,
+			        "@x", IF ( _n <= 1, 60, 7 + ( RANKX ( _pts, dim_snapshot[snapshot_id], , ASC ) - 1 ) * 106 / ( _n - 1 ) ),
+			        "@y", IF ( _hi = _lo, 19, 7 + ( _hi - [@v] ) * 24 / ( _hi - _lo ) )
+			    )
+			VAR _line =
+			    CONCATENATEX ( _xy, FORMAT ( [@x], "0.0" ) & "," & FORMAT ( [@y], "0.0" ), " ", dim_snapshot[snapshot_id], ASC )
+			VAR _end = TOPN ( 1, _xy, dim_snapshot[snapshot_id], DESC )
+			VAR _x1 = FORMAT ( MINX ( _xy, [@x] ), "0.0" )
+			VAR _x2 = FORMAT ( MAXX ( _end, [@x] ), "0.0" )
+			VAR _y2 = FORMAT ( MAXX ( _end, [@y] ), "0.0" )
+			VAR _y0 = FORMAT ( 7 + _hi * 24 / ( _hi - _lo ), "0.0" )
+			VAR _zero =
+			    IF (
+			        _lo < 0 && _hi > 0,
+			        "<line x1='0' x2='120' y1='" & _y0 & "' y2='" & _y0
+			            & "' stroke='%23C0392B' stroke-width='1.2' stroke-dasharray='3 2' vector-effect='non-scaling-stroke'/>"
+			    )
+			RETURN
+			    IF (
+			        _n > 0,
+			        "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='40' viewBox='0 0 120 40'>" & _zero
+			            & "<polygon points='" & _x1 & ",38 " & _line & " " & _x2
+			            & ",38' fill='%232B7A78' fill-opacity='0.14'/>"
+			            & "<polyline points='" & _line
+			            & "' fill='none' stroke='%232B7A78' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'"
+			            & " vector-effect='non-scaling-stroke'/>"
+			            & "<circle cx='" & _x2 & "' cy='" & _y2 & "' r='5.5' fill='%231F3A5F'/></svg>"
+			    )
+			```
 		displayFolder: 14 Trend lines for the KPI cards
 		lineageTag: 7a37f6cb-8a03-5790-a68c-4bb20cb3f17f
 		dataCategory: ImageUrl
 
 	/// Card trend: baseline execution index, by update
-	measure 'Trend - BEI' = DOP.TrendSvg ( [BEI] )
+	measure 'Trend - BEI' = ```
+			VAR _sid = [Selected snapshot id]
+			VAR _pts =
+			    FILTER (
+			        ADDCOLUMNS (
+			            CALCULATETABLE (
+			                VALUES ( dim_snapshot[snapshot_id] ),
+			                REMOVEFILTERS ( dim_snapshot ),
+			                dim_snapshot[snapshot_id] <= _sid
+			            ),
+			            "@v", ( VAR __snapshotId = dim_snapshot[snapshot_id] RETURN CALCULATE ( [BEI], REMOVEFILTERS ( dim_snapshot ), dim_snapshot[snapshot_id] = __snapshotId ) )
+			        ),
+			        NOT ISBLANK ( [@v] )
+			    )
+			VAR _n = COUNTROWS ( _pts )
+			VAR _lo = MINX ( _pts, [@v] )
+			VAR _hi = MAXX ( _pts, [@v] )
+			VAR _xy =
+			    ADDCOLUMNS (
+			        _pts,
+			        "@x", IF ( _n <= 1, 60, 7 + ( RANKX ( _pts, dim_snapshot[snapshot_id], , ASC ) - 1 ) * 106 / ( _n - 1 ) ),
+			        "@y", IF ( _hi = _lo, 19, 7 + ( _hi - [@v] ) * 24 / ( _hi - _lo ) )
+			    )
+			VAR _line =
+			    CONCATENATEX ( _xy, FORMAT ( [@x], "0.0" ) & "," & FORMAT ( [@y], "0.0" ), " ", dim_snapshot[snapshot_id], ASC )
+			VAR _end = TOPN ( 1, _xy, dim_snapshot[snapshot_id], DESC )
+			VAR _x1 = FORMAT ( MINX ( _xy, [@x] ), "0.0" )
+			VAR _x2 = FORMAT ( MAXX ( _end, [@x] ), "0.0" )
+			VAR _y2 = FORMAT ( MAXX ( _end, [@y] ), "0.0" )
+			VAR _y0 = FORMAT ( 7 + _hi * 24 / ( _hi - _lo ), "0.0" )
+			VAR _zero =
+			    IF (
+			        _lo < 0 && _hi > 0,
+			        "<line x1='0' x2='120' y1='" & _y0 & "' y2='" & _y0
+			            & "' stroke='%23C0392B' stroke-width='1.2' stroke-dasharray='3 2' vector-effect='non-scaling-stroke'/>"
+			    )
+			RETURN
+			    IF (
+			        _n > 0,
+			        "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='40' viewBox='0 0 120 40'>" & _zero
+			            & "<polygon points='" & _x1 & ",38 " & _line & " " & _x2
+			            & ",38' fill='%232B7A78' fill-opacity='0.14'/>"
+			            & "<polyline points='" & _line
+			            & "' fill='none' stroke='%232B7A78' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'"
+			            & " vector-effect='non-scaling-stroke'/>"
+			            & "<circle cx='" & _x2 & "' cy='" & _y2 & "' r='5.5' fill='%231F3A5F'/></svg>"
+			    )
+			```
 		displayFolder: 14 Trend lines for the KPI cards
 		lineageTag: 85333517-745f-5ee8-939a-e073dfb4775a
 		dataCategory: ImageUrl

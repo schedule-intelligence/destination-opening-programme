@@ -33,6 +33,8 @@ ref table fact_scenario
 ref table fact_snapshot_summary
 ref table 'Near-critical threshold'
 ref table 'Compare against'
+ref table 'Hierarchy level'
+ref table Definitions
 ref table 'Update axis'
 ref table 'Risk grid'
 ref table _Measures

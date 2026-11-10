@@ -5,12 +5,16 @@ compares the headline measures for a data date with the same numbers in docs/dat
 reconciliation gate already proved against the source XER. It closes the last gap in the chain: XER = model =
 dashboard = published report.
 
-    python scripts/check_service.py                      # latest data date, device-code sign-in
+    python scripts/check_service.py                      # latest data date; a browser window asks you to sign in once
+    python scripts/check_service.py --all                # every data date
     python scripts/check_service.py --data-date 2026-09-24
-    set PBI_TOKEN=<access token>  (or $env:PBI_TOKEN)    # skip the interactive sign-in
+    python scripts/check_service.py --workspace dev      # the Development stage of the deployment pipeline
+    python scripts/check_service.py --device-code        # sign in from another device (a code to enter)
+    set PBI_TOKEN=<access token>  (or $env:PBI_TOKEN)    # skip the sign-in
 
-Sign-in uses MSAL's device-code flow with Microsoft's public Azure CLI client id, scoped to the Power BI service;
-the token cache is kept in output/tmp (git-ignored). `pip install msal` once. Exit code 1 if any value differs.
+Sign-in uses MSAL with Microsoft's public Azure CLI client id, scoped to the Power BI service: the first run opens
+the browser, later runs reuse the token cache in output/tmp (git-ignored). `pip install msal` once. Exit code 1 if
+any value differs.
 """
 from __future__ import annotations
 
@@ -27,8 +31,12 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 DASHBOARD_JSON = ROOT / "docs" / "data" / "dashboard.json"
 TOKEN_CACHE = ROOT / "output" / "tmp" / "pbi_token_cache.json"
 
-WORKSPACE_ID = "8cb3bd05-0fc7-4951-8bc2-30a6388484de"   # DOP Schedule Intelligence
-DATASET_ID = "bfce9993-96be-4e91-9bf8-ea8eb16695cc"     # DOP semantic model
+# (workspace id, semantic model id) of each stage of the deployment pipeline
+STAGES = {
+    "prod": ("8cb3bd05-0fc7-4951-8bc2-30a6388484de", "bfce9993-96be-4e91-9bf8-ea8eb16695cc"),  # DOP Schedule Intelligence
+    "dev": ("99692985-1efc-4b3c-b0e6-817f0cc57754", "96fe2c10-13c5-4370-9a79-fdf66a12f043"),   # ... [Development]
+}
+WORKSPACE_ID, DATASET_ID = STAGES["prod"]
 API = "https://api.powerbi.com/v1.0/myorg"
 SCOPE = ["https://analysis.windows.net/powerbi/api/.default"]
 AZURE_CLI_CLIENT_ID = "04b07795-8ddb-461a-bbee-02f9e1bf7b46"
@@ -68,14 +76,15 @@ def dax_query(data_date: dt.date) -> str:
     )
 
 
-def get_token() -> str:
+def get_token(device_code: bool = False) -> str:
+    """A token from PBI_TOKEN, the cache, a browser sign-in (default) or a device code."""
     token = os.environ.get("PBI_TOKEN")
     if token:
         return token
     try:
         import msal  # type: ignore
     except ImportError:
-        sys.exit("set PBI_TOKEN, or `pip install msal` for the device-code sign-in")
+        sys.exit("set PBI_TOKEN, or `pip install msal` for the sign-in")
     TOKEN_CACHE.parent.mkdir(parents=True, exist_ok=True)
     cache = msal.SerializableTokenCache()
     if TOKEN_CACHE.exists():
@@ -85,11 +94,14 @@ def get_token() -> str:
     accounts = app.get_accounts()
     if accounts:
         result = app.acquire_token_silent(SCOPE, account=accounts[0])
-    if not result:
+    if not result and not device_code:
+        print("A browser window opens: sign in to Power BI with your work account.", flush=True)
+        result = app.acquire_token_interactive(SCOPE, prompt="select_account")
+    elif not result:
         flow = app.initiate_device_flow(scopes=SCOPE)
         if "user_code" not in flow:
             sys.exit(f"device flow failed: {flow}")
-        print(flow["message"], flush=True)
+        print(flow["message"], "(the code is valid for 15 minutes)", flush=True)
         result = app.acquire_token_by_device_flow(flow)
     if "access_token" not in result:
         sys.exit(f"sign-in failed: {result.get('error_description', result)}")
@@ -98,8 +110,9 @@ def get_token() -> str:
     return result["access_token"]
 
 
-def execute_query(token: str, dax: str) -> dict:
-    url = f"{API}/groups/{WORKSPACE_ID}/datasets/{DATASET_ID}/executeQueries"
+def execute_query(token: str, dax: str, stage: str = "prod") -> dict:
+    workspace, dataset = STAGES[stage]
+    url = f"{API}/groups/{workspace}/datasets/{dataset}/executeQueries"
     body = json.dumps({"queries": [{"query": dax}], "serializerSettings": {"includeNulls": True}}).encode()
     req = urllib.request.Request(url, data=body, method="POST",
                                  headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"})
@@ -138,28 +151,37 @@ def compare(expected: dict, actual: dict) -> list[tuple[str, object, object, boo
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--data-date", help="YYYY-MM-DD; default: the latest update in dashboard.json")
+    ap.add_argument("--all", action="store_true", help="check every data date in dashboard.json")
+    ap.add_argument("--workspace", choices=sorted(STAGES), default="prod", help="pipeline stage (default: prod)")
+    ap.add_argument("--device-code", action="store_true", help="sign in with a device code instead of the browser")
     ap.add_argument("--print-dax", action="store_true", help="print the DAX query and exit")
     args = ap.parse_args()
 
     dashboard = json.loads(DASHBOARD_JSON.read_text(encoding="utf-8"))
-    data_date = args.data_date or dashboard["meta"]["latest"]
-    snapshot = dashboard["snapshots"].get(data_date)
-    if snapshot is None:
-        sys.exit(f"no snapshot {data_date} in dashboard.json; have {sorted(dashboard['snapshots'])}")
-    dax = dax_query(dt.date.fromisoformat(data_date))
+    dates = sorted(dashboard["snapshots"]) if args.all else [args.data_date or dashboard["meta"]["latest"]]
+    for data_date in dates:
+        if data_date not in dashboard["snapshots"]:
+            sys.exit(f"no snapshot {data_date} in dashboard.json; have {sorted(dashboard['snapshots'])}")
     if args.print_dax:
-        print(dax)
+        print(dax_query(dt.date.fromisoformat(dates[0])))
         return 0
 
-    actual = execute_query(get_token(), dax)
-    results = compare(snapshot["summary"], actual)
+    token = get_token(args.device_code)
     width = max(len(f) for f in MEASURES)
-    print(f"Published model vs dashboard.json at {data_date}")
-    for field, want, got, ok in results:
-        print(f"  {'ok ' if ok else 'XX '} {field:<{width}}  dashboard {want!s:>12}  service {got!s:>12}")
-    bad = [r for r in results if not r[3]]
-    print(f"{len(results) - len(bad)} of {len(results)} values agree")
-    return 1 if bad else 0
+    failed = 0
+    for data_date in dates:
+        actual = execute_query(token, dax_query(dt.date.fromisoformat(data_date)), args.workspace)
+        results = compare(dashboard["snapshots"][data_date]["summary"], actual)
+        bad = [r for r in results if not r[3]]
+        print(f"Published model ({args.workspace}) vs dashboard.json at {data_date}: "
+              f"{len(results) - len(bad)} of {len(results)} values agree")
+        for field, want, got, ok in results:
+            if not ok or not args.all:
+                print(f"  {'ok ' if ok else 'XX '} {field:<{width}}  dashboard {want!s:>12}  service {got!s:>12}")
+        failed += bool(bad)
+    if args.all:
+        print(f"{len(dates) - failed} of {len(dates)} data dates agree")
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":

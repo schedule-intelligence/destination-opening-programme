@@ -5,6 +5,7 @@
   "options": {
     "targetVisualNames": [
       "p01_h4_dd_slicer",
+      "p01_h12_level",
       "p01_v05_open_decisions",
       "p02_h3_compare",
       "p02_h4_dd_slicer",
@@ -111,6 +112,89 @@
                   ]
                 }
               }
+            }
+          },
+          "p01_h12_level": {
+            "singleVisual": {
+              "visualType": "advancedSlicerVisual",
+              "objects": {
+                "merge": {
+                  "general": [
+                    {
+                      "properties": {
+                        "filter": {
+                          "filter": {
+                            "Version": 2,
+                            "From": [
+                              {
+                                "Name": "h",
+                                "Entity": "Hierarchy level",
+                                "Type": 0
+                              }
+                            ],
+                            "Where": [
+                              {
+                                "Condition": {
+                                  "In": {
+                                    "Expressions": [
+                                      {
+                                        "Column": {
+                                          "Expression": {
+                                            "SourceRef": {
+                                              "Source": "h"
+                                            }
+                                          },
+                                          "Property": "Hierarchy level Fields"
+                                        }
+                                      }
+                                    ],
+                                    "Values": [
+                                      [
+                                        {
+                                          "Literal": {
+                                            "Value": "'''dim_activity''[asset_name]'"
+                                          }
+                                        }
+                                      ]
+                                    ]
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              "cachedFilterDisplayItems": [
+                {
+                  "id": {
+                    "scopeId": {
+                      "Comparison": {
+                        "ComparisonKind": 0,
+                        "Left": {
+                          "Column": {
+                            "Expression": {
+                              "SourceRef": {
+                                "Entity": "Hierarchy level"
+                              }
+                            },
+                            "Property": "Hierarchy level Fields"
+                          }
+                        },
+                        "Right": {
+                          "Literal": {
+                            "Value": "'''dim_activity''[asset_name]'"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "displayName": "Asset"
+                }
+              ]
             }
           },
           "p01_v05_open_decisions": {

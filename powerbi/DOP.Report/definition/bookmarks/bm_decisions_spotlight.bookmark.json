@@ -59,6 +59,9 @@
                 "mode": "spotlight"
               }
             }
+          },
+          "p01_h12_level": {
+            "singleVisual": {}
           }
         }
       }

@@ -133,7 +133,7 @@ table fact_dcma_check
 		mode: import
 		source = ```
 				let
-				    Source = Csv.Document(File.Contents(CsvFolder & "\fact_dcma_check.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Source = Csv.Document(Web.Contents(CsvFolder, [RelativePath = "fact_dcma_check.csv"]), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
 				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
 				    Nulls = Table.ReplaceValue(Promoted, "", null, Replacer.ReplaceValue, Table.ColumnNames(Promoted)),
 				    Typed = Table.TransformColumnTypes(Nulls, {
